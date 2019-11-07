@@ -1,7 +1,6 @@
 ###############################################################################
 # Apr.14.2019
 # Script to generate rhs equations for quadratic gravity
-# Here, we use diagonalize GH system
 ###############################################################################
 import dendro
 from sympy import *
@@ -49,7 +48,10 @@ R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 # evolution equations
 ###################################################################
 
-
+RccSc_rhs = 0
+gm_rhs = 0
+Rcct_rhs = 0
+Vaux_rhs = 0
 
 ###################################################################
 # generate code
