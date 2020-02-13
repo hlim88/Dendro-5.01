@@ -80,26 +80,23 @@ void ot::computeODAFlags(const ot::Mesh *pMesh, std::vector<unsigned int> &flagL
         }
 
     }
-    
 
     const std::vector<unsigned int >& lev1_Octants=pMesh->getLevel1GhostElementIndices();
-    for(unsigned int e =0; e< lev1_Octants.size();e++)
+    for(unsigned int g=0;g<lev1_Octants.size();g++)
     {
-        const unsigned int ele = lev1_Octants[e];
+
+        //binOp::setBit(m_uiOctantFlags[lev1_Octants[g]],ODA_W_DEPENDENT_FLAG_BIT);
         for(unsigned int node=0;node<nPe;node++)
         {
-            lookUp=e2n[ele*nPe+node];
+            lookUp=e2n[lev1_Octants[g]*nPe+node];
             if((lookUp>=nodeLocalBegin && lookUp<nodeLocalEnd))
             {
-                binOp::setBit(flagList[ele],ODA_W_DEPENDENT_FLAG_BIT);
+                binOp::setBit(flagList[lev1_Octants[g]],ODA_W_DEPENDENT_FLAG_BIT);
                 break;
             }
 
         }
-
     }
-
-
 
 
 }

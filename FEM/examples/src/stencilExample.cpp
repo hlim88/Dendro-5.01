@@ -62,9 +62,6 @@ int main (int argc, char** argv) {
     double d_max=0.5;
     double dMin[]={-0.5,-0.5,-0.5};
     double dMax[]={0.5,0.5,0.5};
-
-    Point pt_min(-0.5,-0.5,-0.5);
-    Point pt_max(0.5,0.5,0.5);
     //@note that based on how the functions are defined (f(x), dxf(x), etc) the compuatational domain is equivalent to the grid domain.
     std::function<double(double,double,double)> func =[d_min,d_max](const double x,const double y,const double z){ return (sin(2*M_PI*((x/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((y/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((z/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min)));};
     std::function<double(double,double,double)> dx_func=[d_min,d_max](const double x,const double y,const double z){ return (2*M_PI*(1.0/(1u<<m_uiMaxDepth)*(d_max-d_min)))*(cos(2*M_PI*((x/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((y/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((z/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min)));};
@@ -215,7 +212,7 @@ int main (int argc, char** argv) {
 
     //assert(ot::test::isElementalNodalValuesValid(&mesh,&(*(funcVal.begin())),func,1e-3));
     ot::test::isElementalNodalValuesValid(mesh,&(*(funcVal.begin())),func,1e-3);
-    
+    ot::test::isInterpToSphereValid(mesh,&(*(funcVal.begin())),func,0.1,dMin,dMax,1e-3);
 
     if(!rank)
     {
@@ -265,27 +262,6 @@ int main (int argc, char** argv) {
     {
         std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
         std::cout<<"        UnZip Test Check End     "<<std::endl;
-        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
-
-    }
-
-    if(!rank)
-    {
-        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
-        std::cout<<"        interpolation to sphere check begin    "<<std::endl;
-        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
-
-    }
-    
-    //ot::test::isInterpToSphereValid(mesh,&(*(funcVal.begin())),func,0.1,dMin,dMax,1e-3);
-    ot::test::isSphereInterpValid(mesh,&(*(funcVal.begin())),func,0.1,1e-3,pt_min,pt_max);
-
-    //bool isSphereInterpValid(ot::Mesh* pMesh, T* vec, std::function< double(double,double,double) > func, double r, double tol, Point d_min, Point d_max)
-
-    if(!rank)
-    {
-        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
-        std::cout<<"        interpolation to sphere check end     "<<std::endl;
         std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
 
     }

@@ -1529,7 +1529,6 @@ namespace io
             MPI_Comm_size(comm,&npes);
 
             unsigned int retval;
-            unsigned int eleOrder=1;
 
 
             char fname[FNAME_LENGTH];
@@ -1984,10 +1983,10 @@ namespace io
                     mesh->performGhostExchange(refineWavelets[var]);
                 
                 char** pDataNames=new char*[numVars];
-                const char *  pDataNamesAll[]={"U_ALPHA_WC","U_CHI_WC","U_K_WC","U_GT0_WC","U_GT1_WC","U_GT2_WC","U_BETA0_WC","U_BETA1_WC","U_BETA2_WC","U_B0_WC","U_B1_WC","U_B2_WC","U_SYMGT0_WC","U_SYMGT1_WC","U_SYMGT2_WC","U_SYMGT3_WC","U_SYMGT4_WC","U_SYMGT5_WC","U_SYMAT0_WC","U_SYMAT1_WC","U_SYMAT2_WC","U_SYMAT3_WC","U_SYMAT4_WC","U_SYMAT5_WC"};
+                char *  pDataNamesAll[]={"U_ALPHA_WC","U_CHI_WC","U_K_WC","U_GT0_WC","U_GT1_WC","U_GT2_WC","U_BETA0_WC","U_BETA1_WC","U_BETA2_WC","U_B0_WC","U_B1_WC","U_B2_WC","U_SYMGT0_WC","U_SYMGT1_WC","U_SYMGT2_WC","U_SYMGT3_WC","U_SYMGT4_WC","U_SYMGT5_WC","U_SYMAT0_WC","U_SYMAT1_WC","U_SYMAT2_WC","U_SYMAT3_WC","U_SYMAT4_WC","U_SYMAT5_WC"};
                 for(unsigned int var=0;var<numVars;var++)
                 {
-                    pDataNames[var]=(char*)pDataNamesAll[varIds[var]];
+                    pDataNames[var]=pDataNamesAll[varIds[var]];
                 }
 
                 io::vtk::mesh2vtuFine(mesh,fileName,0,NULL,NULL,numVars,(const char **)pDataNames,(const double **)refineWavelets);

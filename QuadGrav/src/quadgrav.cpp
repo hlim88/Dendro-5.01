@@ -1,11 +1,4 @@
-//
-// Created by milinda on 7/25/17.
-/**
-*@author Milinda Fernando
-*School of Computing, University of Utah
-*@brief Header file for the GR simulation.
-*/
-//
+// Quadgrav header
 
 #include "quadgrav.h"
 #include "quadgravUtils.h"
@@ -87,10 +80,8 @@ int main (int argc, char** argv)
         std::cout<<YLW<<"\tQUADGRAV_ID_ZC2:"<<quadgrav::QUADGRAV_ID_ZC2<<NRM<<std::endl;
         std::cout<<YLW<<"\tQUADGRAV_ID_EPSX1:"<<quadgrav::QUADGRAV_ID_EPSX1<<NRM<<std::endl;
         std::cout<<YLW<<"\tQUADGRAV_ID_EPSY1:"<<quadgrav::QUADGRAV_ID_EPSY1<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_ID_EPSZ1:"<<quadgrav::QUADGRAV_ID_EPSY1<<NRM<<std::endl;
         std::cout<<YLW<<"\tQUADGRAV_ID_EPSX2:"<<quadgrav::QUADGRAV_ID_EPSX2<<NRM<<std::endl;
         std::cout<<YLW<<"\tQUADGRAV_ID_EPSY2:"<<quadgrav::QUADGRAV_ID_EPSY2<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_ID_EPSZ2:"<<quadgrav::QUADGRAV_ID_EPSY2<<NRM<<std::endl;
         std::cout<<YLW<<"\tQUADGRAV_ID_R1:"<<quadgrav::QUADGRAV_ID_R1<<NRM<<std::endl;
         std::cout<<YLW<<"\tQUADGRAV_ID_R2:"<<quadgrav::QUADGRAV_ID_R2<<NRM<<std::endl;
         std::cout<<YLW<<"\tQUADGRAV_ID_NU1:"<<quadgrav::QUADGRAV_ID_NU1<<NRM<<std::endl;
@@ -140,7 +131,8 @@ int main (int argc, char** argv)
     for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_VARS;i++)
         varIndex[i]=i;
 
-    
+    /*varIndex[0]=quadgrav::VAR::U_ALPHA;
+    varIndex[1]=quadgrav::VAR::U_CHI;*/
     DendroIntL localSz,globalSz;
     double t_stat;
     double t_stat_g[3];
@@ -158,8 +150,7 @@ int main (int argc, char** argv)
     {
 
         if(!rank) std::cout<<YLW<<"Using function2Octree. AMR enabled "<<NRM<<std::endl;
-        function2Octree(f_init,quadgrav::QUADGRAV_NUM_VARS,quadgrav::QUADGRAV_REFINE_VARIABLE_INDICES,quadgrav::QUADGRAV_NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,quadgrav::QUADGRAV_WAVELET_TOL,quadgrav::QUADGRAV_ELE_ORDER,comm);
-        //std::cout<<"f2o else end"<<std::endl;
+        function2Octree(f_init,quadgrav::QUADGRAV_NUM_VARS,varIndex,interpVars,tmpNodes,m_uiMaxDepth,quadgrav::QUADGRAV_WAVELET_TOL,quadgrav::QUADGRAV_ELE_ORDER,comm);
 
     }
 
@@ -279,7 +270,7 @@ int main (int argc, char** argv)
 
     quadgrav::timer::t_mesh.start();
 
-    ot::Mesh * mesh=new ot::Mesh(balOct,1,quadgrav::QUADGRAV_ELE_ORDER,comm,true,ot::SM_TYPE::FDM,quadgrav::QUADGRAV_DENDRO_GRAIN_SZ,quadgrav::QUADGRAV_LOAD_IMB_TOL,quadgrav::QUADGRAV_SPLIT_FIX);
+    ot::Mesh * mesh=new ot::Mesh(balOct,1,quadgrav::QUADGRAV_ELE_ORDER,comm,true,quadgrav::QUADGRAV_DENDRO_GRAIN_SZ,quadgrav::QUADGRAV_LOAD_IMB_TOL,quadgrav::QUADGRAV_SPLIT_FIX);
 
     quadgrav::timer::t_mesh.stop();
 

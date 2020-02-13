@@ -23,7 +23,6 @@
 #include "oct2vtk.h"
 #include "odaUtils.h"
 #include "matRecord.h"
-#include <assert.h>
 
 #ifdef BUILD_WITH_PETSC
     #include "petsc.h"
@@ -55,14 +54,9 @@ namespace ot
          * INDEPENDENT : Loop over all the local elements which DOES NOT point to any ghost node region.
          * W_DEPENDENT : Loop over all local elements which has AT LEAST ONE node which point to ghost node region
          * W_BOUNDARY : Loop over all the local elements which is on the domain boundary.
-         * 
-         * LOCAL_ELEMENTS : Loop over local elements of the mesh
-         * PREGHOST_ELEMENTS : Loop over pre ghost elements. 
-         * POSTGHOST_ELEMENTS : Loop over post ghost elements
-         * 
          *
          * */
-        enum LoopType {ALL,WRITABLE,INDEPENDENT,W_DEPENDENT,W_BOUNDARY,LOCAL_ELEMENTS,PREGHOST_ELEMENTS,POSTGHOST_ELEMENTS};
+        enum LoopType {ALL,WRITABLE,INDEPENDENT,W_DEPENDENT,W_BOUNDARY};
 
         /**
          * X_MIN : boundary of the x min on the computational domain.
@@ -84,9 +78,6 @@ namespace ot
          * DA_COARSEN: coarsen the octant.
          * **/
         enum Refine {DA_NO_CHANGE,DA_REFINE,DA_COARSEN};
-
-        enum WriteMode{SET_VALUES=0,ADD_VALUES};
-
 
 
     }
@@ -187,7 +178,7 @@ namespace ot
          * @param [in] grainSz: Number of suggested elements per processor,
          * @param [in] sfc_tol: SFC partitioning tolerance,
          * */
-        DA(std::vector<ot::TreeNode> &balOct,MPI_Comm comm,unsigned int order, unsigned int grainSz=100,double sfc_tol=0.3, SM_TYPE smType=SM_TYPE::FEM_CG);
+        DA(std::vector<ot::TreeNode> &balOct,MPI_Comm comm,unsigned int order, unsigned int grainSz=100,double sfc_tol=0.3);
 
         /**
          * @brief: Create a DA from a specified mesh
@@ -196,36 +187,11 @@ namespace ot
         DA(ot::Mesh* pMesh);
 
 
-        /**
-         * @biref Construct a DA from a function
-         * @param[in] func: function to capture
-         * @param[in] dofSz: size of the degrees of freedoms
-         * @param[in] comm: MPI communicator
-         * @param[in] order: element order
-         * @param[in] interp_tol: interpolation tolerance for func approximation/ capturing
-         * @param[in] grainSz: number of elements per core. 
-         * @param[in] sfc_tol: flexible partitioning tolerance. 
-         * @param[in] SM_TYPE: scatter map type
+        /**@biref: Construct a DA from a function
+         *
          * */
         template<typename T>
-        DA(std::function<void(T,T,T,T*)>func,unsigned int dofSz,MPI_Comm comm,unsigned int order,double interp_tol, unsigned int grainSz=100,double sfc_tol=0.3, SM_TYPE smType=SM_TYPE::FEM_CG);
-
-        /**
-         * @brief Construct a new DA object from specified point set
-         * 
-         * @param[in] pts : input points
-         * @param numPts : number of points
-         * @param pt_min : global min of point
-         * @param pt_max : global max of point
-         * @param comm : MPI communicator
-         * @param order : element order
-         * @param grainSz : number of elements per core
-         * @param sfc_tol : SFC partition tolerance
-         * @param smType : scatter map type
-         */
-        DA(const Point* pts, unsigned int numPts,Point pt_min,Point pt_max, MPI_Comm comm,unsigned int order,unsigned int grainSz=100,double sfc_tol=0.3, SM_TYPE smType=SM_TYPE::FEM_CG);
-
-
+        DA(std::function<void(T,T,T,T*)>func,unsigned int dofSz,MPI_Comm comm,unsigned int order,double interp_tol, unsigned int grainSz=100,double sfc_tol=0.3);
 
         /**
          * @brief deconstructor for the DA class.
@@ -251,7 +217,7 @@ namespace ot
         inline unsigned int getTotalElemSz() const {return m_uiTotalElementSz;}
 
         /**@brief see if the current DA is active*/
-        inline bool isActive() const {return m_uiMesh->isActive();}
+        inline bool isActive(){return m_uiMesh->isActive();}
 
         /**@brief get number of nodes per element*/
         inline unsigned int getNumNodesPerElement() const {return m_uiMesh->getNumNodesPerElement();}
@@ -267,9 +233,6 @@ namespace ot
 
         /**@brief returns the mesh*/
         inline const ot::Mesh* getMesh() const {return m_uiMesh;}
-
-        /**@brief: Returns octDA flags */
-        inline const std::vector<unsigned int> getOctFlags() const {return m_uiOctantFlags; }
 
         /**@brief: returns the active MPI sub com of the global communicator*/
         inline MPI_Comm getCommActive() const
@@ -357,44 +320,7 @@ namespace ot
         /**@brief: get the dimensionality of the octree*/
         inline unsigned int getDimension() const {return m_uiDim;};
 
-        /** @brief get min local node (nodal)*/
-        inline ot::TreeNode getMinTreeNode() const { 
 
-            if(m_uiMesh->isActive())
-            {
-                const ot::TreeNode* allElements = &(*(m_uiMesh->getAllElements().begin()));
-                return allElements[m_uiMesh->getElementLocalBegin()];
-            }else
-            {
-                return ot::TreeNode(0,0,0,0,m_uiDim,m_uiMaxDepth);                
-            }
-            
-        }
-        
-         /** @brief get max localnode (nodal)*/
-        inline ot::TreeNode getMaxTreeNode() const { 
-            
-            if(m_uiMesh->isActive())
-            {
-                const ot::TreeNode* allElements = &(*(m_uiMesh->getAllElements().begin()));
-                return allElements[m_uiMesh->getElementLocalEnd()];
-            }else
-            {
-                return ot::TreeNode(0,0,0,0,m_uiDim,m_uiMaxDepth);                
-            }
-
-            
-        }
-
-        /**
-         * @brief 
-         * @param [in] pNodes: Nodes that needs to be searched across. 
-         * @param[in] n: number of nodes. 
-         * @param[in/out] ownerrank for i^th node, -1 if not found. (Needs to be allocated, outsize for size n);
-          */
-        void computeTreeNodeOwnerProc(const ot::TreeNode * pNodes, unsigned int n, int* ownerranks);
-
-        
         /**
          * @brief Creates a ODA vector
          * @param [in] local : VecType pointer
@@ -403,7 +329,7 @@ namespace ot
          * @param [in] dof: degrees of freedoms
          * */
          template<typename T>
-         int createVector(T*& local, bool isElemental=false, bool isGhosted=false, unsigned int dof=1) const;
+         int createVector(T*& local, bool isElemental=false, bool isGhosted=false, unsigned int dof=1);
 
         /**
         * @brief Creates a ODA vector std::vector<T>
@@ -413,17 +339,17 @@ namespace ot
         * @param [in] dof: degrees of freedoms
         * */
         template<typename T>
-        int createVector(std::vector<T>& local, bool isElemental=false, bool isGhosted=false, unsigned int dof=1) const;
+        int createVector(std::vector<T>& local, bool isElemental=false, bool isGhosted=false, unsigned int dof=1);
 
         /**
          * @brief deallocates the memory allocated for a vector
          * @param[in/out] local: pointer to the vector
          * */
         template <typename T>
-        void destroyVector(T*& local) const;
+        void destroyVector(T*& local);
 
         template <typename T>
-        void destroyVector(std::vector<T>& local) const;
+        void destroyVector(std::vector<T>& local);
 
 
 
@@ -458,15 +384,11 @@ namespace ot
 
          /**@brief Initiate accumilation across ghost elements*/
          template<typename T>
-         void writeToGhostsBegin(T* vec, unsigned int dof=1) ;
+         void writeToGhostsBegin(T* vec, unsigned int dof=1);
 
-         /**@brief Sync accumilation across ghost elements
-          * @param [in] vec: vector pointer
-          * @param [in] mode: mode of the write to ghost
-          * @param [in] dof: degrees of freedoms. 
-         */
+         /**@brief Sync accumilation across ghost elements*/
          template<typename T>
-         void writeToGhostsEnd(T* vec, DA_FLAGS::WriteMode mode,unsigned int dof=1) ;
+         void writeToGhostsEnd(T* vec, unsigned int dof=1);
 
 
          /**
@@ -477,7 +399,7 @@ namespace ot
           * @param[in] dof: degrees of freedoms
           * */
          template<typename T>
-         void nodalVecToGhostedNodal(const T* in,T*& out,bool isAllocated=false, unsigned int dof=1)const;
+         void nodalVecToGhostedNodal(const T* in,T*& out,bool isAllocated=false, unsigned int dof=1);
 
 
         /**
@@ -489,7 +411,7 @@ namespace ot
          * */
 
          template<typename T>
-         void ghostedNodalToNodalVec(const T* gVec,T*& local,bool isAllocated=false, unsigned int dof=1) const;
+         void ghostedNodalToNodalVec(const T* gVec,T*& local,bool isAllocated=false, unsigned int dof=1);
 
 
 
@@ -501,7 +423,7 @@ namespace ot
          * @param[in] dof: degrees of freedoms
          * */
          template <typename T>
-         void getElementNodalValues(const T*in, T* eleVecOut,unsigned int eleID,unsigned int dof=1)const;
+         void getElementNodalValues(const T*in, T* eleVecOut,unsigned int eleID,unsigned int dof=1);
 
         /**
           * @brief computes the elemental vec to global vec accumilation
@@ -511,7 +433,7 @@ namespace ot
           * @param[in] dof: degrees of freedoms
           * */
         template <typename T>
-        void eleVecToVecAccumilation(T*out, const T* eleVecIn,unsigned int eleID,unsigned int dof=1)const;
+        void eleVecToVecAccumilation(T*out, const T* eleVecIn,unsigned int eleID,unsigned int dof=1);
 
         /**
          * @brief Computes the octree writable boundary nodes.
@@ -592,7 +514,7 @@ namespace ot
          * @return pointer to dofIndex.
          * */
         template<typename T>
-        T* getVecPointerToDof(T* in ,unsigned int dofInex, bool isElemental=false,bool isGhosted=false) const;
+        T* getVecPointerToDof(T* in ,unsigned int dofInex, bool isElemental=false,bool isGhosted=false);
 
 
         /**
@@ -604,7 +526,7 @@ namespace ot
          * @param [in] dof: degrees of freedoms
          * */
         template<typename T>
-        void copyVectors(T* dest,const T* source,bool isElemental=false,bool isGhosted=false,unsigned int dof=1) const;
+        void copyVectors(T* dest,const T* source,bool isElemental=false,bool isGhosted=false,unsigned int dof=1);
 
         /**
          * @brief more premitive copy, from source pointer to the dest pointer
@@ -614,7 +536,7 @@ namespace ot
          * @param [in] isGhosted: true if this is a ghosted vector
          * */
         template<typename T>
-        void copyVector(T* dest,const T* source,bool isElemental=false,bool isGhosted=false) const;
+        void copyVector(T* dest,const T* source,bool isElemental=false,bool isGhosted=false);
 
 
         /**
@@ -626,7 +548,7 @@ namespace ot
          * @param[in] sfK: splitter fix factor. better to be power of two. increase the value to 128 when running on > 64,000 cores
          * @return: Specifies the new grid, with new DA.
          */
-        ot::DA* remesh(const DA_FLAGS::Refine * flags, unsigned int sz,unsigned int grainSz=100,double ld_bal=0.3, unsigned int sfK=2, unsigned int (*getWeight)(const ot::TreeNode *)=NULL) const;
+        ot::DA* remesh(const DA_FLAGS::Refine * flags, unsigned int sz,unsigned int grainSz=100,double ld_bal=0.3, unsigned int sfK=2);
 
         /**
          * @brief performs grid transfer operations after the remesh.
@@ -637,7 +559,7 @@ namespace ot
          * @param[in] dof: degrees of freedoms.
          * */
         template<typename T>
-        void intergridTransfer(const T* varIn, T* & varOut, const ot::DA* newDA, bool isElemental=false, bool isGhosted=false, unsigned int dof=1);
+        void intergridTransfer(const T* varIn, T* & varOut,const ot::DA* newDA, bool isElemental=false, bool isGhosted=false, unsigned int dof=1);
 
 
 
@@ -649,21 +571,12 @@ namespace ot
          * @param [out] coords: get the corresponding coordinates size: 4*NodesPerElement*m_uiDim;
          * @param [out] neighID: face neighbor octant IDs,
          * @param [in] face: face direction in {OCT_DIR_LEFT,OCT_IDR_RIGHT,OCT_DIR_DOWN, OCT_DIR_UP,OCT_DIR_BACK,OCT_DIR_FRONT}
-         * @param [out] level: the level of the neighbour octant with respect to the current octant.
-         * returns  the number of face neighbours 1/4 for 3D.
+
+         * returns true if the values are set, i.e. there is a face neighbor to get the values.
          * */
         template<typename T>
-        int getFaceNeighborValues(unsigned int eleID, const T* in, T* out, T* coords, unsigned int * neighID, unsigned int face, NeighbourLevel & level,unsigned int dof) const;
+        bool getFaceNeighborValues(unsigned int eleID, const T* in, T* out, T* coords, unsigned int * neighID, unsigned int face);
 
-        /**
-        * @brief computes the child number of the given octant
-        * @param [in] eleID: element ID
-        * returns the Morton child number of the eleID in the octant
-        * */
-        inline unsigned int getMortonChildNum(unsigned int eleID) const
-        {
-           return m_uiMesh->getMortonchildNum(eleID);
-        }
 
          // all the petsc functionalities goes below with the pre-processor gards.
 #ifdef BUILD_WITH_PETSC
@@ -676,7 +589,7 @@ namespace ot
          * @param [in] dof: degrees of freedoms
          * */
 
-        PetscErrorCode petscCreateVector(Vec &local, bool isElemental, bool isGhosted, unsigned int dof) const;
+        PetscErrorCode petscCreateVector(Vec &local, bool isElemental, bool isGhosted, unsigned int dof);
 
 
         /**
@@ -685,7 +598,7 @@ namespace ot
          @param mtype the type of matrix
          @param dof the number of degrees of freedom per node.
          */
-        PetscErrorCode createMatrix(Mat &M, MatType mtype, unsigned int dof=1) const;
+        PetscErrorCode createMatrix(Mat &M, MatType mtype, unsigned int dof=1);
 
 
 
@@ -696,7 +609,7 @@ namespace ot
          * @param[in] isAllocated: true if the out is allocated, false otherwise.
          * @param[in] dof: degrees of freedoms
          * */
-        PetscErrorCode petscNodalVecToGhostedNodal(const Vec& in,Vec& out,bool isAllocated=false,unsigned int dof=1) const;
+        PetscErrorCode petscNodalVecToGhostedNodal(const Vec& in,Vec& out,bool isAllocated=false,unsigned int dof=1);
 
 
         /**
@@ -707,7 +620,7 @@ namespace ot
         * @param[in] dof: degrees of freedoms
         * */
 
-        PetscErrorCode petscGhostedNodalToNodalVec(const Vec& gVec,Vec& local,bool isAllocated=false,unsigned int dof=1) const;
+        PetscErrorCode petscGhostedNodalToNodalVec(const Vec& gVec,Vec& local,bool isAllocated=false,unsigned int dof=1);
 
         /**
          * @brief Initiate the ghost nodal value exchange
@@ -716,7 +629,7 @@ namespace ot
          * @param[in] dof: Degrees of freedoms
          * */
 
-        void petscReadFromGhostBegin(PetscScalar * vecArry, unsigned int dof=1) ;
+        void petscReadFromGhostBegin(PetscScalar * vecArry, unsigned int dof=1);
 
         /**
          * @brief Sync the ghost element exchange
@@ -724,7 +637,7 @@ namespace ot
          * @param[in] vecArry: pointer to from the VecGetArray()
          * @param[in] dof: Degrees of freedoms
          * */
-        void petscReadFromGhostEnd(PetscScalar * vecArry, unsigned int dof=1) ;
+        void petscReadFromGhostEnd(PetscScalar * vecArry, unsigned int dof=1);
 
 
         /**
@@ -761,7 +674,7 @@ namespace ot
          * @param [in] isGhosted: True will allocate ghost nodal values as well, false will only allocate memory for local nodes.
          * @param [in] dof: degrees of freedoms
          * */
-        void petscVecTopvtu(const Vec& local, const char * fPrefix,char** nodalVarNames=NULL,bool isElemental=false,bool isGhosted=false,unsigned int dof=1) ;
+        void petscVecTopvtu(const Vec& local, const char * fPrefix,char** nodalVarNames=NULL,bool isElemental=false,bool isGhosted=false,unsigned int dof=1);
 
 
         /**
@@ -776,7 +689,7 @@ namespace ot
          * @return an error flag
          * @note records will be cleared inside the function
         */
-        PetscErrorCode petscSetValuesInMatrix(Mat mat, std::vector<ot::MatRecord>& records,unsigned int dof, InsertMode mode) const;
+        PetscErrorCode petscSetValuesInMatrix(Mat mat, std::vector<ot::MatRecord>& records,unsigned int dof, InsertMode mode);
 
         
         
@@ -787,7 +700,7 @@ namespace ot
          * @param [in,out] v1: input and out put vector, 
          * @param [in] dof: number of dof.  
          */
-        PetscErrorCode petscChangeVecToMatBased(Vec& v1,bool isElemental,bool isGhosted,unsigned int dof=1) const;
+        PetscErrorCode petscChangeVecToMatBased(Vec& v1,bool isElemental,bool isGhosted,unsigned int dof=1);
         
         
         /** 
@@ -795,25 +708,7 @@ namespace ot
          * @param [in,out] v1: input and out put vector, 
          * @param [in] dof: number of dof.  
          */
-        PetscErrorCode petscChangeVecToMatFree(Vec& v1,bool isElemental,bool isGhosted,unsigned int dof=1) const;
-
-        /**
-         * @brief performs grid transfer operations after the remesh with Petsc Vectors.
-         * @param[in] varIn: variable defined by oldDA
-         * @param[out] varOut: variable defined by newDA. interpolate varOut from varIn. (Note: varOut allocated inside the function, no need to allocate outside)
-         * @param[in] isElemental: true if it is an elemental vector
-         * @param[in] isGhosted: true if allocated ghost vector
-         * @param[in] dof: degrees of freedoms.
-        */
-        template<typename T>
-        void petscIntergridTransfer(const Vec &varIn, Vec &varOut, const ot::DA *newDA, bool isElemental = false,bool isGhosted = false, unsigned int dof = 1);
-
-        /**
-         * @brief: Destroy petsc vector
-         * @param[in] vec: petsc vector
-         */
-        PetscErrorCode petscDestroyVec(Vec & vec);
-      
+        PetscErrorCode petscChangeVecToMatFree(Vec& v1,bool isElemental,bool isGhosted,unsigned int dof=1);
 
 #endif
 

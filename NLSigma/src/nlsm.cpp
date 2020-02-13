@@ -87,10 +87,8 @@ int main (int argc, char** argv)
         std::cout<<YLW<<"\tNLSM_ID_ZC2:"<<nlsm::NLSM_ID_ZC2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSX1:"<<nlsm::NLSM_ID_EPSX1<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSY1:"<<nlsm::NLSM_ID_EPSY1<<NRM<<std::endl;
-        std::cout<<YLW<<"\tNLSM_ID_EPSZ1:"<<nlsm::NLSM_ID_EPSY1<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSX2:"<<nlsm::NLSM_ID_EPSX2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSY2:"<<nlsm::NLSM_ID_EPSY2<<NRM<<std::endl;
-        std::cout<<YLW<<"\tNLSM_ID_EPSZ2:"<<nlsm::NLSM_ID_EPSY2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_R1:"<<nlsm::NLSM_ID_R1<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_R2:"<<nlsm::NLSM_ID_R2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_NU1:"<<nlsm::NLSM_ID_NU1<<NRM<<std::endl;
@@ -140,7 +138,8 @@ int main (int argc, char** argv)
     for(unsigned int i=0;i<nlsm::NLSM_NUM_VARS;i++)
         varIndex[i]=i;
 
-    
+    /*varIndex[0]=nlsm::VAR::U_ALPHA;
+    varIndex[1]=nlsm::VAR::U_CHI;*/
     DendroIntL localSz,globalSz;
     double t_stat;
     double t_stat_g[3];
@@ -158,8 +157,7 @@ int main (int argc, char** argv)
     {
 
         if(!rank) std::cout<<YLW<<"Using function2Octree. AMR enabled "<<NRM<<std::endl;
-        function2Octree(f_init,nlsm::NLSM_NUM_VARS,nlsm::NLSM_REFINE_VARIABLE_INDICES,nlsm::NLSM_NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,nlsm::NLSM_WAVELET_TOL,nlsm::NLSM_ELE_ORDER,comm);
-        //std::cout<<"f2o else end"<<std::endl;
+        function2Octree(f_init,nlsm::NLSM_NUM_VARS,varIndex,interpVars,tmpNodes,m_uiMaxDepth,nlsm::NLSM_WAVELET_TOL,nlsm::NLSM_ELE_ORDER,comm);
 
     }
 
@@ -279,7 +277,7 @@ int main (int argc, char** argv)
 
     nlsm::timer::t_mesh.start();
 
-    ot::Mesh * mesh=new ot::Mesh(balOct,1,nlsm::NLSM_ELE_ORDER,comm,true,ot::SM_TYPE::FDM,nlsm::NLSM_DENDRO_GRAIN_SZ,nlsm::NLSM_LOAD_IMB_TOL,nlsm::NLSM_SPLIT_FIX);
+    ot::Mesh * mesh=new ot::Mesh(balOct,1,nlsm::NLSM_ELE_ORDER,comm,true,nlsm::NLSM_DENDRO_GRAIN_SZ,nlsm::NLSM_LOAD_IMB_TOL,nlsm::NLSM_SPLIT_FIX);
 
     nlsm::timer::t_mesh.stop();
 

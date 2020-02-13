@@ -14,7 +14,7 @@
 #include <iostream>
 #include <functional>
 #include "daUtils.h"
-#include "lebedev.h"
+#include "../../BSSN_GR/include/lebedev.h"
 
 
 
@@ -97,11 +97,6 @@ namespace ot
 
         template<typename T>
         bool isInterpToSphereValid(const ot::Mesh * mesh,const T* zipIn,std::function<T(T,T,T)> func,double r,const double *dMin,const double * dMax,double tolerance);
-        
-
-
-        template<typename T>
-        bool isSphereInterpValid(ot::Mesh* pMesh, T* vec, std::function< double(double,double,double) > func, double r, double tol, Point d_min, Point d_max);
 
 
 
@@ -2100,8 +2095,6 @@ bool ot::test::isZipNAN(ot::Mesh* pMesh, T* zipVec)
 
     }
 
-    return true;
-
 }
 
 
@@ -2265,8 +2258,6 @@ bool ot::test::isElementalContributionValid(ot::Mesh *pMesh, std::function<T(T,T
 
     }
 
-    return true;
-
 
 
 
@@ -2358,87 +2349,7 @@ bool ot::test::isInterpToSphereValid(const ot::Mesh * mesh,const T* zipIn,std::f
 
 
 
-    }
-
-
-/**
-* @brief perform interpolation onto a sphere to of a known function
-* 
-*/
-template<typename T>
-bool ot::test::isSphereInterpValid(ot::Mesh* pMesh, T* vec, std::function< double(double,double,double) > func, double r, double tol, Point d_min, Point d_max)
-{
-      
-      const double phi_res = 0.02;  // azimuthal angle
-      const double theta_res = 0.01 ; // polar angle. 
-
-      const unsigned int numPts_phi = ( (2*M_PI) / phi_res );
-      const unsigned int numPts_theta = (M_PI/theta_res);
-
-      std::vector<T> coords;
-      coords.reserve(3*(numPts_phi*numPts_theta));
-
-      const unsigned int maxDepth = m_uiMaxDepth;
-      std::vector<unsigned int> validIndex;
-
-      std::vector<T> interpVal;
-      interpVal.resize((numPts_phi*numPts_theta));
-      
-      for (unsigned int i=0; i< numPts_theta ; i++ )
-        for(unsigned int j=0; j< numPts_phi ; j++)
-        {
-            double x = r*sin(j*theta_res) * cos(i*phi_res) ;
-            double y = r*sin(j*theta_res) * sin(i*phi_res) ;
-            double z = r*cos(j*theta_res);
-
-            coords.push_back( (x-d_min.x()) * ((double)(1u<<(maxDepth))) / (d_max.x()-d_min.x())) ;
-            coords.push_back( (y-d_min.y()) * ((double)(1u<<(maxDepth))) / (d_max.y()-d_min.y())) ;
-            coords.push_back( (z-d_min.z()) * ((double)(1u<<(maxDepth))) / (d_max.z()-d_min.z())) ;
-
-        }
-
-
-      ot::da::interpolateToCoords(pMesh,vec,&(*(coords.begin())),coords.size(),&(*(interpVal.begin())),validIndex);
-
-      unsigned int count=0;
-      double sum=0;
-      
-      for (unsigned int i=0; i< numPts_theta ; i++ )
-        for(unsigned int j=0; j< numPts_phi ; j++)
-        {
-            if( count <validIndex.size() && validIndex[count] == (i*numPts_phi +j))
-            {
-              double x = coords[3*validIndex[count] +0];
-              double y = coords[3*validIndex[count] +1];
-              double z = coords[3*validIndex[count] +2];
-
-              if(fabs(interpVal[validIndex[count]]-func(x,y,z))> tol)
-              {
-                std::cout<<"rank: "<<pMesh->getMPIRank()<<" intepVal: "<<interpVal[validIndex[count]] <<" actual val : "<<func(x,y,z)<< " diff : "<< fabs(interpVal[validIndex[count]]- func(x,y,z))<<std::endl;
-              
-              }
-
-              count++;
-
-              sum += (r*r) * sin( i * theta_res ) * sin( i * theta_res ) * theta_res * phi_res;
-
-            } 
-
-        }
-
-
-      double sum_g=0;
-      par::Mpi_Reduce(&sum,&sum_g,1,MPI_SUM,0,pMesh->getMPIGlobalCommunicator());
-      if(!(pMesh->getMPIRank()))
-      {
-        std::cout<<" integration value: "<<sum_g << " analytic : "<<(M_PI*M_PI*r*r) <<" diff:  "<<fabs(sum_g-M_PI*M_PI*r*r)<<" num pts : "<<(numPts_phi*numPts_theta)<<std::endl;
-      }
-      
-
-
-        return true;
-      
-    }
+}
 
 
 #endif //SFCSORTBENCH_MESHTESTUTILS_H

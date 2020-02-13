@@ -324,8 +324,6 @@ int function2Octree(std::function<double(double,double,double)> fx, std::vector<
     delete[] dist_child;
     delete[] dist_child_ip;
     delete[] dist_parent;
-    
-    return 0;
 
 
 }
@@ -548,8 +546,6 @@ int function2Octree(std::function<void(double,double,double,double*)> fx,const u
     delete[] dist_parent;
     delete[] varVal;
 
-    return 0;
-    
 
 }
 
@@ -723,8 +719,6 @@ void octree2BlockDecomposition(std::vector<ot::TreeNode>& pNodes, std::vector<ot
 
         }
     }
-
-   std::reverse(blockList.begin(),blockList.end());
 
 #ifdef OCT2BLK_DEBUG
     std::vector<ot::TreeNode> blockNodes;

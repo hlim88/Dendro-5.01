@@ -1,0 +1,20 @@
+/*
+
+Jan.10.2018
+
+HL : This is the directory for parameter file saving. The purpose of this parameter studies
+is testing different behaviors of BH dynamics, refining/coarsneing, and field evolutions etc.
+All parameter files in here are tested. Each name indicates the idea of testing 
+purpose. Please maintain each parameter until we clean up
+
+*/
+
+
+/**
+ * 
+ * parameters generated based on id.py
+ * 
+ * bssnr1.par -> mass ratio 1
+ * bssnr10.par -> mass ratio 10
+ * bssnr100.par -> mass ratio 100 
+ */

@@ -2568,8 +2568,7 @@ namespace ot
         if(stateX[0] && stateZ[2] && stateY[2])
             return OCT_DIR_UP_FRONT;
 
-        assert(false);
-        return 0;
+
 
     }
 

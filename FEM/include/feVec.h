@@ -74,8 +74,6 @@ public:
         m_uiPtMax=pt_max;
     }
 
-    virtual void setPlaceholder(const double * v) { assert(false); }
-
 #ifdef BUILD_WITH_PETSC
 // all PETSC function should go here.
 

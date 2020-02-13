@@ -1,0 +1,28 @@
+The TwoPunctures initial data solver 
+
+    Source: Einstein Toolkit, Tesla Reslease (2/2018)
+
+There are C and C++ versions of this code. They now give identical
+results. The driver routine is essentially a wrapper to call the
+TwoPunctures code. The TwoPunctures code has been modified to also
+return the BSSN variables.
+
+The driver routine also calculates the approximate solution, which
+is used in the HAD code.
+
+There are 3 sets of initial data coded up in the driver routine.
+These are for the GW150914 data (ID_PARS 0), initial data for a
+test in the TwoPunctures thorn (TwoPunctures/test/twopunctures.par)
+(ID_PARS_1), and a test case that was run with HAD (ID_PARS 2).
+
+When ID_PARS=1, the code produces the same solution (with small
+differences) as ET. This can be seen by running the plot2.ipynb
+code, which plots the cactus solution for U (ucactus.dat) and
+the solution from this code, along a line of constant y.  The solution
+for HAD in this case does not match very well, but this solution
+is quite extreme, given that the BHs are separated by only 3 
+in coordinates, with large momenta.
+
+When ID_PARS=2, we run a case with non-spinning BHs with a coordinate
+separation of 8. In this case the HAD solution matches quite well.
+

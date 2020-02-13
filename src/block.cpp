@@ -29,7 +29,6 @@ ot::Block::Block()
     m_uiBlkElem_1D=1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel());
 
     m_uiIsInternal=false;
-    m_uiBlkType = BlockType::UNSPECIFIED;
 
 
 }
@@ -56,7 +55,6 @@ ot::Block::Block(ot::TreeNode pNode, unsigned int rotID ,unsigned int regLev, un
     m_uiBlkElem_1D=1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel());
 
     m_uiIsInternal=false;
-    m_uiBlkType = BlockType::UNSPECIFIED;
 
 }
 

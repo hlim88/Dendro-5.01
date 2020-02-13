@@ -1,0 +1,50 @@
+Jun.20.2018
+
+This is the apparent horizon finder which came from Jonathan Thornburg's AHFinderDirect thorn inEinstien toolkit
+
+This Living Revies in Relativity article explains details about method and implementation about it.
+
+https://link.springer.com/content/pdf/10.12942%2Flrr-2007-3.pdf
+
+This is quite stand-alone code i.e. not that many depedencies with Cactus framework so we can use for Dendro framework. Below shows what contents are in each directory.
+
+
+driver/ 
+	contains high-level driver routines to solve the
+        Theta(h) = 0 equations 
+
+gr/     
+	contains relativity code; all knowledge of the actual
+        apparent horizon equation lives in the code in this directory
+
+gr.cg/  
+	contains Maple-generated C code (generated from Maple
+        code in  gr/  subdirectory) to compute the Theta(h)
+        function and its Jacobian coefficients
+
+elliptic/
+	contains code to solve elliptic equations on the multipatch
+        $S^2$
+
+sparse-matrix/    
+	constains sparse-matrix libraries imported from outside
+        this thorn
+
+patch/  
+	contains the basic multipatch infrastructure for storing
+        and finite differencing gridfns in angular coordinates
+        on the surface of a 2-sphere
+
+jtutil/       
+	contains various low-level utility routines for things
+        like integer <--> floating-point linear maps, fuzzy
+        floating-point comparisons, N-dimensional arrays, etc;
+        this is the only directory containing C++ templates
+
+include/    
+	contains common header files which don't live in any other
+        source directory; all compile-time options for this thorn
+        are configured here
+
+
+Note that many calculations were performed with Maple which is not open source toolkit.

@@ -141,69 +141,26 @@ void feVector<T>::computeVec(const VECType* in,VECType* out,double scale)
     delete [] val;
 
 
-    const ot::Mesh * pMesh = m_uiOctDA->getMesh();
-    const unsigned int nPe = pMesh->getNumNodesPerElement();
-    double * qMat = new double[nPe*nPe];
-    const unsigned int * e2n_cg = &(*(pMesh->getE2NMapping().begin()));
-    const ot::TreeNode* allElements = &(*(pMesh->getAllElements().begin()));
-    
-    m_uiOctDA->readFromGhostBegin(_in, m_uiDof);
-    const unsigned int totalNodalSize = m_uiOctDA->getTotalNodalSz();
-    for (m_uiOctDA->init<ot::DA_FLAGS::INDEPENDENT>(); m_uiOctDA->curr() < m_uiOctDA->end<ot::DA_FLAGS::INDEPENDENT>(); m_uiOctDA->next<ot::DA_FLAGS::INDEPENDENT>()) {
+    m_uiOctDA->readFromGhostBegin(_in,m_uiDof);
 
-        m_uiOctDA->getElementNodalValues(_in, m_uiEleVecIn, m_uiOctDA->curr(), m_uiDof);
-        const unsigned int currentId = m_uiOctDA->curr();
-        pMesh->getElementQMat(m_uiOctDA->curr(),qMat,true);
-        m_uiOctDA->getElementalCoords(m_uiOctDA->curr(), m_uiEleCoords);
-        elementalComputVec(m_uiEleVecIn, m_uiEleVecOut, m_uiEleCoords, scale);
-        for (unsigned int dof = 0; dof < m_uiDof; dof++) {
-          for (unsigned int i = 0; i < nPe; i++) {
-            VECType ss = (VECType) 0;
-            for (unsigned int j = 0; j < nPe; j++) {
-              ss += qMat[j * nPe + i] * m_uiEleVecOut[dof*nPe + j];
-            }
-            _out[dof*totalNodalSize + e2n_cg[currentId * nPe + i]] += (VECType) ss;
+    for(m_uiOctDA->init<ot::DA_FLAGS::INDEPENDENT>();m_uiOctDA->curr()<m_uiOctDA->end<ot::DA_FLAGS::INDEPENDENT>();m_uiOctDA->next<ot::DA_FLAGS::INDEPENDENT>())
+    {
 
-          }
-        }
-
+        m_uiOctDA->getElementNodalValues(_in,m_uiEleVecIn,m_uiOctDA->curr(),m_uiDof);
+        m_uiOctDA->getElementalCoords(m_uiOctDA->curr(),m_uiEleCoords);
+        elementalComputVec(m_uiEleVecIn,m_uiEleVecOut,m_uiEleCoords,scale);
+        m_uiOctDA->eleVecToVecAccumilation(_out,m_uiEleVecOut,m_uiOctDA->curr(),m_uiDof);
     }
 
-    m_uiOctDA->readFromGhostEnd(_in, m_uiDof);
+    m_uiOctDA->readFromGhostEnd(_in,m_uiDof);
 
-    const unsigned int eleLocalBegin = pMesh->getElementLocalBegin();
-    const unsigned int eleLocalEnd = pMesh -> getElementLocalEnd();
-
-    for (m_uiOctDA->init<ot::DA_FLAGS::W_DEPENDENT>(); m_uiOctDA->curr() < m_uiOctDA->end<ot::DA_FLAGS::W_DEPENDENT>(); m_uiOctDA->next<ot::DA_FLAGS::W_DEPENDENT>()) {
-
-        // temporary fix to skip ghost writable.     
-        if( m_uiOctDA->curr()< eleLocalBegin || m_uiOctDA->curr()>=eleLocalEnd )
-            continue;
-
-        m_uiOctDA->getElementNodalValues(_in, m_uiEleVecIn, m_uiOctDA->curr(), m_uiDof);
-        const unsigned int currentId = m_uiOctDA->curr();
-        pMesh->getElementQMat(m_uiOctDA->curr(),qMat,true);
-        m_uiOctDA->getElementalCoords(m_uiOctDA->curr(), m_uiEleCoords);
-        elementalComputVec(m_uiEleVecIn, m_uiEleVecOut, m_uiEleCoords, scale);
-
-        for (unsigned int dof = 0; dof < m_uiDof; dof++) {
-          for (unsigned int i = 0; i < nPe; i++) {
-            VECType ss = (VECType) 0;
-            for (unsigned int j = 0; j < nPe; j++) {
-              ss += qMat[j * nPe + i] * m_uiEleVecOut[dof*nPe + j];
-            }
-            _out[dof*totalNodalSize + e2n_cg[currentId * nPe + i]] += (VECType) ss;
-
-          }
-        }
-
+    for(m_uiOctDA->init<ot::DA_FLAGS::W_DEPENDENT>();m_uiOctDA->curr()<m_uiOctDA->end<ot::DA_FLAGS::W_DEPENDENT>();m_uiOctDA->next<ot::DA_FLAGS::W_DEPENDENT>())
+    {
+        m_uiOctDA->getElementNodalValues(_in,m_uiEleVecIn,m_uiOctDA->curr(),m_uiDof);
+        m_uiOctDA->getElementalCoords(m_uiOctDA->curr(),m_uiEleCoords);
+        elementalComputVec(m_uiEleVecIn,m_uiEleVecOut,m_uiEleCoords,scale);
+        m_uiOctDA->eleVecToVecAccumilation(_out,m_uiEleVecOut,m_uiOctDA->curr(),m_uiDof);
     }
-
-
-    delete [] qMat;
-
-    m_uiOctDA->writeToGhostsBegin(_out,m_uiDof);
-    m_uiOctDA->writeToGhostsEnd(_out,ot::DA_FLAGS::WriteMode::ADD_VALUES,m_uiDof);
 
     m_uiOctDA->ghostedNodalToNodalVec(_out,out,true,m_uiDof);
 
@@ -224,15 +181,15 @@ void feVector<T>::computeVec(const VECType* in,VECType* out,double scale)
 template <typename T>
 void feVector<T>::computeVec(const Vec &in, Vec &out, double scale)
 {
-    const PetscScalar * inArry=NULL;
+    PetscScalar * inArry=NULL;
     PetscScalar * outArry=NULL;
 
-    VecGetArrayRead(in,&inArry);
+    VecGetArray(in,&inArry);
     VecGetArray(out,&outArry);
 
     computeVec(inArry,outArry,scale);
 
-    VecRestoreArrayRead(in,&inArry);
+    VecRestoreArray(in,&inArry);
     VecRestoreArray(out,&outArry);
 }
 #endif

@@ -954,7 +954,7 @@ namespace SFC
 
 
 
-//#pragma message ("Splitter selection FIX ON")
+#pragma message ("Splitter selection FIX ON")
 
             if (npes > NUM_NPES_THRESHOLD) {
 

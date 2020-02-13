@@ -14,7 +14,6 @@
 #endif
 
 #include <iostream>
-#include <ostream>
 #include "dendro.h"
 
 #ifndef DENDRO_5_0_MATRECORD_H
@@ -213,19 +212,9 @@ namespace ot
                 return (!((*this) < other)) ;
             }
 
-            friend std::ostream & operator<< (std::ostream & os, MatRecord const & re) 
-            {
-                return (os << " row : "<<re.getRowID() << " col: "<<re.getColID()<<" rdim: "<<re.getRowDim()<<" cdim: "<<re.getColDim() );
-            }
-
-            
-
     };
 
-
 }
-
-
 
 
 

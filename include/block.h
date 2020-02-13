@@ -18,19 +18,8 @@
 #include <assert.h>
 #include <treenode2vtk.h>
 #define GHOST_WIDTH 3
-
 namespace ot
 {
-   /**
-    * @brief Block type 
-    * UNSPECIFIED : block flag type is not set
-    * INTRNL_INDEPENDENT: Block internal is independent from ghost nodes
-    * INTRNL_DEPENDENT: Block  internal is dependent from ghost nodes
-    * FULLY_INDEPENDENT : Denotes that the all the block element nodal including padding regions are independent from ghost nodes. 
-    * FULLY_DEPENDENT: Denotes that all the block element nodal including padding region is depend on the ghost nodes.  
-    * 
-    */
-   enum BlockType{UNSPECIFIED=0, INTRNL_INDEPENDENT, INTRNL_DEPENDENT, FULLY_INDEPENDENT, FULLY_DEPENDENT};
 
    class Block
    {
@@ -41,8 +30,8 @@ namespace ot
      /**Coordinates of the block. */
      ot::TreeNode m_uiBlockNode;
 
-     /**rotation id of the block*/
-     unsigned int m_uiRotID;
+    /**rotation id of the block*/
+    unsigned int m_uiRotID;
 
      /** size of the regular grid inside the block. */
      unsigned int m_uiRegGridLev;
@@ -83,11 +72,11 @@ namespace ot
      /** number of elements per block. **/
      unsigned int m_uiBlkElem_1D;
 
-     /** set true after the perform block setpup if the block doesn't depend on the ghost region*/
-     bool m_uiIsInternal;
-     
-     /** block type*/      
-     BlockType m_uiBlkType;
+    /** set true after the perform block setpup if the block doesn't depend on the ghost region*/
+    bool m_uiIsInternal;
+
+
+
 
 
    public:
@@ -147,13 +136,9 @@ namespace ot
 
      inline void setIsInternal(bool isInternal){m_uiIsInternal=isInternal;}
 
-     inline void setBlkType(BlockType btype) { m_uiBlkType = btype; }
-
-     inline BlockType getBlockType() const {return m_uiBlkType;}
-
      inline bool isInternal(){return m_uiIsInternal;}
 
-     /**@brief set the blkFlag with the correct bdy*/
+    /**@brief set the blkFlag with the correct bdy*/
      inline void setBlkNodeFlag(unsigned int flag){m_uiBlockNode.setFlag(flag);};
 
      /**@brief set the blkFlag with the correct bdy*/
@@ -192,11 +177,8 @@ namespace ot
      inline void setAllocationSzZ(unsigned int sz) {m_uiSzZ=sz;}
      inline void setSiz1D(unsigned int sz){m_uiSize1D=sz;}
 
-     inline unsigned int getElemSz1D() const { return m_uiBlkElem_1D;}
-
 
      inline const std::vector<unsigned int >& getBlk2DiagMap_vec() const {return m_uiBLK2DIAG;}
-     inline const std::vector<unsigned int >& getBlk2VertexMap_vec() const {return m_uiBLKVERTX;}
 
      /**@brief computes and returns the space discretization (grid domain) */
      double computeGridDx () const;
