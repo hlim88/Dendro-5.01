@@ -1,13 +1,12 @@
 //
-// Created by milinda on 7/26/17.
 /**
-*@author Milinda Fernando
-*School of Computing, University of Utah
 *@brief Contains utility functions for BSSN simulation.
 */
 //
 
 #include "grUtils.h"
+
+#define QG_ID_EVOL
 
 namespace bssn
 {
@@ -596,6 +595,26 @@ namespace bssn
         var[VAR::U_SYMGT3] = 1.0; //YY
         var[VAR::U_SYMGT4] = 0.0; //YZ
         var[VAR::U_SYMGT5] = 1.0; //ZZ
+
+        // Define values for QG variables
+        // TODO : find good optimal values
+
+        #ifdef QG_ID_EVOL
+        var[VAR::U_RSC] = 0.0;
+        var[VAR::U_RSCH] = 0.0;
+        var[VAR::U_SYMRTT0] = 0.0;
+        var[VAR::U_SYMRTT1] = 0.0;
+        var[VAR::U_SYMRTT2] = 0.0;
+        var[VAR::U_SYMRTT3] = 0.0;
+        var[VAR::U_SYMRTT4] = 0.0;
+        var[VAR::U_SYMRTT5] = 0.0;
+	var[VAR::U_SYMVAT0] = 0.0;
+        var[VAR::U_SYMVAT1] = 0.0;
+        var[VAR::U_SYMVAT2] = 0.0;
+        var[VAR::U_SYMVAT3] = 0.0;
+        var[VAR::U_SYMVAT4] = 0.0;
+        var[VAR::U_SYMVAT5] = 0.0;
+        #endif
 
         for (i1=0;i1<3;i1++) {
             for (i2=0;i2<3;i2++) {
