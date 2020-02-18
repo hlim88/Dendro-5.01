@@ -1,0 +1,331 @@
+/**
+ *@author: Milinda Fernando.
+ *School of Computing University of Utah
+ *@brief: Contains the COG/SymPyGR (symbolic) code generation to perform gravitational wave (GW)
+ *extraction.
+ *
+ * The extraction method is based on "Extraction of Gravitational Waves in Numerical Relativity"
+ * https://arxiv.org/abs/1606.02532 : Chapter 2 , 3, 4.
+ *
+ * For Spin Weighted Spherical Harmonics (SWSH) we use the SphericalFunction module based on
+ * https://arxiv.org/pdf/1604.08140.pdf
+ *
+ *
+ * */
+
+
+#ifndef DENDRO_5_0_GWEXTRACT_H
+#define DENDRO_5_0_GWEXTRACT_H
+
+#include <iostream>
+#include "grDef.h"
+#include "mesh.h"
+#include "parameters.h"
+#include "daUtils.h"
+#include <iomanip>
+#include <complex>
+#include <cmath>
+#include "dendro.h"
+
+extern "C" void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv,double* b, int* ldb, int* info );
+
+namespace GW
+{
+
+
+    /*[[[cog
+        import gw
+        gw1=gw.GWExtract(5,25,[2,3,4],2,[])
+        gw1.initVars(["LEBEDEV_NUM_PTS","LEBEDEV_THETA","LEBEDEV_PHI","LEBEDEV_W","LEBEDEV_SWSH"])
+    ]]]*/
+    //[[[end]]]
+
+    /**
+     * @brief extract the GW waves using poly fit.
+     * @param [in] mesh: input mesh
+     * @param [in] cVar: constraint variables.
+     * @param [in] timestep : timestep value.
+     * @param [in] time: simulation time.
+     *
+     * */
+
+    template<typename T>
+    void extractFarFieldPsi4(const ot::Mesh* mesh, const T** cVar,unsigned int timestep,double time)
+    {
+        unsigned int rankGlobal=mesh->getMPIRankGlobal();
+        unsigned int npesGlobal=mesh->getMPICommSizeGlobal();
+        MPI_Comm commGlobal=mesh->getMPIGlobalCommunicator();
+
+
+        unsigned int totalModes=0;
+        for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            totalModes+=2*BSSN_GW_L_MODES[l]+1;
+
+        const unsigned int TOTAL_MODES=totalModes;
+
+        DendroComplex * swsh_coeff = new DendroComplex[BSSN_GW_NUM_RADAII*TOTAL_MODES];
+        DendroComplex * swsh_coeff_g = new DendroComplex[BSSN_GW_NUM_RADAII*TOTAL_MODES];
+
+        std::vector<unsigned int> lmCounts;
+        std::vector<unsigned int> lmOffset;
+
+        lmCounts.resize(BSSN_GW_NUM_LMODES);
+        lmOffset.resize(BSSN_GW_NUM_LMODES);
+
+        for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            lmCounts[l]=2*BSSN_GW_L_MODES[l]+1;
+
+
+        lmOffset[0]=0;
+        omp_par::scan(&(*(lmCounts.begin())),&(*(lmOffset.begin())),BSSN_GW_NUM_LMODES);
+
+        if(mesh->isActive())
+        {
+
+            const unsigned int rankActive=mesh->getMPIRank();
+            const unsigned int npesActive=mesh->getMPICommSize();
+
+            const unsigned int numPts=LEBEDEV_NUM_PTS;
+
+            std::vector<double> coords;
+            coords.resize(3*LEBEDEV_NUM_PTS);
+
+            std::vector<double> psi4_real;
+            psi4_real.resize(LEBEDEV_NUM_PTS);
+
+            std::vector<double> psi4_imag;
+            psi4_imag.resize(LEBEDEV_NUM_PTS);
+
+            std::vector<unsigned int > validIndex;
+
+            for(unsigned int k=0;k<BSSN_GW_NUM_RADAII;k++)
+            {
+
+
+                for(unsigned int pts=0;pts<numPts;pts++)
+                {
+                    coords[3*pts + 0]=X_TO_GRIDX(BSSN_GW_RADAII[k]*sin(LEBEDEV_THETA[pts])*cos(LEBEDEV_PHI[pts]));
+                    coords[3*pts + 1]=Y_TO_GRIDY(BSSN_GW_RADAII[k]*sin(LEBEDEV_THETA[pts])*sin(LEBEDEV_PHI[pts]));
+                    coords[3*pts + 2]=Z_TO_GRIDZ(BSSN_GW_RADAII[k]*cos(LEBEDEV_THETA[pts]));
+                }
+
+                validIndex.clear();
+                ot::da::interpolateToCoords(mesh,cVar[bssn::VAR_CONSTRAINT::C_PSI4_REAL],&(*(coords.begin())),coords.size(),&(*(psi4_real.begin())),validIndex);
+
+                validIndex.clear();
+                ot::da::interpolateToCoords(mesh,cVar[bssn::VAR_CONSTRAINT::C_PSI4_IMG],&(*(coords.begin())),coords.size(),&(*(psi4_imag.begin())),validIndex);
+
+                for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+                {
+                    for(unsigned int m=0;m<2*BSSN_GW_L_MODES[l]+1;m++)
+                    {
+                        swsh_coeff[k*TOTAL_MODES+lmOffset[l]+m]=DendroComplex(0.0,0.0);
+                        for(unsigned int index=0;index<validIndex.size();index++)
+                        {
+                            DendroComplex psi4=DendroComplex(psi4_real[validIndex[index]],psi4_imag[validIndex[index]]);
+                            swsh_coeff[k*TOTAL_MODES+lmOffset[l]+m]+=( psi4 * LEBEDEV_SWSH[lmOffset[l]+m][validIndex[index]] * LEBEDEV_W[validIndex[index]] );
+                        }
+
+                        swsh_coeff[k*TOTAL_MODES+lmOffset[l]+m]*=(4*M_PI*BSSN_GW_RADAII[k]*BSSN_GW_RADAII[k]);
+
+                    }
+                }
+
+            }
+
+        }
+
+        //par::Mpi_Reduce(swsh_coeff,swsh_coeff_g,(BSSN_GW_NUM_RADAII*TOTAL_MODES),MPI_SUM,0,commGlobal);
+        //for(unsigned int k=0;k<BSSN_GW_NUM_RADAII;k++)
+        MPI_Reduce(swsh_coeff,swsh_coeff_g,(BSSN_GW_NUM_RADAII*TOTAL_MODES),MPI_DOUBLE_COMPLEX,MPI_SUM,0,commGlobal);
+
+        if(!rankGlobal)
+        {
+
+            int n=BSSN_GW_NUM_RADAII;
+            int lda=n, ldb=n;
+            int nrhs=TOTAL_MODES;
+            int info;
+
+            int * ipiv =new int[n];
+            T * A =new double [lda*n];
+            T * rhs_abs=new double[ldb*nrhs];
+            T * rhs_arg=new double[ldb*nrhs];
+
+            double invr;
+            double mval;
+
+            // set up the LHS matrix
+            for(unsigned int i=0;i<BSSN_GW_NUM_RADAII;i++)
+            {
+                invr=(1.0/BSSN_GW_RADAII[i]);
+                mval=invr;
+                for(unsigned int j=0;j<BSSN_GW_NUM_RADAII;j++)
+                {
+                    A[j*n+i]=mval;
+                    mval*=invr;
+                }
+
+            }
+
+            for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            {
+                for(unsigned int m=0;m<2*BSSN_GW_L_MODES[l]+1;m++)
+                {
+                    for(unsigned int i=0;i<BSSN_GW_NUM_RADAII;i++)
+                    {
+                        rhs_abs[(lmOffset[l]+m)*BSSN_GW_NUM_RADAII + i] = abs(swsh_coeff_g[i*TOTAL_MODES+ (lmOffset[l]+m)]);
+                        rhs_arg[(lmOffset[l]+m)*BSSN_GW_NUM_RADAII + i] = atan(swsh_coeff_g[i*TOTAL_MODES+ (lmOffset[l]+m)].imag()/swsh_coeff_g[i*TOTAL_MODES+ (lmOffset[l]+m)].real());
+                    }
+
+                }
+            }
+
+
+#ifdef WITH_BLAS_LAPACK
+            /*std::cout<<"A\n";
+            for(unsigned int i=0;i<BSSN_GW_NUM_RADAII;i++)
+            {
+                for(unsigned int j=0;j<BSSN_GW_NUM_RADAII;j++)
+                {
+                    std::cout<<A[i*n+j]<<",";
+                }
+
+                std::cout<<std::endl;
+            }
+
+
+            std::cout<<"rhs_abs \n";
+            for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            {
+                for(unsigned int m=0;m<2*BSSN_GW_L_MODES[l]+1;m++)
+                {
+                    for(unsigned int i=0;i<BSSN_GW_NUM_RADAII;i++)
+                    {
+                        std::cout<<rhs_abs[(lmOffset[l]+m)*BSSN_GW_NUM_RADAII + i]<<",";
+
+                    }
+                    std::cout<<std::endl;
+                }
+            }
+
+
+             std::cout<<"rhs_arg\n";
+            for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            {
+                for(unsigned int m=0;m<2*BSSN_GW_L_MODES[l]+1;m++)
+                {
+                    for(unsigned int i=0;i<BSSN_GW_NUM_RADAII;i++)
+                    {
+                        std::cout<<rhs_arg[(lmOffset[l]+m)*BSSN_GW_NUM_RADAII + i]<<",";
+
+                    }
+                    std::cout<<std::endl;
+                }
+            }*/
+
+
+            dgesv_(&n, &nrhs, A, &lda, ipiv, rhs_abs, &ldb, &info );
+            dgesv_(&n, &nrhs, A, &lda, ipiv, rhs_arg, &ldb, &info );
+
+
+           /* std::cout<<"rhs_abs out\n";
+            for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            {
+                for(unsigned int m=0;m<2*BSSN_GW_L_MODES[l]+1;m++)
+                {
+                    for(unsigned int i=0;i<BSSN_GW_NUM_RADAII;i++)
+                    {
+                        std::cout<<rhs_abs[(lmOffset[l]+m)*BSSN_GW_NUM_RADAII + i]<<",";
+
+                    }
+                    std::cout<<std::endl;
+                }
+            }*/
+
+
+            if(info > 0)
+            {
+                std::cout<<"GW extraction polynomial fit matrix is singular. "<<std::endl;
+                exit(0);
+
+            }
+
+#else
+            std::cout<<"Cannot solve the linear system without LAPACK. Link with Lapack"<<std::endl;
+            exit(0);
+#endif
+
+
+
+            // write data to file
+
+            std::ofstream fileGW;
+            char fName[256];
+            sprintf(fName,"%s_GW.dat",bssn::BSSN_PROFILE_FILE_PREFIX.c_str());
+            fileGW.open (fName,std::ofstream::app);
+
+            // writes the header
+            if(timestep==0)
+            {
+                fileGW<<"TimeStep\t"<<" t\t"<<" t*\t";
+                for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+                {
+                    for(int m=-BSSN_GW_L_MODES[l];m<0;m++)
+                    {
+                        fileGW<<" abs(l_"<<BSSN_GW_L_MODES[l]<<"m_m_"<<abs(m)<<")\t";
+                        fileGW<<" arg(l_"<<BSSN_GW_L_MODES[l]<<"m_m_"<<abs(m)<<")\t";
+                    }
+
+                    for(int m=0;m<(BSSN_GW_L_MODES[l]+1);m++)
+                    {
+                        fileGW<<" abs(l_"<<BSSN_GW_L_MODES[l]<<"m_p_"<<m<<")\t";
+                        fileGW<<" arg(l_"<<BSSN_GW_L_MODES[l]<<"m_p_"<<m<<")\t";
+                    }
+
+                }
+
+                fileGW<<std::endl;
+
+            }
+
+
+            fileGW<<timestep<<"\t"<<time<<"\t"<<time<<"\t";
+
+            for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            {
+
+                for(unsigned int m=0;m<2*BSSN_GW_L_MODES[l]+1;m++)
+                {
+                    fileGW<<rhs_abs[(lmOffset[l]+m)*BSSN_GW_NUM_RADAII+0]<<"\t";
+                    fileGW<<rhs_arg[(lmOffset[l]+m)*BSSN_GW_NUM_RADAII+0]<<"\t";
+                }
+
+            }
+
+            fileGW<<std::endl;
+            fileGW.close();
+
+            delete [] A;
+            delete [] rhs_abs;
+            delete [] rhs_arg;
+            delete [] ipiv;
+
+
+        }
+
+
+        delete [] swsh_coeff;
+        delete [] swsh_coeff_g;
+
+        return;
+
+    }
+
+
+} // end of namespace GW
+
+
+
+#endif
+
