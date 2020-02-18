@@ -4,6 +4,11 @@
 
 #define QUADGRAV_EVOL
 
+//QG related constant
+//TODO : Do we need to make it as params?
+#define a_const 1.0
+#define b_const 1.0
+
 using namespace std;
 using namespace bssn;
 
