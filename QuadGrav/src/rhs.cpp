@@ -6,8 +6,10 @@
 
 //QG related constant
 //TODO : Do we need to make it as params?
+//       Currently, defines as macro, will change to constexpr
 #define a_const 1.0
 #define b_const 1.0
+#define qg_ho_coup 0.0
 
 using namespace std;
 using namespace bssn;

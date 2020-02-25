@@ -18,6 +18,7 @@ lf0, lf1 = symbols('lambda_f[0] lambda_f[1]')
 #QG related constants
 a_const = symbols('a_const')
 b_const = symbols('b_const')
+qg_ho_coup = symbols('qg_ho_coup')
 
 PI = 3.14159265358979323846
 
@@ -43,6 +44,9 @@ Rsc = dendro.scalar("Rsc", "[pp]")
 Rsch = dendro.scalar("Rsch", "[pp]")
 Rtt = dendro.sym_3x3("Rtt", "[pp]")
 Vat = dendro.sym_3x3("Vat", "[pp]")
+
+Yabnp = dendro.sym_3x3("Yabp", "[pp]")
+Yabp = dendro.sym_3x3("Yabnp", "[pp]")
 
 # Lie derivative weight
 weight = -Rational(2,3)
@@ -73,9 +77,6 @@ R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 
 a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 
-#[ewh] In the had code, this is treated as an advective derivative.
-#      I think this should be:
-#         l2 * dendro.vec_j_del_j(b, b[i])
 b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
         l2 * dendro.vec_j_ad_j(b, b[i])
          for i in dendro.e_i ] + 0*dendro.kodiss(b)
@@ -86,10 +87,8 @@ chi_rhs = dendro.lie(b, chi, weight) + Rational(2,3) * (chi*a*K) + 0*dendro.kodi
 
 AikAkj = Matrix([sum([At[i, k] * sum([dendro.inv_metric[k, l]*At[l, j] for l in dendro.e_i]) for k in dendro.e_i]) for i, j in dendro.e_ij])
 
-#ewh2 At_rhs = dendro.lie(b, At, weight) + dendro.trace_free(chi*(dendro.DiDj(a) + a*R)) + a*(K*At - 2*AikAkj.reshape(3, 3))
 At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
 
-#K_rhs = dendro.vec_k_del_k(b, K) - dendro.laplacian(a) + a*(1/3*K*K + dendro.sqr(At))
 K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*dendro.kodiss(K)
 
 At_UU = dendro.up_up(At)
@@ -115,8 +114,23 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
 # Additional Equations
 
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsc
+
 Rsch_rhs = dendro.lie(b, Rsch) - a*dendro.laplacian(Rsch,chi) + a*K*Rsch + Rsc/(36*PI*(3*b_const-2*a_const))
 
+Rtt_rhs = dendro.lie(b, Rtt, weight) - a * Vat 
+
+#TODO : Check eqns.. somewhat not working
+Yabnp = 1/(16*PI)*Rtt - (2*b_const - a_const)/(128*PI*(3*b_const-a_const))*gt*Rsc 
+Yabp = Rtt
+Vat_rhs = Matrix([sum(b[k]*d(k,Vat[i,j]) for k in dendro.e_i) for i,j in dendro.e_ij]) + \
+          Matrix([sum(Vat[i,k]*d(j,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) + \
+          Matrix([sum(Vat[k,j]*d(i,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) - \
+          a*Matrix([dendro.laplacian(Rtt[i,j],chi) for i,j in dendro.e_ij]) - \
+          Matrix([d(i,a)*d(i,Rtt[i,j]) for i,j in dendro.e_ij]) + \
+          a*Matrix([K*Vat[i,j] for i,j in dendro.e_ij]) + \
+          Matrix([Yabnp[i,j] for i,j in dendro.e_ij]) + \
+          qg_ho_coup*Matrix([Yabp[i,j] for i,j in dendro.e_ij])
+          
 #_I = gt*igt
 #print(simplify(_I))
 
@@ -140,8 +154,8 @@ Rsch_rhs = dendro.lie(b, Rsch) - a*dendro.laplacian(Rsch,chi) + a*K*Rsch + Rsc/(
 # generate code
 ###################################################################
 
-outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs]
-vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs']
+outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Rtt_rhs, Vat_rhs]
+vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs','Rtt_rhs','Vat_rhs']
 #dendro.generate_debug(outs, vnames)
 dendro.generate(outs, vnames, '[pp]')
 #numVars=len(outs)
