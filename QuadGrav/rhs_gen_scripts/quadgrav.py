@@ -113,9 +113,13 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
 
 # Additional Equations
 
-Rsc_rhs = dendro.lie(b, Rsc) - a*Rsc
+Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
-Rsch_rhs = dendro.lie(b, Rsch) - a*dendro.laplacian(Rsch,chi) + a*K*Rsch + Rsc/(36*PI*(3*b_const-2*a_const))
+Rsch_rhs = dendro.lie(b, Rsch) - a*chi*sum(igt[i,j]*d2(i,j,Rsch) for i,j in dendro.e_ij) - \
+           chi*sum(igt[i,j]*d(i,a)*d(j,Rsch) for i,j in dendro.e_ij) + \
+           a*chi*sum(Gt[i]*d(i,Rsch) for i in dendro.e_i) + \
+           a*sum(igt[i,j]*d(i,Rsch)*d(j,chi) for i,j in dendro.e_ij) + \
+           a*K*Rsch + a*Rsc/(36*PI*(3*b_const-2*a_const))
 
 Rtt_rhs = dendro.lie(b, Rtt, weight) - a * Vat 
 
@@ -126,7 +130,7 @@ Vat_rhs = Matrix([sum(b[k]*d(k,Vat[i,j]) for k in dendro.e_i) for i,j in dendro.
           Matrix([sum(Vat[i,k]*d(j,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) + \
           Matrix([sum(Vat[k,j]*d(i,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) - \
           a*Matrix([dendro.laplacian(Rtt[i,j],chi) for i,j in dendro.e_ij]) - \
-          Matrix([d(i,a)*d(i,Rtt[i,j]) for i,j in dendro.e_ij]) + \
+          Matrix([d(i,a)*d(i,Rtt[i,j]) - 3/(2*chi)*Rtt[i,j]*d(i,chi) for i,j in dendro.e_ij]) + \
           a*Matrix([K*Vat[i,j] for i,j in dendro.e_ij]) + \
           Matrix([Yabnp[i,j] for i,j in dendro.e_ij]) + \
           qg_ho_coup*Matrix([Yabp[i,j] for i,j in dendro.e_ij])
