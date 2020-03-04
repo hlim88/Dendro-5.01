@@ -115,10 +115,10 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
 
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
-Rsch_rhs = dendro.lie(b, Rsch) - a*chi*sum(igt[i,j]*d2(i,j,Rsch) for i,j in dendro.e_ij) - \
-           chi*sum(igt[i,j]*d(i,a)*d(j,Rsch) for i,j in dendro.e_ij) + \
-           a*chi*sum(Gt[i]*d(i,Rsch) for i in dendro.e_i) + \
-           a*sum(igt[i,j]*d(i,Rsch)*d(j,chi) for i,j in dendro.e_ij) + \
+Rsch_rhs = dendro.lie(b, Rsc) - a*chi*sum(igt[i,j]*d2(i,j,Rsc) for i,j in dendro.e_ij) - \
+           chi*sum(igt[i,j]*d(i,a)*d(j,Rsc) for i,j in dendro.e_ij) + \
+           a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
+           a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
            a*K*Rsch + a*Rsc/(36*PI*(3*b_const-2*a_const))
 
 Rtt_rhs = dendro.lie(b, Rtt, weight) - a * Vat 
