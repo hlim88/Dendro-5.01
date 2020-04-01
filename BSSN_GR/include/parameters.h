@@ -20,7 +20,7 @@ namespace bssn
 {
 
     /**@brief element order*/
-    static const unsigned int BSSN_ELE_ORDER=4;
+    extern unsigned int BSSN_ELE_ORDER;
 
     /**@brief number of variables*/
     static const unsigned int BSSN_NUM_VARS=24;
@@ -58,6 +58,9 @@ namespace bssn
 
     /**@brief solution output frequency*/
     extern unsigned int BSSN_IO_OUTPUT_FREQ;
+
+    /**@brief Gravitational wave data extraction frequency*/
+    extern unsigned int BSSN_GW_EXTRACT_FREQ;
 
     /**@brief timestep norms out put freq.*/
     extern unsigned int BSSN_TIME_STEP_OUTPUT_FREQ;
@@ -212,6 +215,9 @@ namespace bssn
     /**@brief: chi floor value */
     extern double CHI_FLOOR;
 
+    /**@brief: dissipation type */
+    extern unsigned int DISSIPATION_TYPE;
+
     /**@brief: Kreiss-Oliger dissipation */
     extern double KO_DISS_SIGMA;
 
@@ -232,6 +238,31 @@ namespace bssn
 
     /**@brief: eta function parameters (powers)*/
     extern double BSSN_ETA_POWER[2];
+
+    /**@brief: xi parameters to change between different gauge conditions*/
+    extern unsigned int BSSN_XI[3];
+
+    /**@brief: @david can you please add some comeents for these parameters. */
+    extern unsigned int BSSN_DISSIPATION_NC;
+
+    /**@brief: @david can you please add some comeents for these parameters. */
+    extern unsigned int BSSN_DISSIPATION_S;
+
+    /**@brief: if true it will use finite differnce like grid transfer*/
+    extern bool BSSN_USE_FD_GRID_TRANSFER;
+
+    /**@brief: tolerance for refinement based on EH */
+    extern double BSSN_EH_REFINE_VAL;
+    
+    /**@brief: tolerance for coarsen based on EH */
+    extern double BSSN_EH_COARSEN_VAL;
+
+    /**@brief: refinement mode for the application*/
+    extern RefinementMode BSSN_REFINEMENT_MODE;
+    
+    /**@brief: if true output only the z slice*/
+    extern bool BSSN_VTU_Z_SLICE_ONLY;
+
 
 
 }

@@ -31,6 +31,9 @@ namespace nlsm
             if(!infile) {std::cout<<fName<<" parameter file open failed "<<std::endl;}
             infile>>parFile;
 
+            if(parFile.find("NLSM_ELE_ORDER")!=parFile.end())
+                nlsm::NLSM_ELE_ORDER = parFile["NLSM_ELE_ORDER"];
+
             nlsm::NLSM_IO_OUTPUT_FREQ=parFile["NLSM_IO_OUTPUT_FREQ"];
             nlsm::NLSM_REMESH_TEST_FREQ=parFile["NLSM_REMESH_TEST_FREQ"];
             nlsm::NLSM_CHECKPT_FREQ=parFile["NLSM_CHECKPT_FREQ"];
@@ -75,10 +78,15 @@ namespace nlsm
             nlsm::NLSM_ID_XC2=parFile["NLSM_ID_XC2"];
             nlsm::NLSM_ID_YC2=parFile["NLSM_ID_YC2"];
             nlsm::NLSM_ID_ZC2=parFile["NLSM_ID_ZC2"];
+            
             nlsm::NLSM_ID_EPSX1=parFile["NLSM_ID_EPSX1"];
             nlsm::NLSM_ID_EPSY1=parFile["NLSM_ID_EPSY1"];
+            nlsm::NLSM_ID_EPSZ1=parFile["NLSM_ID_EPSZ1"];
+            
             nlsm::NLSM_ID_EPSX2=parFile["NLSM_ID_EPSX2"];
             nlsm::NLSM_ID_EPSY2=parFile["NLSM_ID_EPSY2"];
+            nlsm::NLSM_ID_EPSZ2=parFile["NLSM_ID_EPSZ2"];
+
             nlsm::NLSM_ID_R1=parFile["NLSM_ID_R1"];
             nlsm::NLSM_ID_R2=parFile["NLSM_ID_R2"];
             nlsm::NLSM_ID_NU1=parFile["NLSM_ID_NU1"];
@@ -88,7 +96,26 @@ namespace nlsm
             nlsm::NLSM_WAVELET_TOL=parFile["NLSM_WAVELET_TOL"];
             nlsm::NLSM_CFL_FACTOR=parFile["NLSM_CFL_FACTOR"];
 
+            if(parFile.find("NLSM_WAVE_SPEED_X")!=parFile.end())
+                nlsm::NLSM_WAVE_SPEED_X = parFile["NLSM_WAVE_SPEED_X"];
+            
+            if(parFile.find("NLSM_WAVE_SPEED_Y")!=parFile.end())
+                nlsm::NLSM_WAVE_SPEED_Y = parFile["NLSM_WAVE_SPEED_Y"];
+
+            if(parFile.find("NLSM_WAVE_SPEED_Z")!=parFile.end())
+                nlsm::NLSM_WAVE_SPEED_Z = parFile["NLSM_WAVE_SPEED_Z"];
+
+            if(parFile.find("NLSM_CHI_REFINE_VAL")!=parFile.end())
+                nlsm::NLSM_CHI_REFINE_VAL = parFile["NLSM_CHI_REFINE_VAL"];
+
+            if(parFile.find("NLSM_CHI_COARSEN_VAL")!=parFile.end())
+                nlsm::NLSM_CHI_COARSEN_VAL = parFile["NLSM_CHI_COARSEN_VAL"];
+
+            if(parFile.find("NLSM_REFINE_MODE")!=parFile.end())
+                nlsm::NLSM_REFINE_MODE = static_cast<nlsm::RefineMode>(parFile["NLSM_REFINE_MODE"]);
+
             nlsm::NLSM_NUM_REFINE_VARS=parFile["NLSM_NUM_REFINE_VARS"];
+
             for(unsigned int i=0;i<nlsm::NLSM_NUM_REFINE_VARS;i++)
                 nlsm::NLSM_REFINE_VARIABLE_INDICES[i]=parFile["NLSM_REFINE_VARIABLE_INDICES"][i];
 
@@ -104,7 +131,7 @@ namespace nlsm
 
         }
 
-
+        par::Mpi_Bcast(&NLSM_ELE_ORDER,1,0,comm);
         par::Mpi_Bcast(&NLSM_IO_OUTPUT_FREQ,1,0,comm);
         par::Mpi_Bcast(&NLSM_REMESH_TEST_FREQ,1,0,comm);
         par::Mpi_Bcast(&NLSM_CHECKPT_FREQ,1,0,comm);
@@ -119,6 +146,15 @@ namespace nlsm
         par::Mpi_Bcast(&NLSM_ASYNC_COMM_K,1,0,comm);
 
         par::Mpi_Bcast(&NLSM_CFL_FACTOR,1,0,comm);
+
+        par::Mpi_Bcast(&NLSM_WAVE_SPEED_X,1,0,comm);
+        par::Mpi_Bcast(&NLSM_WAVE_SPEED_Y,1,0,comm);
+        par::Mpi_Bcast(&NLSM_WAVE_SPEED_Z,1,0,comm);
+
+        par::Mpi_Bcast(&NLSM_CHI_REFINE_VAL,1,0,comm);
+        par::Mpi_Bcast(&NLSM_CHI_COARSEN_VAL,1,0,comm);
+        par::Mpi_Bcast((unsigned int*)&NLSM_REFINE_MODE,1,0,comm);
+        
 
         char vtu_name[vtu_len+1];
         char chp_name[chp_len+1];
@@ -176,10 +212,15 @@ namespace nlsm
         par::Mpi_Bcast(&NLSM_ID_XC2,1,0,comm);
         par::Mpi_Bcast(&NLSM_ID_YC2,1,0,comm);
         par::Mpi_Bcast(&NLSM_ID_ZC2,1,0,comm);
+        
         par::Mpi_Bcast(&NLSM_ID_EPSX1,1,0,comm);
         par::Mpi_Bcast(&NLSM_ID_EPSY1,1,0,comm);
+        par::Mpi_Bcast(&NLSM_ID_EPSZ1,1,0,comm);
+
         par::Mpi_Bcast(&NLSM_ID_EPSX2,1,0,comm);
         par::Mpi_Bcast(&NLSM_ID_EPSY2,1,0,comm);
+        par::Mpi_Bcast(&NLSM_ID_EPSZ2,1,0,comm);
+
         par::Mpi_Bcast(&NLSM_ID_R1,1,0,comm);
         par::Mpi_Bcast(&NLSM_ID_R2,1,0,comm);
         par::Mpi_Bcast(&NLSM_ID_NU1,1,0,comm);
@@ -249,8 +290,10 @@ namespace nlsm
         const double zc2 = nlsm::NLSM_ID_ZC2;
         const double epsx1 = nlsm::NLSM_ID_EPSX1;
         const double epsy1 = nlsm::NLSM_ID_EPSY1;
+        const double epsz1 = nlsm::NLSM_ID_EPSZ1;
         const double epsx2 = nlsm::NLSM_ID_EPSX2;
         const double epsy2 = nlsm::NLSM_ID_EPSY2;
+        const double epsz2 = nlsm::NLSM_ID_EPSZ2;
         const double R1 = nlsm::NLSM_ID_R1;
         const double R2 = nlsm::NLSM_ID_R2;
         const double nu1 = nlsm::NLSM_ID_NU1;
@@ -261,31 +304,31 @@ namespace nlsm
 
         //std::cout<<"initData: "<<x<<", "<<y<<", "<<z<<std::endl;
 
-#ifdef NLSM_NONLINEAR
-       /* regularity requires that chi=0 at the origin for all times. */
-        double rsq =  x*x + y*y + z*z;
-        if (rsq < 1.0e-13) {
-          chi = 0.0;
-          phi = 0.0;
-          return;
-        }
-#endif
+        #ifdef NLSM_NONLINEAR
+            /* regularity requires that chi=0 at the origin for all times. */
+                double rsq =  x*x + y*y + z*z;
+                if (rsq < 1.0e-13) {
+                chi = 0.0;
+                phi = 0.0;
+                return;
+                }
+        #endif
 
-       /* if we are not at the origin, then specify a particular ID family */
-        
+        /* if we are not at the origin, then specify a particular ID family */
         if (nlsm::NLSM_ID_TYPE == 0) {
          /* this is the original test data */
-          const double amp = 1.0;
-          const double delta = 3.0;
-          const double xc = 0.0;
-          const double yc = 0.0;
-          const double zc = 0.0;
-          const double epsx = 1.0;
-          const double epsy = 1.0;
-          const double epsz = 1.0;
-          const double R = 0.0;
+          const double amp = amp1;
+          const double delta = delta1;
+          const double xc = xc1;
+          const double yc = yc1;
+          const double zc = zc1;
+          const double epsx = epsx1;
+          const double epsy = epsy1;
+          const double epsz = epsz1;
+          const double R = R1;
 	      double rt = sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
           chi = amp * exp(-(rt-R)*(rt-R)/(delta*delta));
+          //chi = amp * exp(-( (x-R)*(x-R) + (y-R)*(y-R) + (z-R)*(z-R) )/(delta*delta));
           phi = 0.0; 
 
         } else if (nlsm::NLSM_ID_TYPE == 1) {
@@ -321,18 +364,18 @@ namespace nlsm
 
         // simplistic initial data to make the comparison with analytical solution easier
 
-          const double amp = 1.0e-2;
-          const double delta = 1.0;
-          const double xc = 0.0;
-          const double yc = 0.0;
-          const double zc = 0.0;
-          const double epsx = 1.0;
-          const double epsy = 1.0;
-          const double epsz = 1.0;
-          const double R = 0.0;
-	      double rt = epsx*(x-xc)+epsy*(y-yc)+epsz*(z-zc);//sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
+          const double amp = amp1;
+          const double delta = delta1;
+          const double xc = xc1;
+          const double yc = yc1;
+          const double zc = zc1;
+          const double epsx = epsx1;
+          const double epsy = epsy1;
+          const double epsz = epsz1;
+          const double R = R1;
+	      double rt = epsx*(x-xc)+epsy*(y-yc)+epsz*(z-zc);
           chi = amp * exp(-(rt-R)/(delta*delta));
-          phi =-sqrt(3)*amp * exp(-(rt-R)/(delta*delta));//0.0; 
+          phi =0;//-sqrt(3)*amp * exp(-(rt-R)/(delta*delta)); 
 
         } else if (nlsm::NLSM_ID_TYPE == 4) {
 
@@ -377,8 +420,10 @@ namespace nlsm
         const double zc2 = nlsm::NLSM_ID_ZC2;
         const double epsx1 = nlsm::NLSM_ID_EPSX1;
         const double epsy1 = nlsm::NLSM_ID_EPSY1;
+        const double epsz1 = nlsm::NLSM_ID_EPSZ1;
         const double epsx2 = nlsm::NLSM_ID_EPSX2;
         const double epsy2 = nlsm::NLSM_ID_EPSY2;
+        const double epsz2 = nlsm::NLSM_ID_EPSZ2;
         const double R1 = nlsm::NLSM_ID_R1;
         const double R2 = nlsm::NLSM_ID_R2;
         const double nu1 = nlsm::NLSM_ID_NU1;
@@ -389,18 +434,18 @@ namespace nlsm
 
         if (nlsm::NLSM_ID_TYPE == 0) {
          /* this is the original test data */
-          const double amp = 1.0;
-          const double delta = 3.0;
-          const double xc = 0.0;
-          const double yc = 0.0;
-          const double zc = 0.0;
-          const double epsx = 1.0;
-          const double epsy = 1.0;
-          const double epsz = 1.0;
-          const double R = 0.0;
+          const double amp = amp1;
+          const double delta = delta1;
+          const double xc = xc1;
+          const double yc = yc1;
+          const double zc = zc1;
+          const double epsx = epsx1;
+          const double epsy = epsy1;
+          const double epsz = epsz1;
+          const double R = R1;
 	      double rt = sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
-          double rt_pt = rt + t;
-          double rt_mt = rt - t;
+          double rt_pt = sqrt( epsx*(x + nlsm::NLSM_WAVE_SPEED_X*t -xc)*(x + nlsm::NLSM_WAVE_SPEED_X*t -xc) + epsy*(y + nlsm::NLSM_WAVE_SPEED_Y*t -yc)*(y + nlsm::NLSM_WAVE_SPEED_Y*t -yc) + epsz*(z + nlsm::NLSM_WAVE_SPEED_Z*t -zc)*(z + nlsm::NLSM_WAVE_SPEED_Z*t -zc) ); 
+          double rt_mt = sqrt( epsx*(x - nlsm::NLSM_WAVE_SPEED_X*t -xc)*(x - nlsm::NLSM_WAVE_SPEED_X*t -xc) + epsy*(y - nlsm::NLSM_WAVE_SPEED_Y*t -yc)*(y - nlsm::NLSM_WAVE_SPEED_Y*t -yc) + epsz*(z - nlsm::NLSM_WAVE_SPEED_Z*t -zc)*(z - nlsm::NLSM_WAVE_SPEED_Z*t -zc) );
           chi = 0.5*amp *(exp(-(rt_pt-R)*(rt_pt-R)/(delta*delta)) + exp(-(rt_mt-R)*(rt_mt-R)/(delta*delta))); 
           phi = 0.0; 
 
@@ -415,11 +460,10 @@ namespace nlsm
             const double epsy = 1.0;
             const double epsz = 1.0;
             const double R = 0.0;
-            double rt = sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
-            double rt_plus_t  = ( epsx*(x-xc) + epsy*(y-yc) + epsz*(z-zc) +sqrt(3)*t );
-            double rt_minus_t = ( epsx*(x-xc) + epsy*(y-yc) + epsz*(z-zc) -sqrt(3)*t );
+            double rt = ( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
+            double rt_plus_t  = (epsx*(x + t - xc)*(x + t - xc) + epsy*(y + t - yc)*(y + t - yc) + epsz*(z + t - zc)*(z + t - zc) );
+            double rt_minus_t = (epsx*(x - t - xc)*(x - t - xc) + epsy*(y - t - yc)*(y - t - yc) + epsz*(z - t - zc)*(z - t - zc) );
             chi = amp *exp(-(rt_plus_t-R)/(delta*delta));
-            //chi = 0.5*amp *(exp(-(rt_plus_t-R)/(delta*delta))+ exp(-(rt_minus_t-R)/(delta*delta)));
             phi = 0.0;
             
         } else if (nlsm::NLSM_ID_TYPE == 4) {
@@ -472,7 +516,7 @@ namespace nlsm
         unsigned int zRange_b=pt_g_min[2],zRange_e=pt_g_max[2];
 
         xRange_b=pt_g_min[0];//(rank*(pt_g_max[0]-pt_g_min[0]))/npes + pt_g_min[0];
-        xRange_e=pt_g_max[1];//((rank+1)*(pt_g_max[0]-pt_g_min[0]))/npes + pt_g_min[0];
+        xRange_e=pt_g_max[0];//((rank+1)*(pt_g_max[0]-pt_g_min[0]))/npes + pt_g_min[0];
 
         unsigned int stepSz=1u<<(maxDepth-regLev);
 
@@ -497,6 +541,162 @@ namespace nlsm
        return nlsm::NLSM_WAVELET_TOL;
     }
 
+
+    bool isRemeshForce(const ot::Mesh* pMesh, const double ** unzipVec, unsigned int vIndex, double refine_th, double coarsen_th, bool isOverwrite)
+    {
+        const unsigned int eleLocalBegin = pMesh->getElementLocalBegin();
+        const unsigned int eleLocalEnd = pMesh->getElementLocalEnd();
+        bool isOctChange=false;
+        bool isOctChange_g =false;
+        const unsigned int eOrder = pMesh->getElementOrder();
+
+        if(pMesh->isActive())
+        {
+            ot::TreeNode * pNodes = (ot::TreeNode*) &(*(pMesh->getAllElements().begin()));
+            
+            if(isOverwrite)
+            for(unsigned int ele = eleLocalBegin; ele< eleLocalEnd; ele++)
+                pNodes[ele].setFlag(((OCT_NO_CHANGE<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+
+            const std::vector<ot::Block> blkList = pMesh->getLocalBlockList();
+            unsigned int sz[3];
+            unsigned int ei[3];
+            
+            // refine test
+            for(unsigned int b=0; b< blkList.size(); b++)
+            {
+                const ot::TreeNode blkNode = blkList[b].getBlockNode();
+
+                sz[0]=blkList[b].getAllocationSzX();
+                sz[1]=blkList[b].getAllocationSzY();
+                sz[2]=blkList[b].getAllocationSzZ();
+
+                const unsigned int bflag = blkList[b].getBlkNodeFlag();
+                const unsigned int offset = blkList[b].getOffset();
+
+                const unsigned int regLev=blkList[b].getRegularGridLev();
+                const unsigned int eleIndexMax=(1u<<(regLev-blkNode.getLevel()))-1;
+                const unsigned int eleIndexMin=0;
+
+                for(unsigned int ele = blkList[b].getLocalElementBegin(); ele< blkList[b].getLocalElementEnd(); ele++)
+                {
+                    ei[0]=(pNodes[ele].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
+                    ei[1]=(pNodes[ele].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
+                    ei[2]=(pNodes[ele].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
+
+                    if((bflag &(1u<<OCT_DIR_LEFT)) && ei[0]==eleIndexMin)   continue;
+                    if((bflag &(1u<<OCT_DIR_DOWN)) && ei[1]==eleIndexMin)   continue;
+                    if((bflag &(1u<<OCT_DIR_BACK)) && ei[2]==eleIndexMin)   continue;
+
+                    if((bflag &(1u<<OCT_DIR_RIGHT)) && ei[0]==eleIndexMax)  continue;
+                    if((bflag &(1u<<OCT_DIR_UP)) && ei[1]==eleIndexMax)     continue;
+                    if((bflag &(1u<<OCT_DIR_FRONT)) && ei[2]==eleIndexMax)  continue;
+
+                    // refine test. 
+                    for(unsigned int k=3; k< eOrder+1 +   3; k++)
+                     for(unsigned int j=3; j< eOrder+1 +  3; j++)
+                      for(unsigned int i=3; i< eOrder+1 + 3; i++)
+                      {
+                          if ( (unzipVec[vIndex][offset + (ei[2]*eOrder + k)*sz[0]*sz[1] + (ei[1]*eOrder + j)*sz[0] + (ei[0]*eOrder + i)] < refine_th) &&  (unzipVec[vIndex][offset + (ei[2]*eOrder + k)*sz[0]*sz[1] + (ei[1]*eOrder + j)*sz[0] + (ei[0]*eOrder + i)]) > coarsen_th )
+                          {
+                            if( (pNodes[ele].getLevel() + MAXDEAPTH_LEVEL_DIFF +1) < m_uiMaxDepth  )
+                                pNodes[ele].setFlag(((OCT_SPLIT<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+                          }
+
+                      }
+                    
+                    
+                }
+
+            }
+
+            //coarsen test. 
+            for(unsigned int b=0; b< blkList.size(); b++)
+            {
+                const ot::TreeNode blkNode = blkList[b].getBlockNode();
+
+                sz[0]=blkList[b].getAllocationSzX();
+                sz[1]=blkList[b].getAllocationSzY();
+                sz[2]=blkList[b].getAllocationSzZ();
+
+                const unsigned int bflag = blkList[b].getBlkNodeFlag();
+                const unsigned int offset = blkList[b].getOffset();
+
+                const unsigned int regLev=blkList[b].getRegularGridLev();
+                const unsigned int eleIndexMax=(1u<<(regLev-blkNode.getLevel()))-1;
+                const unsigned int eleIndexMin=0;
+
+                if((eleIndexMax==0) || (bflag!=0)) continue; // this implies the blocks with only 1 child and boundary blocks.
+
+                for(unsigned int ele = blkList[b].getLocalElementBegin(); ele< blkList[b].getLocalElementEnd(); ele++)
+                {
+                    assert(pNodes[ele].getParent()==pNodes[ele+NUM_CHILDREN-1].getParent());
+                    bool isCoarsen =true;
+
+                    for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                    {
+                        if((pNodes[ele+child].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
+                        {
+                            isCoarsen=false;
+                            break;
+                        }
+
+                    }
+
+                    if(isCoarsen && pNodes[ele].getLevel()>1)
+                    {
+                        bool coarse = true;
+                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                        {
+                            ei[0]=(pNodes[ele + child].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
+                            ei[1]=(pNodes[ele + child].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
+                            ei[2]=(pNodes[ele + child].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
+
+                            for(unsigned int k=3; k< eOrder+1 + 3; k++)
+                            for(unsigned int j=3; j< eOrder+1 +3; j++)
+                             for(unsigned int i=3; i< eOrder+ +3; i++)
+                             {
+                                if ( (unzipVec[vIndex][offset + (ei[2]*eOrder + k)*sz[0]*sz[1] + (ei[1]*eOrder + j)*sz[0] + (ei[0]*eOrder + i)]) > coarsen_th )
+                                    coarse = false;
+                             }
+                        }
+
+                        if(coarse)
+                            for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                                pNodes[ele+child].setFlag(((OCT_COARSE<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+
+                    }
+
+                    ele = ele + NUM_CHILDREN-1;
+
+                    
+                    
+                    
+                }
+
+            }
+
+
+
+            for(unsigned int ele=eleLocalBegin;ele<eleLocalEnd;ele++)
+                if((pNodes[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT) // trigger remesh only when some refinement occurs (laid back remesh :)  )
+                { 
+                    isOctChange=true;
+                    break;
+                }
+
+            
+
+        }
+
+        bool isOctChanged_g;
+        MPI_Allreduce(&isOctChange,&isOctChanged_g,1,MPI_CXX_BOOL,MPI_LOR,pMesh->getMPIGlobalCommunicator());
+        //if(!m_uiGlobalRank) std::cout<<"is oct changed: "<<isOctChanged_g<<std::endl;
+        return isOctChanged_g;
+    }
 
 }// end of namespace nlsm
 

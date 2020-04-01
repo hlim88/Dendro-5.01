@@ -289,7 +289,7 @@ int main (int argc, char** argv)
 
     ccz4::timer::t_mesh.start();
 
-    ot::Mesh * mesh=new ot::Mesh(balOct,1,ccz4::CCZ4_ELE_ORDER,comm,true,ccz4::CCZ4_DENDRO_GRAIN_SZ,ccz4::CCZ4_LOAD_IMB_TOL,ccz4::CCZ4_SPLIT_FIX);
+    ot::Mesh * mesh=new ot::Mesh(balOct,1,ccz4::CCZ4_ELE_ORDER,comm,true,ot::SM_TYPE::FDM,ccz4::CCZ4_DENDRO_GRAIN_SZ,ccz4::CCZ4_LOAD_IMB_TOL,ccz4::CCZ4_SPLIT_FIX);
 
     ccz4::timer::t_mesh.stop();
 

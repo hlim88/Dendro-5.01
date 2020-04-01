@@ -25,7 +25,13 @@ void ko_deriv42_z(double * const Du, const double * const u, const double dz, co
 void ko_deriv42_y(double * const  Du, const double * const  u, const double dy, const unsigned int *sz, unsigned bflag);
 void ko_deriv42_x(double * const  Du, const double * const  u, const double dx, const unsigned int *sz, unsigned bflag);
 
+void disstvb3_x(double * const  Du, const double * const  u, const double * const lam, const double dx, const unsigned int *sz, unsigned bflag);
+void disstvb3_y(double * const  Du, const double * const  u, const double * const lam, const double dx, const unsigned int *sz, unsigned bflag);
+void disstvb3_z(double * const  Du, const double * const  u, const double * const lam, const double dx, const unsigned int *sz, unsigned bflag);
 
+void disstvb5_x(double * const  Du, const double * const  u, const double * const lam, const double dx, const unsigned int *sz, unsigned bflag);
+void disstvb5_y(double * const  Du, const double * const  u, const double * const lam, const double dx, const unsigned int *sz, unsigned bflag);
+void disstvb5_z(double * const  Du, const double * const  u, const double * const lam, const double dx, const unsigned int *sz, unsigned bflag);
 
 /**@brief: copies unzipped padding to the computed derivatives.
  * (this is essential for the mixed derivatives.)

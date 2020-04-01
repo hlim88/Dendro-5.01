@@ -22,6 +22,13 @@
 extern "C" void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv,double* b, int* ldb, int* info );
 extern "C" void dsyev_( char* jobz, char* uplo, int* n, double* a, int* lda,double* w, double* work, int* lwork, int* info);
 
+// LU decomoposition of a general matrix
+extern "C" void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+
+// generate inverse of a matrix given its LU decomposition
+extern "C" void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+
+
 namespace lapack
 {
 
@@ -107,11 +114,11 @@ inline void lapack_DSYEV(int n, const double * A, int lda, double * wr,double * 
     double wkopt;
     double* work;
     int lwork=-1;
-    dsyev_( "Vectors", "Upper", (int*)&n, L, (int*)&lda, wr, &wkopt, &lwork,(int*)&info );
+    dsyev_((char*) "Vectors", (char*)"Upper", (int*)&n, L, (int*)&lda, wr, &wkopt, &lwork,(int*)&info );
     lwork = (int)wkopt;
     work = new double[lwork];
     /* Solve eigenproblem */
-    dsyev_( "Vectors", "Upper", (int*)&n, L, (int*)&lda, wr, work, &lwork, (int*)&info );
+    dsyev_( (char*)"Vectors", (char*)"Upper", (int*)&n, L, (int*)&lda, wr, work, &lwork, (int*)&info );
 
 
     for(unsigned int i=0;i<n;i++)
@@ -156,6 +163,25 @@ inline void lapack_DSYEV(int n, const double * A, int lda, double * wr,double * 
 
 }
 
+/**
+ * @brief computes the inverse of a matrix. 
+ * @param[in] A : input matrix. (should be invertible)
+ * @param[in] N : size of the matrix. 
+ * 
+ */
+inline void inverse(double* A, int N)
+{
+    int *IPIV = new int[N+1];
+    int LWORK = N*N;
+    double *WORK = new double[LWORK];
+    int INFO;
+
+    dgetrf_(&N,&N,A,&N,IPIV,&INFO);
+    dgetri_(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
+
+    delete IPIV;
+    delete WORK;
+}
 
 
 

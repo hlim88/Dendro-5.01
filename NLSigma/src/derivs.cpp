@@ -66,17 +66,17 @@ void deriv42_x(double * const  Dxu, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-#pragma message("DEBUG_DERIVS_COMP: ON")
-  for (int k = 3; k < sz[2]-3; k++) {
-    for (int j = 3; j < sz[1]-3; j++) {
-      for (int i = 3; i < sz[0]-3; i++) {
-        int pp = IDX(i,j,k);
-         if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+  #pragma message("DEBUG_DERIVS_COMP: ON")
+    for (int k = 3; k < sz[2]-3; k++) {
+      for (int j = 3; j < sz[1]-3; j++) {
+        for (int i = 3; i < sz[0]-3; i++) {
+          int pp = IDX(i,j,k);
+          if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 
 }
@@ -144,16 +144,16 @@ void deriv42_y(double * const  Dyu, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = 3; k < sz[2]-3; k++) {
-    for (int j = 3; j < sz[1]-3; j++) {
-      for (int i = 3; i < sz[0]-3; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = 3; k < sz[2]-3; k++) {
+      for (int j = 3; j < sz[1]-3; j++) {
+        for (int i = 3; i < sz[0]-3; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -223,16 +223,16 @@ void deriv42_z(double * const  Dzu, const double * const  u,
 
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -308,16 +308,16 @@ void deriv42_xx(double * const  DxDxu, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -389,16 +389,16 @@ void deriv42_yy(double * const  DyDyu, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -472,16 +472,16 @@ void deriv42_zz(double * const  DzDzu, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -613,16 +613,16 @@ void deriv42adv_x(double * const  Dxu, const double * const  u,
   }
 
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -753,16 +753,16 @@ void deriv42adv_y(double * const  Dyu, const double * const  u,
   }
 
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -893,16 +893,16 @@ void deriv42adv_z(double * const  Dzu, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -938,19 +938,7 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
-        
-        Du[IDX(ib,j,k)] = pre_factor_6_dx *
-                         (
-                         -      u[IDX(ib+4,j,k)]                             
-                         +  6.0*u[IDX(ib+3,j,k)]
-                         - 15.0*u[IDX(ib+2,j,k)]
-                         + 20.0*u[IDX(ib+1,j,k)]
-                         - 15.0*u[IDX(ib,j,k)]
-                         +  6.0*u[IDX(ib-1,j,k)]
-                         -      u[IDX(ib-2,j,k)]
-                         );
-        
-       for (int i = ib+1; i < ie-1; i++) {
+       for (int i = ib; i < ie; i++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dx *
                          (
@@ -963,20 +951,6 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
                          -      u[pp+3]
                          );
        }
-       
-       Du[IDX(ie-1,j,k)] = pre_factor_6_dx *
-                         (
-                         -      u[IDX(ie+1,j,k)]                             
-                         +  6.0*u[IDX(ie,j,k)]
-                         - 15.0*u[IDX(ie-1,j,k)]
-                         + 20.0*u[IDX(ie-2,j,k)]
-                         - 15.0*u[IDX(ie-3,j,k)]
-                         +  6.0*u[IDX(ie-4,j,k)]
-                         -      u[IDX(ie-5,j,k)]
-                         );
-       
-       
-       
     }
   }
 
@@ -1037,16 +1011,16 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -1083,20 +1057,7 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
-        
-        
-        Du[IDX(i,jb,k)] = pre_factor_6_dy *
-                         (
-                         -      u[IDX(i,jb+4,k)]                             
-                         +  6.0*u[IDX(i,jb+3,k)]
-                         - 15.0*u[IDX(i,jb+2,k)]
-                         + 20.0*u[IDX(i,jb+1,k)]
-                         - 15.0*u[IDX(i,jb,k)]
-                         +  6.0*u[IDX(i,jb-1,k)]
-                         -      u[IDX(i,jb-2,k)]
-                         );
-        
-       for (int j = jb+1; j < je-1; j++) {
+       for (int j = jb; j < je; j++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dy *
                          (
@@ -1109,22 +1070,6 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
                          -      u[pp+3*nx]
                          );
        }
-       
-       
-       Du[IDX(i,je-1,k)] = pre_factor_6_dy *
-                         (
-                         -      u[IDX(i,je+1,k)]                             
-                         +  6.0*u[IDX(i,je,k)]
-                         - 15.0*u[IDX(i,je-1,k)]
-                         + 20.0*u[IDX(i,je-2,k)]
-                         - 15.0*u[IDX(i,je-3,k)]
-                         +  6.0*u[IDX(i,je-4,k)]
-                         -      u[IDX(i,je-5,k)]
-                         );
-       
-       
-       
-       
     }
   }
 
@@ -1186,16 +1131,16 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-#endif
+  #endif
 
 }
 
@@ -1234,19 +1179,7 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
-        
-        Du[IDX(i,j,kb)] = pre_factor_6_dz *
-                         (
-                         -      u[IDX(i,j,kb+4)]                             
-                         +  6.0*u[IDX(i,j,kb+3)]
-                         - 15.0*u[IDX(i,j,kb+2)]
-                         + 20.0*u[IDX(i,j,kb+1)]
-                         - 15.0*u[IDX(i,j,kb)]
-                         +  6.0*u[IDX(i,j,kb-1)]
-                         -      u[IDX(i,j,kb-2)]
-                         );
-        
-       for (int k = kb+1; k < ke-1; k++) {
+       for (int k = kb; k < ke; k++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dz *
                          (
@@ -1259,19 +1192,6 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
                          -      u[pp+3*n]
                          );
        }
-       
-       Du[IDX(i,j,ke-1)] = pre_factor_6_dz *
-                         (
-                         -      u[IDX(i,j,ke+1)]                             
-                         +  6.0*u[IDX(i,j,ke)]
-                         - 15.0*u[IDX(i,j,ke-1)]
-                         + 20.0*u[IDX(i,j,ke-2)]
-                         - 15.0*u[IDX(i,j,ke-3)]
-                         +  6.0*u[IDX(i,j,ke-4)]
-                         -      u[IDX(i,j,ke-5)]
-                         );
-       
-       
     }
   }
 
@@ -1332,33 +1252,208 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
     }
   }
 
-#ifdef DEBUG_DERIVS_COMP
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
+      }
+    }
+  #endif
+
+}
+
+
+void deriv22_zz(double *const DzDzu, const double *const u, const double dz, const unsigned int *sz, unsigned bflag)
+{
+  const double idz_sqrd = 1.0/(dz*dz);
+  
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  const int n = nx * ny;
+
+  for (int j = jb; j < je; j++) {
+    for (int i = ib; i < ie; i++) {
+      for (int k = kb; k < ke; k++) {
+        int pp = IDX(i,j,k);
+        DzDzu[pp] = (  u[pp-n] - 2.0 * u[pp]
+                   + 1.0 * u[pp+n] ) * idz_sqrd;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_BACK)) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
+        
+
+        DzDzu[IDX(i,j,3)] = (         u[IDX(i,j,3)]
+                           - 2.0 * u[IDX(i,j,4)]
+                           +       u[IDX(i,j,5)]
+                        ) * idz_sqrd;
+
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_FRONT)) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
+
+        DzDzu[IDX(i,j,ke-1)] = (      u[IDX(i,j,ke-3)]
+                           - 2.0 * u[IDX(i,j,ke-2)]
+                           +       u[IDX(i,j,ke-1)]
+                          ) * idz_sqrd;
+      }
+    }
+  }
+
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
+      }
+    }
+  #endif
+
+}
+void deriv22_yy(double *const DyDyu, const double *const u, const double dy, const unsigned int *sz, unsigned bflag)
+{
+  const double idy_sqrd = 1.0/(dy*dy);
+  
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  for (int k = kb; k < ke; k++) {
+    for (int i = ib; i < ie; i++) {
+      for (int j = jb; j < je; j++) {
+        int pp = IDX(i,j,k);
+        DyDyu[pp] = (  u[pp-nx] 
+                    - 2.0 * u[pp] 
+                    + u[pp+nx] 
+                 ) * idy_sqrd;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_DOWN)) {
+    for (int k = kb; k < ke; k++) {
+      for (int i = ib; i < ie; i++) {
+        
+        DyDyu[IDX(i,3,k)] = (         u[IDX(i,3,k)]
+                           - 2.0 * u[IDX(i,4,k)]
+                           +       u[IDX(i,5,k)]
+                        ) * idy_sqrd;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_UP)) {
+
+    for (int k = kb; k < ke; k++) {
+      for (int i = ib; i < ie; i++) {
+        DyDyu[IDX(i,je-1,k)] = (      u[IDX(i,je-3,k)]
+                           - 2.0 * u[IDX(i,je-2,k)]
+                           +       u[IDX(i,je-1,k)]
+                          ) * idy_sqrd;
+
+      }
+    }
+  }
+
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
+      }
+    }
+  #endif
+
+}
+
+void deriv22_xx(double *const DxDxu, const double *const u, const double dx, const unsigned int *sz, unsigned bflag)
+{
+  const double idx_sqrd = 1.0/(dx*dx);
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
         int pp = IDX(i,j,k);
-        if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+
+        DxDxu[pp] = (          u[pp-1] 
+                        -2.0 * u[pp]
+                         +     u[pp+1]
+                        
+                    ) * idx_sqrd;
       }
     }
   }
-#endif
 
+  if (bflag & (1u<<OCT_DIR_LEFT)) {
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+    
+        DxDxu[IDX(3,j,k)] = (         u[IDX(3,j,k)]
+                              - 2.0 * u[IDX(4,j,k)]
+                              + 1.0 * u[IDX(5,j,k)]
+                            ) * idx_sqrd;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_RIGHT)) {
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+
+        DxDxu[IDX(ie-1,j,k)] = (       u[IDX(ie-3,j,k)]
+                               - 2.0 * u[IDX(ie-2,j,k)]
+                               +       u[IDX(ie-1,j,k)]
+                              ) * idx_sqrd;
+      }
+    }
+  }
+
+  #ifdef DEBUG_DERIVS_COMP
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        for (int i = ib; i < ie; i++) {
+          int pp = IDX(i,j,k);
+          if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
+      }
+    }
+  #endif
 }
 
-
-
-
-void cpy_unzip_padd(double * const  Du, const double * const  u,const unsigned int *sz, unsigned bflag)
-{
-    const int nx = sz[0];
-    const int ny = sz[1];
-    const int nz = sz[2];
-
-    for(unsigned int k=0;k<sz[2];k++)
-      for(unsigned int j=0;j<sz[1];j++)
-        for(unsigned int i=0;i<sz[0];i++)
-            if((i<3||i>=sz[0]-3) || (j<3||j>=sz[0]-3)|| (k<3||k>=sz[2]-3))
-                Du[IDX(i,j,k)]=u[IDX(i,j,k)];
-
-
-}

@@ -25,7 +25,7 @@
 #include "rhs.h"
 #include "physcon.h"
 #include "psi4.h"
-#include "test/meshTestUtils.h"
+#include "meshTestUtils.h"
 #include "TwoPunctures.h"
 
 static const double RK_5_C[]={16.0/135.0, 0.0, 6656.0/12825.0, 28561.0/56430, -9.0/50.0 ,2.0/55.0};

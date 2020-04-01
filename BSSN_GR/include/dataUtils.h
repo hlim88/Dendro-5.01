@@ -43,6 +43,28 @@ namespace bssn
     void writeBHCoordinates(const ot::Mesh* pMesh,const Point* ptLocs, unsigned int numPt,unsigned int timestep);
 
 
+    /**
+     * @brief refine based on the black hole location locations. 
+     * @param[in] pMesh : pointer to the mesh. 
+     * @param[in] bhLoc : BH location 
+     * @param[in] r: radius to refine based on the bh location. (square block refinement. )
+     */
+    bool isRemeshBH(const ot::Mesh* pMesh, const Point* bhLoc, const double* r);
+
+    /**
+     * @brief refine only based on the alpha variable event horizon. 
+     * 
+     * @param pMesh : pointer to the mesh 
+     * @param unzipVec : unzip vars. 
+     * @param refine_th : refine tol for alpha
+     * @param coarsen_th : coarsend threshold for alpha
+     * @return true : is mesh need to be changed
+     * @return false : otherwise. 
+     */
+    bool isRemeshEH(const ot::Mesh* pMesh, const double ** unzipVec, unsigned int vIndex, double refine_th, double coarsen_th, bool isOverwrite=true);
+
+
+
 
 } // end of namespace bssn
 

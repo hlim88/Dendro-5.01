@@ -1,5 +1,6 @@
 #include "rhs.h"
 #include "gr.h"
+#include "hadrhs.h"
 
 using namespace std;
 using namespace bssn;
@@ -61,7 +62,6 @@ void bssnRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blk
         ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
 #ifdef BSSN_RHS_STAGED_COMP
-
         bssnrhs_sep(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
 #else
         bssnrhs(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
@@ -225,13 +225,26 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
 
                 bssn::timer::t_rhs.start();
 
-#ifdef USE_ETA_FUNC
-#include "bssneqs_eta_func.cpp"
-#else
-#include "bssneqs_eta_const.cpp"
-#endif
+                #ifdef USE_ROCHESTER_GAUGE
+                    #pragma message("BSSN: using rochester gauge")
+                    #ifdef USE_ETA_FUNC
+                        #pragma message("BSSN: using function eta damping")
+                        #include "bssneqs_eta_func_rochester_gauge.cpp"
+                    #else
+                        #pragma message("BSSN: using const eta damping")
+                        #include "bssneqs_eta_const_rochester_gauge.cpp"
+                    #endif
+                #else
+                    #pragma message("BSSN: using standard gauge")
+                    #ifdef USE_ETA_FUNC
+                        #pragma message("BSSN: using function eta damping")
+                        #include "bssneqs_eta_func_standard_gauge.cpp"
+                    #else
+                        #pragma message("BSSN: using const eta damping")
+                        #include "bssneqs_eta_const_standard_gauge.cpp"
+                    #endif
 
-
+                #endif    
 
                 bssn::timer::t_rhs.stop();
 
@@ -715,10 +728,38 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
         bssn::timer::t_bdyc.stop();
     }
 
-
-    bssn::timer::t_deriv.start();
+    if (bssn::DISSIPATION_TYPE == 0) {
+        bssn::timer::t_deriv.start();
 #include "bssnrhs_ko_derivs.h"
-    bssn::timer::t_deriv.stop();
+        bssn::timer::t_deriv.stop();
+    }
+    //HL : not need for us
+#if 0
+    else if (bssn::DISSIPATION_TYPE == 1 || bssn::DISSIPATION_TYPE == 2) {
+        std::cout<<"...calling TVB dissipation"<<std::endl;
+        double * lam1=new double[n];
+        double * lam2=new double[n];
+        double * lam3=new double[n];
+        max_spacetime_speeds( lam1, lam2, lam3, 
+                           alpha, beta0, beta1, beta2,
+                           gt0, gt1, gt2, gt3, gt4, gt5,
+                           chi, sz);
+        bssn::timer::t_deriv.start();
+        if (bssn::DISSIPATION_TYPE == 1) {
+#include "bssnrhs_tvb3_derivs.h"
+        }
+        else {
+#include "bssnrhs_tvb5_derivs.h"
+        }
+        bssn::timer::t_deriv.stop();
+        delete [] lam1;
+        delete [] lam2;
+        delete [] lam3;
+    }
+#endif
+    else {
+        std::cout<<"Unknown DISSIPATION_TYPE"<<std::endl;
+    }
 
 // remove the block write once the ko is fully debuged,
     /*    double bxMin[3]={bssn::BSSN_BLK_MIN_X,bssn::BSSN_BLK_MIN_Y,bssn::BSSN_BLK_MIN_Z};
@@ -945,7 +986,51 @@ void bssn_bcs(double *f_rhs, const double *f,
  *
  *
  *----------------------------------------------------------------------*/
+void max_spacetime_speeds( 
+                           double * const lambda1max, double * const lambda2max, double * const lambda3max, 
+                           const double * const alpha, 
+                           const double * const beta1, const double * const beta2, const double * const beta3,
+                           const double * const gtd11, const double * const gtd12, const double * const gtd13,
+                           const double * const gtd22, const double * const gtd23, const double * const gtd33,
+                           const double * const chi, const unsigned int *sz)
+{
 
+    const unsigned int nx = sz[0];
+    const unsigned int ny = sz[1];
+    const unsigned int nz = sz[2];
+
+    unsigned int ib = 3;
+    unsigned int jb = 3;
+    unsigned int kb = 3;
+    unsigned int ie = sz[0]-3;
+    unsigned int je = sz[1]-3;
+    unsigned int ke = sz[2]-3;
+
+    for (unsigned int k = kb; k < ke; k++) {
+        for (unsigned int j = jb; j < je; j++) {
+            for (unsigned int i = ib; i < ie; i++) {
+                unsigned int pp = IDX(i,j,k);
+               /* note: gtu is the inverse tilde metric. It should have detgtd = 1. So, for the purposes of 
+                * calculating wavespeeds, I simple set detgtd = 1. */
+                double gtu11 = gtd22[pp]*gtd33[pp] - gtd23[pp]*gtd23[pp];
+                double gtu22 = gtd11[pp]*gtd33[pp] - gtd13[pp]*gtd13[pp];
+                double gtu33 = gtd11[pp]*gtd22[pp] - gtd12[pp]*gtd12[pp];
+                if (gtu11 < 0.0 || gtu22 < 0.0 || gtu33 < 0.0) {
+                    std::cout<<"Problem computing spacetime characteristics"<<std::endl;
+                    std::cout<<"gtu11 = "<<gtu11<<", gtu22 = "<<gtu22<<", gtu33 = "<<gtu33<<std::endl;
+                    gtu11 = 1.0; gtu22 = 1.0; gtu33 = 1.0;
+                }
+                double t1 = alpha[pp] * sqrt(gtu11 * chi[pp]);
+                double t2 = alpha[pp] * sqrt(gtu22 * chi[pp]);
+                double t3 = alpha[pp] * sqrt(gtu33 * chi[pp]);
+                lambda1max[pp] = std::max( abs(-beta1[pp] + t1), abs(-beta1[pp] - t1) );
+                lambda2max[pp] = std::max( abs(-beta2[pp] + t2), abs(-beta2[pp] - t2) );
+                lambda3max[pp] = std::max( abs(-beta3[pp] + t3), abs(-beta3[pp] - t3) );
+            }
+        }
+    }
+ 
+}
 
 /*----------------------------------------------------------------------;
  *
@@ -1023,6 +1108,19 @@ void freeze_bcs(double *f_rhs, const unsigned int *sz, const unsigned int &bflag
     }
 
 }
+
+#if 0
+
+/*----------------------------------------------------------------------;
+ *
+ * HAD RHS
+ *
+ *----------------------------------------------------------------------*/
+void call_HAD_rhs()
+{
+    had_bssn_rhs_();
+}
+#endif
 
 #if 0
 /*--------------------------------------------------------------

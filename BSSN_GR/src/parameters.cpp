@@ -11,8 +11,13 @@
 
 namespace bssn
 {
+
+    unsigned int BSSN_ELE_ORDER =4;
     unsigned int BSSN_IO_OUTPUT_FREQ=10;
     unsigned int BSSN_TIME_STEP_OUTPUT_FREQ=10;
+
+    unsigned int BSSN_GW_EXTRACT_FREQ=std::max(1u,BSSN_IO_OUTPUT_FREQ>>1u);
+    
     unsigned int BSSN_REMESH_TEST_FREQ=10;
     double BSSN_IO_OUTPUT_GAP=1.0;
 
@@ -89,6 +94,7 @@ namespace bssn
     double CHI_FLOOR=0.1;
     double KO_DISS_SIGMA=0.01;
 
+    unsigned int DISSIPATION_TYPE=0;
 
     unsigned int BSSN_DENDRO_GRAIN_SZ=1000;
 
@@ -102,7 +108,21 @@ namespace bssn
     unsigned int BSSN_VTU_OUTPUT_EVOL_INDICES[BSSN_NUM_VARS]={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23};
     unsigned int BSSN_VTU_OUTPUT_CONST_INDICES[BSSN_CONSTRAINT_NUM_VARS]={0,1,2,3,4,5};
 
+    unsigned int BSSN_XI[3]={0 , 0 , 0};
 
+    unsigned int BSSN_DISSIPATION_NC=0;
+
+    unsigned int BSSN_DISSIPATION_S=10;
+
+    bool BSSN_USE_FD_GRID_TRANSFER=false;
+
+    double BSSN_EH_REFINE_VAL = 0.3 ;
+    double BSSN_EH_COARSEN_VAL = 0.4;
+
+    // by default use WAMR refinement. 
+    RefinementMode BSSN_REFINEMENT_MODE = RefinementMode::WAMR;
+
+    bool BSSN_VTU_Z_SLICE_ONLY = true;
 
 
 }

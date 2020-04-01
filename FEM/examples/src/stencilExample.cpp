@@ -38,7 +38,7 @@ int main (int argc, char** argv) {
     if(argc<4)
     {
         if(!rank) std::cout<<"Usage: "<<argv[0]<<" maxDepth wavelet_tol partition_tol eleOrder"<<std::endl;
-        return 0;
+        MPI_Abort(comm,0);
     }
 
     m_uiMaxDepth=atoi(argv[1]);
@@ -62,6 +62,9 @@ int main (int argc, char** argv) {
     double d_max=0.5;
     double dMin[]={-0.5,-0.5,-0.5};
     double dMax[]={0.5,0.5,0.5};
+
+    Point pt_min(-0.5,-0.5,-0.5);
+    Point pt_max(0.5,0.5,0.5);
     //@note that based on how the functions are defined (f(x), dxf(x), etc) the compuatational domain is equivalent to the grid domain.
     std::function<double(double,double,double)> func =[d_min,d_max](const double x,const double y,const double z){ return (sin(2*M_PI*((x/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((y/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((z/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min)));};
     std::function<double(double,double,double)> dx_func=[d_min,d_max](const double x,const double y,const double z){ return (2*M_PI*(1.0/(1u<<m_uiMaxDepth)*(d_max-d_min)))*(cos(2*M_PI*((x/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((y/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min))*sin(2*M_PI*((z/(1u<<m_uiMaxDepth))*(d_max-d_min)+d_min)));};
@@ -90,10 +93,10 @@ int main (int argc, char** argv) {
 
     bool isActive;
     MPI_Comm commActive;
-    const int p_npes_prev=binOp::getPrevHighestPowerOfTwo((globalSz/grainSz));
-    const int p_npes_next=binOp::getNextHighestPowerOfTwo((globalSz/grainSz));
+    const int p_npes_prev=binOp::getPrevHighestPowerOfTwo(std::max((globalSz/grainSz),1LL));
+    const int p_npes_next=binOp::getNextHighestPowerOfTwo(std::max((globalSz/grainSz),1LL));
 
-    int p_npes=globalSz/grainSz;
+    int p_npes=std::max((globalSz/grainSz),1LL);
     (std::abs(p_npes_prev-p_npes)<=std::abs(p_npes_next-p_npes)) ? p_npes=p_npes_prev : p_npes=p_npes_next;
 
     if(p_npes>npes) p_npes=npes;
@@ -212,7 +215,7 @@ int main (int argc, char** argv) {
 
     //assert(ot::test::isElementalNodalValuesValid(&mesh,&(*(funcVal.begin())),func,1e-3));
     ot::test::isElementalNodalValuesValid(mesh,&(*(funcVal.begin())),func,1e-3);
-    ot::test::isInterpToSphereValid(mesh,&(*(funcVal.begin())),func,0.1,dMin,dMax,1e-3);
+    
 
     if(!rank)
     {
@@ -255,6 +258,7 @@ int main (int argc, char** argv) {
     }
 
     mesh->unzip(&(*(funcVal.begin())),&(*(funcValUnZip.begin())));
+    //std::cout<<"unzip ended "<<std::endl;
     //assert(ot::test::isUnzipValid(&mesh,&(*(funcValUnZip.begin())),func,1e-3));
     ot::test::isUnzipValid(mesh,&(*(funcValUnZip.begin())),func,1e-3);
 
@@ -265,6 +269,74 @@ int main (int argc, char** argv) {
         std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
 
     }
+
+    if(!rank)
+    {
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+        std::cout<<"        interpolation to sphere check begin    "<<std::endl;
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+
+    }
+    
+    //ot::test::isInterpToSphereValid(mesh,&(*(funcVal.begin())),func,0.1,dMin,dMax,1e-3);
+    ot::test::isSphereInterpValid(mesh,&(*(funcVal.begin())),func,0.1,1e-3,pt_min,pt_max);
+
+    //bool isSphereInterpValid(ot::Mesh* pMesh, T* vec, std::function< double(double,double,double) > func, double r, double tol, Point d_min, Point d_max)
+
+    if(!rank)
+    {
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+        std::cout<<"        interpolation to sphere check end     "<<std::endl;
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+
+    }
+
+    // test elemental ghost exchange
+
+    if(!rank)
+    {
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+        std::cout<<"        elemental ghost sync test begin    "<<std::endl;
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+
+    }
+
+    unsigned int * cellVec = mesh->createElementVector(0u);
+    const ot::TreeNode* const pNodes = mesh->getAllElements().data();
+
+    for (unsigned int ele = mesh->getElementLocalBegin(); ele < mesh->getElementLocalEnd(); ele++)
+        cellVec[ele] = pNodes[ele].getLevel();
+
+    mesh->readFromGhostBeginElementVec(cellVec,1);
+    mesh->readFromGhostEndElementVec(cellVec,1);
+
+        for (unsigned int ele = mesh->getElementPreGhostBegin(); ele < mesh->getElementPreGhostEnd(); ele++)
+        {
+            if( !(cellVec[ele] ==0 || cellVec[ele] == pNodes[ele].getLevel()))
+                std::cout<<"rank: "<<mesh->getMPIRank()<<" elemental ghost sync error in pre ghost "<<std::endl;
+        }
+
+        for (unsigned int ele = mesh->getElementLocalBegin(); ele < mesh->getElementLocalEnd(); ele++)
+        {
+            if( !(cellVec[ele] == pNodes[ele].getLevel()))
+                std::cout<<"rank: "<<mesh->getMPIRank()<<" elemental ghost sync currupts local values "<<std::endl;
+        }
+
+        for (unsigned int ele = mesh->getElementPostGhostBegin(); ele < mesh->getElementPostGhostEnd(); ele++)
+        {
+            if( !(cellVec[ele] ==0 || cellVec[ele] == pNodes[ele].getLevel()))
+                std::cout<<"rank: "<<mesh->getMPIRank()<<" elemental ghost sync error in post ghost cell val "<<cellVec[ele]<<" nodel lev: "<<pNodes[ele].getLevel()<<std::endl;
+        }
+
+    
+    if(!rank)
+    {
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+        std::cout<<"        elemental ghost sync test end    "<<std::endl;
+        std::cout<<YLW<<"================================================================================================"<<NRM<<std::endl;
+
+    }
+
 
 
 
@@ -304,6 +376,7 @@ int main (int argc, char** argv) {
     mesh->performGhostExchange(funcVal);
 
 
+    
 
 #if 0
 
@@ -362,8 +435,11 @@ int main (int argc, char** argv) {
     const char *fVarNames []={"Time","Cycle"};
     double fVarVal []={0.1,1};
 
-    io::vtk::mesh2vtuFine(mesh, "f_val",2,(const char **)fVarNames,(const double *)fVarVal,numPVars,(const char** )pVarNames,(const double **)pVarVal);
+    unsigned int s_val[] ={1u<<(m_uiMaxDepth-1), 1u<<(m_uiMaxDepth-1), 1u<<(m_uiMaxDepth-1)};
+    unsigned int s_normal[]={0,0,1};
 
+    io::vtk::mesh2vtu_slice(mesh, s_val,s_normal, "f_val_slice",2,(const char **)fVarNames,(const double *)fVarVal,numPVars,(const char** )pVarNames,(const double **)pVarVal);
+    io::vtk::mesh2vtuFine(mesh, "f_val",2,(const char **)fVarNames,(const double *)fVarVal,numPVars,(const char** )pVarNames,(const double **)pVarVal);
 
 
     /*mesh.vectorToVTK(funcVal,"f");

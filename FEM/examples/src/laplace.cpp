@@ -208,7 +208,7 @@ int main (int argc, char** argv) {
 
 
     t1=MPI_Wtime();
-    ot::Mesh * mesh=new ot::Mesh(balOct,1,eOrder,comm,true,grainSz,partition_tol);
+    ot::Mesh * mesh=new ot::Mesh(balOct,1,eOrder,comm,true,ot::SM_TYPE::FEM_CG,grainSz,partition_tol);
     t2=MPI_Wtime();
 
     t_stat=t2-t1;

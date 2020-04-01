@@ -79,7 +79,7 @@ resid (CCTK_REAL *  const res,
        int const *  const *  const cols,
        CCTK_REAL const *  const *  const JFD)
 {
-#pragma omp parallel for
+
   for (int i = 0; i < ntotal; i++)
   {
     CCTK_REAL JFDdv_i = 0;
@@ -223,36 +223,28 @@ relax (CCTK_REAL *  const dv,
   {
     for (n = 0; n < N_PlaneRelax; n++)
     {
-#pragma omp parallel for schedule(dynamic)
       for (i = 2; i < n1; i = i + 2)
-	LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
-#pragma omp parallel for schedule(dynamic)
+      	LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
       for (i = 1; i < n1; i = i + 2)
-	LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
-#pragma omp parallel for schedule(dynamic)
+	      LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
       for (j = 1; j < n2; j = j + 2)
-	LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
-#pragma omp parallel for schedule(dynamic)
+	      LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
       for (j = 0; j < n2; j = j + 2)
-	LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
+	      LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
     }
   }
   for (k = 1; k < n3; k = k + 2)
   {
     for (n = 0; n < N_PlaneRelax; n++)
     {
-#pragma omp parallel for schedule(dynamic)
       for (i = 0; i < n1; i = i + 2)
-	LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
-#pragma omp parallel for schedule(dynamic)
+      	LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
       for (i = 1; i < n1; i = i + 2)
-	LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
-#pragma omp parallel for schedule(dynamic)
+	      LineRelax_be (dv, i, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
       for (j = 1; j < n2; j = j + 2)
-	LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
-#pragma omp parallel for schedule(dynamic)
+	      LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
       for (j = 0; j < n2; j = j + 2)
-	LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
+      	LineRelax_al (dv, j, k, nvar, n1, n2, n3, rhs, ncols, cols, JFD);
     }
   }
 }
@@ -262,6 +254,10 @@ void
 TestRelax ( int nvar, int n1, int n2, int n3, derivs v,
 	   CCTK_REAL *dv)
 {
+
+  int rank;
+  MPI_Comm_rank(MPI_TP_COMM,&rank);
+
   int ntotal = n1 * n2 * n3 * nvar, **cols, *ncols, maxcol =
     StencilSize * nvar, j;
   CCTK_REAL *F, *res, **JFD;
@@ -282,7 +278,10 @@ TestRelax ( int nvar, int n1, int n2, int n3, derivs v,
   for (j = 0; j < ntotal; j++)
     dv[j] = 0;
   resid (res, ntotal, dv, F, ncols, cols, JFD);
-  printf ("Before: |F|=%20.15e\n", (double) norm1 (res, ntotal));
+  
+  if(!rank)
+    printf ("Before: |F|=%20.15e\n", (double) norm1 (res, ntotal));
+  
   fflush(stdout);
   for (j = 0; j < NRELAX; j++)
   {
@@ -290,13 +289,19 @@ TestRelax ( int nvar, int n1, int n2, int n3, derivs v,
     if (j % Step_Relax == 0)
     {
       resid (res, ntotal, dv, F, ncols, cols, JFD);
-      printf ("j=%d\t |F|=%20.15e\n", j, (double) norm1 (res, ntotal));
+      
+      if(!rank)  
+        printf ("j=%d\t |F|=%20.15e\n", j, (double) norm1 (res, ntotal));
+      
       fflush(stdout);
     }
   }
 
   resid (res, ntotal, dv, F, ncols, cols, JFD);
-  printf ("After: |F|=%20.15e\n", (double) norm1 (res, ntotal));
+  
+  if(!rank)
+    printf ("After: |F|=%20.15e\n", (double) norm1 (res, ntotal));
+  
   fflush(stdout);
 
   free_dvector (F, 0, ntotal - 1);
@@ -325,6 +330,10 @@ bicgstab ( int const nvar, int const n1, int const n2, int const n3,
   CCTK_REAL *F;
   derivs u, ph, sh;
 
+  int rank;
+  MPI_Comm_rank(MPI_TP_COMM,&rank);
+
+
   F = dvector (0, ntotal - 1);
   allocate_derivs (&u, ntotal);
 
@@ -348,21 +357,22 @@ bicgstab ( int const nvar, int const n1, int const n2, int const n3,
   vv = dvector (0, ntotal - 1);
 
   /* check */
-  if (output == 1) {
+  if (output == 1 && !rank) {
     printf ("bicgstab:  itmax %d, tol %e\n", itmax, (double)tol);
     fflush(stdout);
   }
 
   /* compute initial residual rt = r = F - J*dv */
   J_times_dv (nvar, n1, n2, n3, dv, r, u);
-#pragma omp parallel for
+
   for (int j = 0; j < ntotal; j++)
     rt[j] = r[j] = F[j] - r[j];
 
   *normres = norm2 (r, ntotal);
-  if (output == 1) {
-    printf ("bicgstab: %5d  %10.3e\n", 0, (double) *normres);
-    fflush(stdout);
+
+  if (output == 1 && !rank) {
+   printf ("bicgstab: %5d  %10.3e\n", 0, (double) *normres);
+   fflush(stdout);
   }
 
   if (*normres <= tol)
@@ -371,6 +381,7 @@ bicgstab ( int const nvar, int const n1, int const n2, int const n3,
   /* cgs iteration */
   for (ii = 0; ii < itmax; ii++)
   {
+
     rho = scalarproduct (rt, r, ntotal);
     if (fabs (rho) < rhotol)
       break;
@@ -378,28 +389,29 @@ bicgstab ( int const nvar, int const n1, int const n2, int const n3,
     /* compute direction vector p */
     if (ii == 0)
     {
-#pragma omp parallel for
-      for (int j = 0; j < ntotal; j++)
-	p[j] = r[j];
+        for (int j = 0; j < ntotal; j++)
+	        p[j] = r[j];
     }
     else
     {
       beta = (rho / rho1) * (alpha / omega);
-#pragma omp parallel for
+      
       for (int j = 0; j < ntotal; j++)
-	p[j] = r[j] + beta * (p[j] - omega * vv[j]);
+	      p[j] = r[j] + beta * (p[j] - omega * vv[j]);
     }
 
+    
     /* compute direction adjusting vector ph and scalar alpha */
-#pragma omp parallel for
+    
     for (int j = 0; j < ntotal; j++)
       ph.d0[j] = 0;
+
     for (int j = 0; j < NRELAX; j++)	/* solves JFD*ph = p by relaxation*/
       relax (ph.d0, nvar, n1, n2, n3, p, ncols, cols, JFD);
 
     J_times_dv (nvar, n1, n2, n3, ph, vv, u);	/* vv=J*ph*/
     alpha = rho / scalarproduct (rt, vv, ntotal);
-#pragma omp parallel for
+    
     for (int j = 0; j < ntotal; j++)
       s[j] = r[j] - alpha * vv[j];
 
@@ -407,19 +419,18 @@ bicgstab ( int const nvar, int const n1, int const n2, int const n3,
     *normres = norm2 (s, ntotal);
     if (*normres <= tol)
     {
-#pragma omp parallel for
+ 
       for (int j = 0; j < ntotal; j++)
-	dv.d0[j] += alpha * ph.d0[j];
-      if (output == 1) {
-	printf ("bicgstab: %5d  %10.3e  %10.3e  %10.3e  %10.3e\n",
-		ii + 1, (double) *normres, (double)alpha, (double)beta, (double)omega);
+    	dv.d0[j] += alpha * ph.d0[j];
+      if (output == 1 && !rank) {
+        printf ("bicgstab: %5d  %10.3e  %10.3e  %10.3e  %10.3e\n",
+		    ii + 1, (double) *normres, (double)alpha, (double)beta, (double)omega);
         fflush(stdout);
       }
       break;
     }
 
     /* compute stabilizer vector sh and scalar omega */
-#pragma omp parallel for
     for (int j = 0; j < ntotal; j++)
       sh.d0[j] = 0;
     for (int j = 0; j < NRELAX; j++)	/* solves JFD*sh = s by relaxation*/
@@ -429,7 +440,6 @@ bicgstab ( int const nvar, int const n1, int const n2, int const n3,
     omega = scalarproduct (t, s, ntotal) / scalarproduct (t, t, ntotal);
 
     /* compute new solution approximation */
-#pragma omp parallel for
     for (int j = 0; j < ntotal; j++)
     {
       dv.d0[j] += alpha * ph.d0[j] + omega * sh.d0[j];
@@ -437,7 +447,7 @@ bicgstab ( int const nvar, int const n1, int const n2, int const n3,
     }
     /* are we done? */
     *normres = norm2 (r, ntotal);
-    if (output == 1) {
+    if (output == 1 && !rank) {
       printf ("bicgstab: %5d  %10.3e  %10.3e  %10.3e  %10.3e\n",
 	      ii + 1, (double) *normres, (double)alpha, (double)beta, (double)omega);
       fflush(stdout);
@@ -489,6 +499,8 @@ Newton ( int const nvar, int const n1, int const n2, int const n3,
 	derivs v,
         CCTK_REAL const tol, int const itmax)
 {
+  int rank;
+  MPI_Comm_rank(MPI_TP_COMM,&rank);
 
   int ntotal = n1 * n2 * n3 * nvar, ii, it;
   CCTK_REAL *F, dmax, normres;
@@ -508,11 +520,10 @@ Newton ( int const nvar, int const n1, int const n2, int const n3,
       F_of_v (nvar, n1, n2, n3, v, F, u);
       dmax = norm_inf (F, ntotal);
     }
-#pragma omp parallel for
     for (int j = 0; j < ntotal; j++)
       dv.d0[j] = 0;
 
-    if(TPID::verbose==1){
+    if(TPID::verbose==1 && !rank){
       printf ("Newton: it=%d \t |F|=%e\n", it, (double)dmax);
       printf ("bare mass: mp=%g \t mm=%g\n", (double) TPID::par_m_plus, (double) TPID::par_m_minus);
     }
@@ -520,7 +531,7 @@ Newton ( int const nvar, int const n1, int const n2, int const n3,
     fflush(stdout);
     ii =
       bicgstab ( nvar, n1, n2, n3, v, dv, TPID::verbose, 100, dmax * 1.e-3, &normres);
-#pragma omp parallel for
+
     for (int j = 0; j < ntotal; j++)
       v.d0[j] -= dv.d0[j];
     F_of_v ( nvar, n1, n2, n3, v, F, u);
@@ -533,7 +544,7 @@ Newton ( int const nvar, int const n1, int const n2, int const n3,
       dmax = norm_inf (F, ntotal);
   }
 
-  if(TPID::verbose==1)
+  if(TPID::verbose==1 && !rank)
     printf ("Newton: it=%d \t |F|=%e \n", it, (double)dmax);
 
   fflush(stdout);

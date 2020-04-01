@@ -74,128 +74,140 @@ RefElement::RefElement(unsigned int dim, unsigned int order)
 
     ipT_1D_0.resize(m_uiNrp*m_uiNrp);
     ipT_1D_1.resize(m_uiNrp*m_uiNrp);
+    Fr.resize(m_uiNrp*m_uiNrp);
+
+    //TODO Later change this to proper computation. 
+    gridT.resize(6,0);
+    for(unsigned int i=0; i< 6; i++ )
+     gridT[i] = IP_1D_FD_Order_5[i];
+
+    const unsigned int p2c_sz=21*21*21;
+    out_p2c.resize(p2c_sz,0);
 
 
-#ifdef WITH_BLAS_LAPACK
+    #ifdef WITH_BLAS_LAPACK
 
-   unsigned int info;
+    unsigned int info;
 
-   double x_min=-1.0;
-   double x_max= 1.0;
+    double x_min=-1.0;
+    double x_max= 1.0;
 
-   for(unsigned int k=0;k<m_uiNrp;k++){
-       u[k]=x_min+(x_max-x_min)*k/m_uiOrder;
-   }
+    for(unsigned int k=0;k<m_uiNrp;k++){
+        u[k]=x_min+(x_max-x_min)*k/m_uiOrder;
+    }
 
-   //std::cout<<"gauss-labatto quadrature begin "<<std::endl;
+    //std::cout<<"gauss-labatto quadrature begin "<<std::endl;
 
-   double* w1=new double[m_uiNrp];
-   double* wgll1=new double[m_uiNrp];
+    double* w1=new double[m_uiNrp];
+    double* wgll1=new double[m_uiNrp];
 
-   basis::jacobiglq(0,0,m_uiOrder,&(*(r.begin())),wgll1);
-   basis::jacobigq(0,0,m_uiOrder,&(*(g.begin())),w1);
-   //std::cout<<"gauss-labatto quadrature end "<<std::endl;
+    const double alpha =0.0;
+    const double beta =0.0;
 
-   for(unsigned int k=0;k<m_uiNrp;k++)
-   {
-       // parent to child points.
-       u_0[k]=0.5*(u[k]-1);
-       u_1[k]=0.5*(u[k]+1);
-   }
+    basis::jacobiglq(alpha,beta,m_uiOrder,&(*(r.begin())),wgll1);
+    basis::jacobigq(alpha,beta,m_uiOrder,&(*(g.begin())),w1);
+    //std::cout<<"gauss-labatto quadrature end "<<std::endl;
 
-   /*std::cout<<" r: ";printArray_1D((&(*(r.begin()))),m_uiNrp);
-   std::cout<<" u: ";printArray_1D((&(*(u.begin()))),m_uiNrp);
-   std::cout<<" wgll: ";printArray_1D(wgll1,m_uiNrp);
-   std::cout<<" wg: ";printArray_1D(w1,m_uiNrp);
-   std::cout<<" g: ";printArray_1D((&(*(g.begin()))),m_uiNrp);
+    for(unsigned int k=0;k<m_uiNrp;k++)
+    {
+        // parent to child points.
+        u_0[k]=0.5*(u[k]-1);
+        u_1[k]=0.5*(u[k]+1);
+    }
 
-   std::cout<<" r0: ";printArray_1D((&(*(u_0.begin()))),m_uiNrp);
-   std::cout<<" r1: ";printArray_1D((&(*(u_1.begin()))),m_uiNrp);*/
+    /*std::cout<<" r: ";printArray_1D((&(*(r.begin()))),m_uiNrp);
+    std::cout<<" u: ";printArray_1D((&(*(u.begin()))),m_uiNrp);
+    std::cout<<" wgll: ";printArray_1D(wgll1,m_uiNrp);
+    std::cout<<" wg: ";printArray_1D(w1,m_uiNrp);
+    std::cout<<" g: ";printArray_1D((&(*(g.begin()))),m_uiNrp);
 
-
-   for(unsigned int i=0;i<m_uiNrp;i++) {
-
-
-      basis::jacobip(0, 0, i, (&(*(u_0.begin()))), &(*(Vu_0.begin() + i*m_uiNrp )), m_uiNrp);
-      basis::jacobip(0, 0, i, (&(*(u_1.begin()))), &(*(Vu_1.begin() + i*m_uiNrp )), m_uiNrp);
-
-      basis::jacobip(0, 0, i, (&(*(u.begin()))), &(*(Vu.begin() + i*m_uiNrp)), m_uiNrp);
-      basis::gradjacobip(0, 0, i, (&(*(u.begin()))), &(*(gradVu.begin() + i*m_uiNrp)), m_uiNrp);
-
-      basis::jacobip(0, 0, i, (&(*(r.begin()))), &(*(Vr.begin() + i*m_uiNrp)), m_uiNrp);
-      basis::gradjacobip(0, 0, i, (&(*(r.begin()))), &(*(gradVr.begin() + i*m_uiNrp)), m_uiNrp);
-
-      basis::jacobip(0, 0, i, (&(*(g.begin()))), &(*(Vg.begin() + i*m_uiNrp)), m_uiNrp);
-      basis::gradjacobip(0, 0, i, (&(*(g.begin()))), &(*(gradVg.begin() + i*m_uiNrp)), m_uiNrp);
-
-      //std::cout<<i<<" r eval : ";printArray_1D(&(*(Vr.begin() + i*m_uiNrp)),m_uiNrp);
-      //std::cout<<i<<" r0 eval : ";printArray_1D(&(*(xCh_0.begin())),m_uiNrp);
-      //std::cout<<i<<" r1:eval  ";printArray_1D(&(*(xCh_1.begin())),m_uiNrp);
-
-   }
-
-    /*std::cout<<"Vr0: "<<std::endl;
-    printArray_2D(&(*(Vu_0.begin())),m_uiNrp,m_uiNrp);
-
-    std::cout<<"Vr1: "<<std::endl;
-    printArray_2D(&(*(Vu_1.begin())),m_uiNrp,m_uiNrp);
-
-    std::cout<<"Vu: "<<std::endl;
-    printArray_2D(&(*(Vu.begin())),m_uiNrp,m_uiNrp);
-
-    std::cout<<"Vr: "<<std::endl;
-    printArray_2D(&(*(Vr.begin())),m_uiNrp,m_uiNrp);
-
-    std::cout<<"Vg: "<<std::endl;
-    printArray_2D(&(*(Vg.begin())),m_uiNrp,m_uiNrp);
-
-    std::cout<<"gradVu: "<<std::endl;
-    printArray_2D(&(*(gradVu.begin())),m_uiNrp,m_uiNrp);
-
-    std::cout<<"gradVr: "<<std::endl;
-    printArray_2D(&(*(gradVr.begin())),m_uiNrp,m_uiNrp);
-
-    std::cout<<"gradVg: "<<std::endl;
-    printArray_2D(&(*(gradVg.begin())),m_uiNrp,m_uiNrp);*/
-
-
-    lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(gradVr.begin())),&(*(Dr.begin())),m_uiNrp,info);
-    lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(gradVg.begin())),&(*(Dg.begin())),m_uiNrp,info);
-
-
-    lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(Vu_0.begin())),&(*(ip_1D_0.begin())),m_uiNrp,info);
-    lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(Vu_1.begin())),&(*(ip_1D_1.begin())),m_uiNrp,info);
-
-    lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(Vg.begin())),&(*(quad_1D.begin())),m_uiNrp,info);
-
-
-    // transpose operators
-    /*lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu_0.begin())),m_uiNrp,&(*(Vu.begin())),&(*(ipT_1D_0.begin())),m_uiNrp,info);
-    lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu_1.begin())),m_uiNrp,&(*(Vu.begin())),&(*(ipT_1D_1.begin())),m_uiNrp,info);
-
-    lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vg.begin())),m_uiNrp,&(*(Vu.begin())),&(*(quadT_1D.begin())),m_uiNrp,info);*/
-
+    std::cout<<" r0: ";printArray_1D((&(*(u_0.begin()))),m_uiNrp);
+    std::cout<<" r1: ";printArray_1D((&(*(u_1.begin()))),m_uiNrp);*/
 
 
     for(unsigned int i=0;i<m_uiNrp;i++) {
-        w[i]=w1[i];
-        wgll[i]=wgll1[i];
-
-        for(unsigned int j=0;j<m_uiNrp;j++)
-        {
-            ipT_1D_0[i*m_uiNrp+j]=ip_1D_0[j*m_uiNrp+i];
-            ipT_1D_1[i*m_uiNrp+j]=ip_1D_1[j*m_uiNrp+i];
-            quadT_1D[i*m_uiNrp+j]=quad_1D[j*m_uiNrp+i];
-            DgT[i*m_uiNrp+j]=Dg[j*m_uiNrp+i];
 
 
-        }
+        basis::jacobip(alpha,beta, i, (&(*(u_0.begin()))), &(*(Vu_0.begin() + i*m_uiNrp )), m_uiNrp);
+        basis::jacobip(alpha,beta, i, (&(*(u_1.begin()))), &(*(Vu_1.begin() + i*m_uiNrp )), m_uiNrp);
+
+        basis::jacobip(alpha,beta, i, (&(*(u.begin()))), &(*(Vu.begin() + i*m_uiNrp)), m_uiNrp);
+        basis::gradjacobip(alpha,beta, i, (&(*(u.begin()))), &(*(gradVu.begin() + i*m_uiNrp)), m_uiNrp);
+
+        basis::jacobip(alpha,beta, i, (&(*(r.begin()))), &(*(Vr.begin() + i*m_uiNrp)), m_uiNrp);
+        basis::gradjacobip(alpha,beta, i, (&(*(r.begin()))), &(*(gradVr.begin() + i*m_uiNrp)), m_uiNrp);
+
+        basis::jacobip(alpha,beta, i, (&(*(g.begin()))), &(*(Vg.begin() + i*m_uiNrp)), m_uiNrp);
+        basis::gradjacobip(alpha,beta, i, (&(*(g.begin()))), &(*(gradVg.begin() + i*m_uiNrp)), m_uiNrp);
+
+        //std::cout<<i<<" r eval : ";printArray_1D(&(*(Vr.begin() + i*m_uiNrp)),m_uiNrp);
+        //std::cout<<i<<" r0 eval : ";printArray_1D(&(*(xCh_0.begin())),m_uiNrp);
+        //std::cout<<i<<" r1:eval  ";printArray_1D(&(*(xCh_1.begin())),m_uiNrp);
 
     }
 
+        /*std::cout<<"Vr0: "<<std::endl;
+        printArray_2D(&(*(Vu_0.begin())),m_uiNrp,m_uiNrp);
 
-    delete [] w1;
-    delete [] wgll1;
+        std::cout<<"Vr1: "<<std::endl;
+        printArray_2D(&(*(Vu_1.begin())),m_uiNrp,m_uiNrp);
+
+        std::cout<<"Vu: "<<std::endl;
+        printArray_2D(&(*(Vu.begin())),m_uiNrp,m_uiNrp);
+
+        std::cout<<"Vr: "<<std::endl;
+        printArray_2D(&(*(Vr.begin())),m_uiNrp,m_uiNrp);
+
+        std::cout<<"Vg: "<<std::endl;
+        printArray_2D(&(*(Vg.begin())),m_uiNrp,m_uiNrp);
+
+        std::cout<<"gradVu: "<<std::endl;
+        printArray_2D(&(*(gradVu.begin())),m_uiNrp,m_uiNrp);
+
+        std::cout<<"gradVr: "<<std::endl;
+        printArray_2D(&(*(gradVr.begin())),m_uiNrp,m_uiNrp);
+
+        std::cout<<"gradVg: "<<std::endl;
+        printArray_2D(&(*(gradVg.begin())),m_uiNrp,m_uiNrp);*/
+
+
+        lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(gradVr.begin())),&(*(Dr.begin())),m_uiNrp,info);
+        lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(gradVg.begin())),&(*(Dg.begin())),m_uiNrp,info);
+
+
+        lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(Vu_0.begin())),&(*(ip_1D_0.begin())),m_uiNrp,info);
+        lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(Vu_1.begin())),&(*(ip_1D_1.begin())),m_uiNrp,info);
+
+        lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu.begin())),m_uiNrp,&(*(Vg.begin())),&(*(quad_1D.begin())),m_uiNrp,info);
+
+
+        // transpose operators
+        /*lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu_0.begin())),m_uiNrp,&(*(Vu.begin())),&(*(ipT_1D_0.begin())),m_uiNrp,info);
+        lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vu_1.begin())),m_uiNrp,&(*(Vu.begin())),&(*(ipT_1D_1.begin())),m_uiNrp,info);
+
+        lapack::lapack_DGESV(m_uiNrp,m_uiNrp,&(*(Vg.begin())),m_uiNrp,&(*(Vu.begin())),&(*(quadT_1D.begin())),m_uiNrp,info);*/
+
+
+
+        for(unsigned int i=0;i<m_uiNrp;i++) {
+            w[i]=w1[i];
+            wgll[i]=wgll1[i];
+
+            for(unsigned int j=0;j<m_uiNrp;j++)
+            {
+                ipT_1D_0[i*m_uiNrp+j]=ip_1D_0[j*m_uiNrp+i];
+                ipT_1D_1[i*m_uiNrp+j]=ip_1D_1[j*m_uiNrp+i];
+                quadT_1D[i*m_uiNrp+j]=quad_1D[j*m_uiNrp+i];
+                DgT[i*m_uiNrp+j]=Dg[j*m_uiNrp+i];
+
+
+            }
+
+        }
+
+
+        delete [] w1;
+        delete [] wgll1;
 
     /*std::cout<<"ip_1D_0: "<<std::endl;
     printArray_2D(&(*(ip_1D_0.begin())),m_uiNrp,m_uiNrp);
@@ -223,7 +235,12 @@ RefElement::RefElement(unsigned int dim, unsigned int order)
     printArray_2D(&(*(quadT_1D.begin())),m_uiNrp,m_uiNrp);*/
     //std::cout<<" wg: ";printArray_1D((&(*(w.begin()))),m_uiNrp);
 
-#else
+    for(unsigned int i=0;i<m_uiNrp;i++)
+        Fr[i * m_uiNrp  + i ] = 1.0;
+    //computeFilterOp(2,1);
+    //printArray_2D(&(*(Fr.begin())),m_uiNrp,m_uiNrp);
+    
+    #else
 
 
     if(m_uiDimension==3 && m_uiOrder==1)
@@ -280,7 +297,7 @@ RefElement::RefElement(unsigned int dim, unsigned int order)
 
 
 
-#endif
+    #endif
 
 
 }
@@ -297,34 +314,79 @@ void RefElement::generateHeaderFile(char * fName)
 {
 
 
-#ifdef WITH_BLAS_LAPACK
-    std::ofstream myfile (fName);
-    if (myfile.is_open())
-    {
+    #ifdef WITH_BLAS_LAPACK
+        std::ofstream myfile (fName);
+        if (myfile.is_open())
+        {
 
-       myfile<<" /**\n * @author Milinda Fernando\n * @breif This file contains the precomputed interpolation matrices for a given order, computed based on Hari's HOMG refele.m code. \n * @Note: For wavelet based finite differencing we use uniform points instead of gll points.\n */";
-       myfile << "// This is a machine generated code to initialize interpolation matrices for reference element specified. \n";
+        myfile<<" /**\n * @author Milinda Fernando\n * @breif This file contains the precomputed interpolation matrices for a given order, computed based on Hari's HOMG refele.m code. \n * @Note: For wavelet based finite differencing we use uniform points instead of gll points.\n */";
+        myfile << "// This is a machine generated code to initialize interpolation matrices for reference element specified. \n";
 
-       myfile<<"static double IP_1D_Order_"<<m_uiOrder<<"_0 [] ={";
-       for(unsigned int i=0;i<m_uiNrp;i++)
-           for(unsigned int j=0;j<m_uiNrp;j++)
-               (i!=(m_uiNrp-1) || j!=(m_uiNrp-1)) ? myfile<<std::setprecision(16)<<ip_1D_0[i*m_uiNrp+j]<<" ," : myfile<<std::setprecision(16)<<ip_1D_0[i*m_uiNrp+j];
-
-        myfile<<" };\n";
-
-
-        myfile<<"static double IP_1D_Order_"<<m_uiOrder<<"_1 [] ={";
+        myfile<<"static double IP_1D_Order_"<<m_uiOrder<<"_0 [] ={";
         for(unsigned int i=0;i<m_uiNrp;i++)
             for(unsigned int j=0;j<m_uiNrp;j++)
-                (i!=(m_uiNrp-1) || j!=(m_uiNrp-1)) ? myfile<<std::setprecision(16)<<ip_1D_1[i*m_uiNrp+j]<<" ," : myfile<<std::setprecision(16)<<ip_1D_1[i*m_uiNrp+j];
+                (i!=(m_uiNrp-1) || j!=(m_uiNrp-1)) ? myfile<<std::setprecision(16)<<ip_1D_0[i*m_uiNrp+j]<<" ," : myfile<<std::setprecision(16)<<ip_1D_0[i*m_uiNrp+j];
 
-        myfile<<" };\n";
-       myfile.close();
-    }
-    else std::cout << "Unable to open file"<<std::endl;
-#else
-    std::cout<<"GenerateHeader file should be run with BLAS enabled. "<<std::endl;
-#endif
+            myfile<<" };\n";
+
+
+            myfile<<"static double IP_1D_Order_"<<m_uiOrder<<"_1 [] ={";
+            for(unsigned int i=0;i<m_uiNrp;i++)
+                for(unsigned int j=0;j<m_uiNrp;j++)
+                    (i!=(m_uiNrp-1) || j!=(m_uiNrp-1)) ? myfile<<std::setprecision(16)<<ip_1D_1[i*m_uiNrp+j]<<" ," : myfile<<std::setprecision(16)<<ip_1D_1[i*m_uiNrp+j];
+
+            myfile<<" };\n";
+        myfile.close();
+        }
+        else std::cout << "Unable to open file"<<std::endl;
+
+    #else
+        std::cout<<"GenerateHeader file should be run with BLAS enabled. "<<std::endl;
+    #endif
 
 }
+
+
+void RefElement::computeFilterOp(unsigned int nc,unsigned int s)
+{
+    for(unsigned int i=0;i<m_uiNrp;i++)
+        Fr[i * m_uiNrp  + i ] = 1.0;
+    
+    const double alpha = -log(__DBL_EPSILON__);
+    
+    for(unsigned int i=nc;i<m_uiNrp;i++)
+    {
+      Fr[i * m_uiNrp  + i ] = exp(-alpha*(i-nc)/(pow((m_uiNrp-nc),2*s)));
+    }
+
+    //printArray_2D(&(*(Fr.begin())),m_uiNrp,m_uiNrp);
+
+    std::vector<double> invVr;
+    invVr.resize(m_uiNrp*m_uiNrp);
+
+    std::memcpy(&(*(invVr.begin())),&(*(Vr.begin())),sizeof(double)*m_uiNrp*m_uiNrp);
+
+    #ifdef WITH_BLAS_LAPACK
+        lapack::inverse(&(*(invVr.begin())),m_uiNrp);
+    #else
+        std::cout<<"Enable blas lapck to use elemental high frequency filtering. "<<std::endl;
+        exit(0);        
+    #endif
+
+    for(unsigned int i=0;i<m_uiNrp;i++)
+    {
+        for(unsigned int j=0;j<m_uiNrp;j++)
+        {
+            double sum=0;
+            for(unsigned int k=0;k<m_uiNrp;k++)
+            {
+                sum+=(Vr[i * m_uiNrp + k ]  * Fr[k*m_uiNrp + k] * invVr[k*m_uiNrp + j]); 
+            }
+            Fr[i*m_uiNrp + j] = sum;
+        }
+    }
+
+
+}
+
 

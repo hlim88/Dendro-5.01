@@ -47,6 +47,7 @@ int main (int argc, char** argv)
         std::cout<<"parameters read: "<<std::endl;
 
         std::cout<<YLW<<"\tnpes :"<<npes<<NRM<<std::endl;
+        std::cout<<YLW<<"\tNLSM_ELE_ORDER :"<<nlsm::NLSM_ELE_ORDER<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_DIM :"<<nlsm::NLSM_DIM<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_IO_OUTPUT_FREQ :"<<nlsm::NLSM_IO_OUTPUT_FREQ<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_REMESH_TEST_FREQ :"<<nlsm::NLSM_REMESH_TEST_FREQ<<NRM<<std::endl;
@@ -87,8 +88,10 @@ int main (int argc, char** argv)
         std::cout<<YLW<<"\tNLSM_ID_ZC2:"<<nlsm::NLSM_ID_ZC2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSX1:"<<nlsm::NLSM_ID_EPSX1<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSY1:"<<nlsm::NLSM_ID_EPSY1<<NRM<<std::endl;
+        std::cout<<YLW<<"\tNLSM_ID_EPSZ1:"<<nlsm::NLSM_ID_EPSY1<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSX2:"<<nlsm::NLSM_ID_EPSX2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_EPSY2:"<<nlsm::NLSM_ID_EPSY2<<NRM<<std::endl;
+        std::cout<<YLW<<"\tNLSM_ID_EPSZ2:"<<nlsm::NLSM_ID_EPSY2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_R1:"<<nlsm::NLSM_ID_R1<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_R2:"<<nlsm::NLSM_ID_R2<<NRM<<std::endl;
         std::cout<<YLW<<"\tNLSM_ID_NU1:"<<nlsm::NLSM_ID_NU1<<NRM<<std::endl;
@@ -118,14 +121,14 @@ int main (int argc, char** argv)
 
     _InitializeHcurve(nlsm::NLSM_DIM);
     m_uiMaxDepth=nlsm::NLSM_MAXDEPTH;
-
+    
     if(nlsm::NLSM_NUM_VARS%nlsm::NLSM_ASYNC_COMM_K!=0)
     {
         if(!rank) std::cout<<"[overlap communication error]: total NLSM_NUM_VARS: "<<nlsm::NLSM_NUM_VARS<<" is not divisable by NLSM_ASYNC_COMM_K: "<<nlsm::NLSM_ASYNC_COMM_K<<std::endl;
         exit(0);
     }
 
-    nlsm::NLSM_RK45_TIME_STEP_SIZE=nlsm::NLSM_CFL_FACTOR*(nlsm::NLSM_COMPD_MAX[0]-nlsm::NLSM_COMPD_MIN[0])*(1.0/(double)(1u<<nlsm::NLSM_MAXDEPTH));
+    
 
     //2. generate the initial grid.
     std::vector<ot::TreeNode> tmpNodes;
@@ -138,8 +141,7 @@ int main (int argc, char** argv)
     for(unsigned int i=0;i<nlsm::NLSM_NUM_VARS;i++)
         varIndex[i]=i;
 
-    /*varIndex[0]=nlsm::VAR::U_ALPHA;
-    varIndex[1]=nlsm::VAR::U_CHI;*/
+    
     DendroIntL localSz,globalSz;
     double t_stat;
     double t_stat_g[3];
@@ -152,12 +154,13 @@ int main (int argc, char** argv)
         const Point pt_min(nlsm::NLSM_BLK_MIN_X,nlsm::NLSM_BLK_MIN_Y,nlsm::NLSM_BLK_MIN_Z);
         const Point pt_max(nlsm::NLSM_BLK_MAX_X,nlsm::NLSM_BLK_MAX_Y,nlsm::NLSM_BLK_MAX_Z);
 
-        nlsm::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);
+        nlsm::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-(binOp::fastLog2(nlsm::NLSM_ELE_ORDER)),m_uiMaxDepth,comm);
     }else
     {
 
         if(!rank) std::cout<<YLW<<"Using function2Octree. AMR enabled "<<NRM<<std::endl;
-        function2Octree(f_init,nlsm::NLSM_NUM_VARS,varIndex,interpVars,tmpNodes,m_uiMaxDepth,nlsm::NLSM_WAVELET_TOL,nlsm::NLSM_ELE_ORDER,comm);
+        function2Octree(f_init,nlsm::NLSM_NUM_VARS,nlsm::NLSM_REFINE_VARIABLE_INDICES,nlsm::NLSM_NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,nlsm::NLSM_WAVELET_TOL,nlsm::NLSM_ELE_ORDER,comm);
+        //std::cout<<"f2o else end"<<std::endl;
 
     }
 
@@ -277,7 +280,7 @@ int main (int argc, char** argv)
 
     nlsm::timer::t_mesh.start();
 
-    ot::Mesh * mesh=new ot::Mesh(balOct,1,nlsm::NLSM_ELE_ORDER,comm,true,nlsm::NLSM_DENDRO_GRAIN_SZ,nlsm::NLSM_LOAD_IMB_TOL,nlsm::NLSM_SPLIT_FIX);
+    ot::Mesh * mesh=new ot::Mesh(balOct,1,nlsm::NLSM_ELE_ORDER,comm,true,ot::SM_TYPE::FDM,nlsm::NLSM_DENDRO_GRAIN_SZ,nlsm::NLSM_LOAD_IMB_TOL,nlsm::NLSM_SPLIT_FIX);
 
     nlsm::timer::t_mesh.stop();
 
@@ -299,6 +302,12 @@ int main (int argc, char** argv)
         std::cout<<"\t"<<GRN<<" blk (min,mean,max): "<<"( "<<t_blk_g[0]<<"\t"<<t_blk_g[1]<<"\t"<<t_blk_g[2]<<" )"<<NRM<<std::endl;
     }
 
+    unsigned int lmin,lmax;
+    mesh->computeMinMaxLevel(lmin,lmax);
+    nlsm::NLSM_RK45_TIME_STEP_SIZE=nlsm::NLSM_CFL_FACTOR*((nlsm::NLSM_COMPD_MAX[0]-nlsm::NLSM_COMPD_MIN[0])*((1u<<(m_uiMaxDepth-lmax))/((double) nlsm::NLSM_ELE_ORDER))/((double)(1u<<(m_uiMaxDepth))));
+    par::Mpi_Bcast(&nlsm::NLSM_RK45_TIME_STEP_SIZE,1,0,comm);
+    //std::cout<<" lmin: "<<lmin<<" lmax: "<<lmax<<std::endl;
+    
 
     ode::solver::RK4_NLSM rk_nlsm(mesh,nlsm::NLSM_RK45_TIME_BEGIN,nlsm::NLSM_RK45_TIME_END,nlsm::NLSM_RK45_TIME_STEP_SIZE);
     //ode::solver::RK3_NLSM rk_nlsm(mesh,nlsm::NLSM_RK45_TIME_BEGIN,nlsm::NLSM_RK45_TIME_END,nlsm::NLSM_RK45_TIME_STEP_SIZE);

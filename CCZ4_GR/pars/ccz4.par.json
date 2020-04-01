@@ -119,7 +119,7 @@
 
     "__comment__" : "========== Select Initial Data =========================",
             "           " : "0-TwoPuncture Elliptic sol, 1-HAD approximate sol",
-            "CCZ4_ID_TYPE": 0,
+            "CCZ4_ID_TYPE": 1,
 
     "__comment__" : "========================================================",
 

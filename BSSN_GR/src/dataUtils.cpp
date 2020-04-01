@@ -107,11 +107,11 @@ namespace bssn
                ptOut[c]/=(double)ptCounts_g[c];
             
             
-            /*if(pMesh->getMPIRank()==0)std::cout<<"bh1 in : "<<ptIn[0].x()<<", "<<ptIn[0].y()<<", "<<ptIn[0].z()<<std::endl;
-            if(pMesh->getMPIRank()==0)std::cout<<"bh2 in : "<<ptIn[1].x()<<", "<<ptIn[1].y()<<", "<<ptIn[1].z()<<std::endl;
+            // if(pMesh->getMPIRank()==0)std::cout<<"bh1 in : "<<ptIn[0].x()<<", "<<ptIn[0].y()<<", "<<ptIn[0].z()<<std::endl;
+            // if(pMesh->getMPIRank()==0)std::cout<<"bh2 in : "<<ptIn[1].x()<<", "<<ptIn[1].y()<<", "<<ptIn[1].z()<<std::endl;
             
-            if(pMesh->getMPIRank()==0)std::cout<<"bh1 out: "<<ptOut[0].x()<<", "<<ptOut[0].y()<<", "<<ptOut[0].z()<<std::endl;
-            if(pMesh->getMPIRank()==0)std::cout<<"bh2 out: "<<ptOut[1].x()<<", "<<ptOut[1].y()<<", "<<ptOut[1].z()<<std::endl;*/
+            // if(pMesh->getMPIRank()==0)std::cout<<"bh1 out: "<<ptOut[0].x()<<", "<<ptOut[0].y()<<", "<<ptOut[0].z()<<std::endl;
+            // if(pMesh->getMPIRank()==0)std::cout<<"bh2 out: "<<ptOut[1].x()<<", "<<ptOut[1].y()<<", "<<ptOut[1].z()<<std::endl;
             
             
 
@@ -147,5 +147,265 @@ namespace bssn
 
         }
     }
+
+    bool isRemeshBH(const ot::Mesh* pMesh, const Point* bhLoc, const double* r)
+    {
+        //Point bh_1 = Point(X_TO_GRIDX(bhLoc[0].x()),Y_TO_GRIDY(bhLoc[0].y()),Z_TO_GRIDZ(bhLoc[0].z()));
+        //Point bh_2 = Point(X_TO_GRIDX(bhLoc[1].x()),Y_TO_GRIDY(bhLoc[1].y()),Z_TO_GRIDZ(bhLoc[1].z()));
+
+        const double rx= r[0];
+        const double ry= r[1];
+        const double rz= r[2];
+
+        const double rrx= 1.5 * r[0];
+        const double rry= 1.5 * r[1];
+        const double rrz= 1.5 * r[2];
+
+        const unsigned int eleLocalBegin = pMesh->getElementLocalBegin();
+        const unsigned int eleLocalEnd = pMesh->getElementLocalEnd();
+        bool isOctChange=false;
+        bool isOctChange_g =false;
+        Point d1, d2;
+
+        if(pMesh->isActive())
+        {
+            ot::TreeNode * pNodes = (ot::TreeNode*) &(*(pMesh->getAllElements().begin()));
+            Point temp;
+
+            for(unsigned int ele = eleLocalBegin; ele< eleLocalEnd; ele++)
+                pNodes[ele].setFlag(((OCT_NO_CHANGE<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+            // refine pass. 
+            for(unsigned int ele = eleLocalBegin; ele< eleLocalEnd; ele++)
+            {
+                temp = Point( GRIDX_TO_X(pNodes[ele].minX()), GRIDY_TO_Y(pNodes[ele].minY()), GRIDZ_TO_Z(pNodes[ele].minZ()) ); 
+                d1 = temp -bhLoc[0]; 
+                d2 = temp -bhLoc[1];
+
+                if( (fabs(d1.x()) <=rx && fabs(d1.y())<=ry && fabs(d1.z())<=rz ) || (fabs(d2.x()) <=rx && fabs(d2.y())<=ry && fabs(d2.z())<=rz) )
+                {   
+                    if((pNodes[ele].getLevel()+MAXDEAPTH_LEVEL_DIFF+1)<m_uiMaxDepth)
+                        pNodes[ele].setFlag(((OCT_SPLIT<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+                }
+            
+            }
+
+            // coarsen pass. 
+            for(unsigned int ele = eleLocalBegin; ele< eleLocalEnd; ele++)
+            {
+                if( ((ele + NUM_CHILDREN-1) < eleLocalEnd) && (pNodes[ele].getLevel()>1 && pNodes[ele].getParent() == pNodes[ele + NUM_CHILDREN-1].getParent() )) 
+                {
+                    bool isCoarsen=false;
+                    for(unsigned int child=0; child < NUM_CHILDREN ; child ++)
+                    {
+                        temp = Point( GRIDX_TO_X(pNodes[ele + child].minX()), GRIDY_TO_Y(pNodes[ele + child].minY()), GRIDZ_TO_Z(pNodes[ele + child].minZ()) ); 
+                        d1 = temp -bhLoc[0]; d2= temp -bhLoc[1];
+                        if( ( (! ( (fabs(d1.x()) <=rx && fabs(d1.y())<=ry && fabs(d1.z())<=rz ) || (fabs(d2.x()) <=rx && fabs(d2.y())<=ry && fabs(d2.z())<=rz) ) )) && ( (fabs(d1.x()) <=rrx && fabs(d1.y())<=rry && fabs(d1.z())<=rrz ) || (fabs(d2.x()) <=rrx && fabs(d2.y())<=rry && fabs(d2.z())<=rrz ) ) && ((pNodes[ele+child].getFlag()>>NUM_LEVEL_BITS)!=OCT_SPLIT) )
+                            isCoarsen=true;
+                        else
+                            isCoarsen=false;
+                    }
+                    
+                    if(isCoarsen)
+                    {
+                        for(unsigned int child=0; child < NUM_CHILDREN ; child ++)
+                            pNodes[ele + child].setFlag(((OCT_COARSE<<NUM_LEVEL_BITS)|pNodes[ele+child].getLevel()));
+
+                        ele += NUM_CHILDREN-1;
+                    }
+
+                    
+                        
+                }
+            }
+
+            
+            for(unsigned int ele=eleLocalBegin;ele<eleLocalEnd;ele++)
+                if((pNodes[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT) // trigger remesh only when some refinement occurs
+                { 
+                    isOctChange=true;
+                    break;
+                }
+
+
+        }
+
+        bool isOctChanged_g;
+        MPI_Allreduce(&isOctChange,&isOctChanged_g,1,MPI_CXX_BOOL,MPI_LOR,pMesh->getMPIGlobalCommunicator());
+        //if(!m_uiGlobalRank) std::cout<<"is oct changed: "<<isOctChanged_g<<std::endl;
+        return isOctChanged_g;
+
+        
+
+    }
+
+
+    bool isRemeshEH(const ot::Mesh* pMesh, const double ** unzipVec, unsigned int vIndex, double refine_th, double coarsen_th, bool isOverwrite)
+    {
+        const unsigned int eleLocalBegin = pMesh->getElementLocalBegin();
+        const unsigned int eleLocalEnd = pMesh->getElementLocalEnd();
+        bool isOctChange=false;
+        bool isOctChange_g =false;
+        const unsigned int eOrder = pMesh->getElementOrder();
+
+        if(pMesh->isActive())
+        {
+            ot::TreeNode * pNodes = (ot::TreeNode*) &(*(pMesh->getAllElements().begin()));
+            
+            if(isOverwrite)
+            for(unsigned int ele = eleLocalBegin; ele< eleLocalEnd; ele++)
+                pNodes[ele].setFlag(((OCT_NO_CHANGE<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+
+            const std::vector<ot::Block> blkList = pMesh->getLocalBlockList();
+            unsigned int sz[3];
+            unsigned int ei[3];
+            
+            // refine test
+            for(unsigned int b=0; b< blkList.size(); b++)
+            {
+                const ot::TreeNode blkNode = blkList[b].getBlockNode();
+
+                sz[0]=blkList[b].getAllocationSzX();
+                sz[1]=blkList[b].getAllocationSzY();
+                sz[2]=blkList[b].getAllocationSzZ();
+
+                const unsigned int bflag = blkList[b].getBlkNodeFlag();
+                const unsigned int offset = blkList[b].getOffset();
+
+                const unsigned int regLev=blkList[b].getRegularGridLev();
+                const unsigned int eleIndexMax=(1u<<(regLev-blkNode.getLevel()))-1;
+                const unsigned int eleIndexMin=0;
+
+                for(unsigned int ele = blkList[b].getLocalElementBegin(); ele< blkList[b].getLocalElementEnd(); ele++)
+                {
+                    ei[0]=(pNodes[ele].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
+                    ei[1]=(pNodes[ele].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
+                    ei[2]=(pNodes[ele].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
+
+                    if((bflag &(1u<<OCT_DIR_LEFT)) && ei[0]==eleIndexMin)   continue;
+                    if((bflag &(1u<<OCT_DIR_DOWN)) && ei[1]==eleIndexMin)   continue;
+                    if((bflag &(1u<<OCT_DIR_BACK)) && ei[2]==eleIndexMin)   continue;
+
+                    if((bflag &(1u<<OCT_DIR_RIGHT)) && ei[0]==eleIndexMax)  continue;
+                    if((bflag &(1u<<OCT_DIR_UP)) && ei[1]==eleIndexMax)     continue;
+                    if((bflag &(1u<<OCT_DIR_FRONT)) && ei[2]==eleIndexMax)  continue;
+
+                    // refine test. 
+                    for(unsigned int k=3; k< eOrder+1 +   3; k++)
+                     for(unsigned int j=3; j< eOrder+1 +  3; j++)
+                      for(unsigned int i=3; i< eOrder+1 + 3; i++)
+                      {
+                          if ( unzipVec[vIndex][offset + (ei[2]*eOrder + k)*sz[0]*sz[1] + (ei[1]*eOrder + j)*sz[0] + (ei[0]*eOrder + i)] < refine_th)
+                          {
+                            if( (pNodes[ele].getLevel() + MAXDEAPTH_LEVEL_DIFF +1) < m_uiMaxDepth  )
+                                pNodes[ele].setFlag(((OCT_SPLIT<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+                          }
+
+                      }
+                    
+                    
+                }
+
+            }
+
+            //coarsen test. 
+            for(unsigned int b=0; b< blkList.size(); b++)
+            {
+                const ot::TreeNode blkNode = blkList[b].getBlockNode();
+
+                sz[0]=blkList[b].getAllocationSzX();
+                sz[1]=blkList[b].getAllocationSzY();
+                sz[2]=blkList[b].getAllocationSzZ();
+
+                const unsigned int bflag = blkList[b].getBlkNodeFlag();
+                const unsigned int offset = blkList[b].getOffset();
+
+                const unsigned int regLev=blkList[b].getRegularGridLev();
+                const unsigned int eleIndexMax=(1u<<(regLev-blkNode.getLevel()))-1;
+                const unsigned int eleIndexMin=0;
+
+                if((eleIndexMax==0) || (bflag!=0)) continue; // this implies the blocks with only 1 child and boundary blocks.
+
+                for(unsigned int ele = blkList[b].getLocalElementBegin(); ele< blkList[b].getLocalElementEnd(); ele++)
+                {
+                    assert(pNodes[ele].getParent()==pNodes[ele+NUM_CHILDREN-1].getParent());
+                    bool isCoarsen =true;
+
+                    for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                    {
+                        if((pNodes[ele+child].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
+                        {
+                            isCoarsen=false;
+                            break;
+                        }
+
+                    }
+
+                    if(isCoarsen && pNodes[ele].getLevel()>1)
+                    {
+                        bool coarse = true;
+                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                        {
+                            ei[0]=(pNodes[ele + child].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
+                            ei[1]=(pNodes[ele + child].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
+                            ei[2]=(pNodes[ele + child].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
+
+                            for(unsigned int k=3; k< eOrder+1 + 3; k++)
+                            for(unsigned int j=3; j< eOrder+1 +3; j++)
+                             for(unsigned int i=3; i< eOrder+ +3; i++)
+                             {
+                                if ( !((refine_th  < unzipVec[vIndex][offset + (ei[2]*eOrder + k)*sz[0]*sz[1] + (ei[1]*eOrder + j)*sz[0] + (ei[0]*eOrder + i)]) &&  (unzipVec[vIndex][offset + (ei[2]*eOrder + k)*sz[0]*sz[1] + (ei[1]*eOrder + j)*sz[0] + (ei[0]*eOrder + i)] <=coarsen_th ))  )
+                                    coarse = false;
+                             }
+
+
+                        }
+
+                        if(coarse)
+                            for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                                pNodes[ele+child].setFlag(((OCT_COARSE<<NUM_LEVEL_BITS)|pNodes[ele].getLevel()));
+
+
+
+                        
+
+                    }
+
+                    ele = ele + NUM_CHILDREN-1;
+
+                    
+                    
+                    
+                }
+
+            }
+
+
+
+            for(unsigned int ele=eleLocalBegin;ele<eleLocalEnd;ele++)
+                if((pNodes[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT) // trigger remesh only when some refinement occurs (laid back remesh :)  )
+                { 
+                    isOctChange=true;
+                    break;
+                }
+
+            
+
+        }
+
+        bool isOctChanged_g;
+        MPI_Allreduce(&isOctChange,&isOctChanged_g,1,MPI_CXX_BOOL,MPI_LOR,pMesh->getMPIGlobalCommunicator());
+        //if(!m_uiGlobalRank) std::cout<<"is oct changed: "<<isOctChanged_g<<std::endl;
+        return isOctChanged_g;
+
+
+
+
+    }
+
+
 
 }// end of namespace bssn

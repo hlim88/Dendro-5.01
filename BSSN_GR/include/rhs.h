@@ -66,4 +66,13 @@ void freeze_bcs(double *f_rhs, const unsigned int *sz, const unsigned int &bflag
 
 void fake_initial_data(double x, double y, double z, double *u);
 
+void max_spacetime_speeds( double * const lambda1max, double * const lambda2max, double * const lambda3max, 
+                           const double * const alpha, 
+                           const double * const beta1, const double * const beta2, const double * const beta3,
+                           const double * const gtd11, const double * const gtd12, const double * const gtd13,
+                           const double * const gtd22, const double * const gtd23, const double * const gtd33,
+                           const double * const chi, const unsigned int *sz); 
+
+void call_HAD_rhs();
+
 #endif

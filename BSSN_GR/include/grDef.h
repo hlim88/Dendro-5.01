@@ -37,6 +37,14 @@ namespace bssn
 
     static const char * BSSN_CONSTRAINT_VAR_NAMES[]={"C_HAM","C_MOM0","C_MOM1","C_MOM2","C_PSI4_REAL","C_PSI4_IMG"};
 
+    /**
+     * @brief Refinement mode types. 
+     * WAMR : Wavelet based refinement. 
+     * EH : black hole event horizon based refinement. 
+     * EH_WAMR: both even horizon as well as WAMR based refinement. 
+     */
+    enum RefinementMode{WAMR=0, EH, EH_WAMR};
+
 
 
 }// end of namespace bssn

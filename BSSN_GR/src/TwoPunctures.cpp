@@ -12,6 +12,7 @@
 
 using namespace bssn;
 
+MPI_Comm MPI_TP_COMM = MPI_COMM_WORLD;
 
 inline double EXTEND(double M, double r) {
   return ( M * (3./8 * pow(r, 4) / pow(TPID::TP_Extend_Radius, 5) -
@@ -22,8 +23,7 @@ inline double EXTEND(double M, double r) {
 /* -------------------------------------------------------------------*/
 void TwoPunctures(const double xx1, const double yy1, const double zz1, double *vars,
                   double *mp, double *mm, double *mp_adm, double *mm_adm,
-                  double *E, double *J1, double *J2, double *J3
-                 )
+                  double *E, double *J1, double *J2, double *J3)
 {
 
   * mp = TPID::par_m_plus;
@@ -32,17 +32,23 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
   enum GRID_SETUP_METHOD { GSM_Taylor_expansion, GSM_evaluation };
   enum GRID_SETUP_METHOD gsm;
 
+  int rank, npes;
+  MPI_Comm_rank(MPI_TP_COMM,&rank);
+  MPI_Comm_size(MPI_TP_COMM,&npes);
+
   int antisymmetric_lapse, averaged_lapse, pmn_lapse, brownsville_lapse;
 
   int const nvar = 1, n1 = TPID::npoints_A, n2 = TPID::npoints_B, n3 = TPID::npoints_phi;
 
   int const ntotal = n1 * n2 * n3 * nvar;
-#if 1
-  int percent10 = 0;
-#endif
+  
+  #if 1
+    int percent10 = 0;
+  #endif
   static CCTK_REAL *F = NULL;
   static derivs u, v, cf_v;
   CCTK_REAL admMass;
+  
 
   if (! F) {
     CCTK_REAL up, um;
@@ -52,7 +58,8 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
     allocate_derivs (&v, ntotal);
     allocate_derivs (&cf_v, ntotal);
 
-    printf("INFO: b = %g\n", TPID::par_b);
+    if(!rank)
+      printf("INFO: b = %g\n", TPID::par_b);
 
     /* initialise to 0 */
     for (int j = 0; j < ntotal; j++)
@@ -88,16 +95,19 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
 
       CCTK_REAL M_p = TPID::target_M_plus;
       CCTK_REAL M_m = TPID::target_M_minus;
-
-      printf("Attempting to find bare masses.\n");
-      printf("Target ADM masses: M_p=%g and M_m=%g\n",
-                  (double) M_p, (double) M_m);
-      printf("ADM mass tolerance: %g\n", (double) TPID::adm_tol);
-
+      
+      if(!rank){
+        printf("Attempting to find bare masses.\n");
+        printf("Target ADM masses: M_p=%g and M_m=%g\n",
+                    (double) M_p, (double) M_m);
+        printf("ADM mass tolerance: %g\n", (double) TPID::adm_tol);
+      }
       /* Loop until both ADM masses are within adm_tol of their target */
       do {
-        printf("Bare masses: mp=%.15g, mm=%.15g\n",
-                    (double)*mp, (double)*mm);
+
+        if(!rank)
+          printf("Bare masses: mp=%.15g, mm=%.15g\n",(double)*mp, (double)*mm);
+        
         Newton (nvar, n1, n2, n3, v, TPID::Newton_tol, 1);
 
         F_of_v (nvar, n1, n2, n3, v, F, u);
@@ -112,8 +122,9 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
         /* Check how far the current ADM masses are from the target */
         mp_adm_err = fabs(M_p-*mp_adm);
         mm_adm_err = fabs(M_m-*mm_adm);
-        printf("ADM mass error: M_p_err=%.15g, M_m_err=%.15g\n",
-                    mp_adm_err, mm_adm_err);
+
+        if(!rank)
+          printf("ADM mass error: M_p_err=%.15g, M_m_err=%.15g\n",mp_adm_err, mm_adm_err);
 
         /* Invert the ADM mass equation and update the bare mass guess so that
            it gives the correct target ADM masses */
@@ -124,12 +135,12 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
         *mm = (tmp - M_p + M_m)/(2.*(1 + um));
 
         /* Set the par_m_plus and par_m_minus parameters */
-/*
+        /*
         sprintf (valbuf,"%.17g", (double) *mp);
         CCTK_ParameterSet ("par_m_plus", "TwoPunctures", valbuf);
         sprintf (valbuf,"%.17g", (double) *mm);
-        CCTK_ParameterSet ("par_m_minus", "TwoPunctures", valbuf);
-*/
+        CCTK_ParameterSet ("par_m_minus", "TwoPunctures", valbuf);  
+        */
 
         TPID::par_m_plus = *mp;
         TPID::par_m_minus = *mm;
@@ -137,7 +148,8 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
       } while ( (mp_adm_err > TPID::adm_tol) ||
                 (mm_adm_err > TPID::adm_tol) );
 
-      printf("Found bare masses.");
+      if(!rank)
+        printf("Found bare masses.");
     }
 
     Newton (nvar, n1, n2, n3, v, TPID::Newton_tol, TPID::Newton_maxit);
@@ -146,7 +158,8 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
 
     SpecCoef(n1, n2, n3, 0, v.d0, cf_v.d0);
 
-    printf("The two puncture masses are mp=%.17g and mm=%.17g\n", *mp, *mm);
+    if(!rank)
+      printf("The two puncture masses are mp=%.17g and mm=%.17g\n", *mp, *mm);
 
     up = PunctIntPolAtArbitPosition(0, nvar, n1, n2, n3, v, TPID::par_b, 0., 0.);
     um = PunctIntPolAtArbitPosition(0, nvar, n1, n2, n3, v,-TPID::par_b, 0., 0.);
@@ -155,13 +168,18 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
     *mp_adm = (1 + up) * *mp + *mp * *mm / (4. * TPID::par_b);
     *mm_adm = (1 + um) * *mm + *mp * *mm / (4. * TPID::par_b);
 
-    printf("Puncture 1 ADM mass is %g\n", *mp_adm);
-    printf("Puncture 2 ADM mass is %g\n", *mm_adm);
+    if(!rank)
+      printf("Puncture 1 ADM mass is %g\n", *mp_adm);
+    
+    if(!rank)
+      printf("Puncture 2 ADM mass is %g\n", *mm_adm);
 
     /* print out ADM mass, eq.: \Delta M_ADM=2*r*u=4*b*V for A=1,B=0,phi=0 */
-    admMass = (*mp + *mm
-               - 4*TPID::par_b*PunctEvalAtArbitPosition(v.d0, 0, 1, 0, 0, nvar, n1, n2, n3));
-    printf("The total ADM mass is %g\n", admMass);
+    admMass = (*mp + *mm - 4*TPID::par_b*PunctEvalAtArbitPosition(v.d0, 0, 1, 0, 0, nvar, n1, n2, n3));
+    
+    if(!rank)
+      printf("The total ADM mass is %g\n", admMass);
+    
     *E = admMass;
 
     /*
@@ -198,8 +216,9 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
   }
   else
   {
-    printf("internal error. unknown grid_setup_method = %d\n",
-            TPID::grid_setup_method);
+    if(!rank)
+      printf("internal error. unknown grid_setup_method = %d\n", TPID::grid_setup_method);
+    
     exit(-1);
   }
 
@@ -207,14 +226,23 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
   averaged_lapse = (TPID::initial_lapse == LAPSE_AVERAGED) ? 1 : 0;
 	pmn_lapse = (TPID::initial_lapse == LAPSE_PSIN) ? 1 : 0 ;
   if (pmn_lapse)
-		printf("Setting initial lapse to psi^%f profile.\n",
-               TPID::initial_lapse_psi_exponent);
+  {
+    /*if(!rank)
+      printf("Setting initial lapse to psi ^ %f profile.\n", TPID::initial_lapse_psi_exponent);*/
+  }
+		
+  
   brownsville_lapse = (TPID::initial_lapse == LAPSE_BROWNSVILLE) ? 1 : 0;
+  
   if (brownsville_lapse)
-    printf( "Setting initial lapse to a Brownsville-style profile "
-            "with exp %f.", TPID::initial_lapse_psi_exponent);
-
-  printf("Interpolating result.\n");
+  {
+    /*if(!rank)
+     printf( "Setting initial lapse to a Brownsville-style profile with exp %f.", TPID::initial_lapse_psi_exponent);*/
+  }
+    
+  
+  /*if(!rank)
+    printf("Interpolating result.\n");*/
 
  /* Apparently in Cactus, you can choose to save one of the following
   * to 3D arrays:
@@ -367,10 +395,10 @@ void TwoPunctures(const double xx1, const double yy1, const double zz1, double *
     if (conformal_state >= 1) {
       static_psi = p;
     }
-    if (conformal_state >= 2) {
+    if (conformal_state >= 2 && !rank) {
       printf("Code doesn't yet work for conformal_state == 2.\n");
     }
-    if (conformal_state >= 3) {
+    if (conformal_state >= 3 && !rank) {
       printf("Code doesn't yet work for conformal_state == 3.\n");
     }
 

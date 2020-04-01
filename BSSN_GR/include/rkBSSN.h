@@ -26,7 +26,7 @@
 #include "rhs.h"
 #include "physcon.h"
 #include "psi4.h"
-#include "test/meshTestUtils.h"
+#include "meshTestUtils.h"
 #include "TwoPunctures.h"
 #include "dataUtils.h"
 #include "rawIO.h"
@@ -171,7 +171,7 @@ namespace ode
             void performGhostExchangeVars(DendroScalar** zipIn);
 
             /**@brief: performs the intergrid transfer*/
-            void intergridTransferVars(DendroScalar **& zipIn, const ot::Mesh* pnewMesh);
+            void intergridTransferVars(DendroScalar **& zipIn, const ot::Mesh* pnewMesh, bool useUnzip);
 
             /**@brief unzip all the vars specified in VARS*/
             void unzipVars(DendroScalar ** zipIn , DendroScalar **uzipOut);
@@ -183,7 +183,7 @@ namespace ode
             void zipVars(DendroScalar** uzipIn , DendroScalar** zipOut);
 
             /**@brief write the solution to vtu file. */
-            void writeToVTU(DendroScalar **evolZipVarIn, DendroScalar ** constrZipVarIn, unsigned int numEvolVars,unsigned int numConstVars,const unsigned int * evolVarIndices, const unsigned int * constVarIndices);
+            void writeToVTU(DendroScalar **evolZipVarIn, DendroScalar ** constrZipVarIn, unsigned int numEvolVars,unsigned int numConstVars,const unsigned int * evolVarIndices, const unsigned int * constVarIndices, bool zslice=false);
 
             /**@brief: Implementation of the base class time step function*/
             void performSingleIteration();

@@ -137,7 +137,7 @@ namespace bssn
         }
 
 
-#if 0
+        #if 0
         if(!rankGlobal)
         {
                 for(unsigned int index=0;index<numConstraints;index++)
@@ -155,11 +155,86 @@ namespace bssn
 
         }
         par::Mpi_Bcast(&bssn::KO_DISS_SIGMA,1,0,commGlobal);
-#endif
+        #endif
 
 
 
     }
+
+
+    template<typename T>
+    void artificial_dissipation(ot::Mesh * pMesh , T** zipVars, unsigned int numVars, unsigned int nc, unsigned int s,bool isGhostEx)
+    {
+
+        if(!isGhostEx)
+        {
+            for(unsigned int var=0;var<numVars;var++)
+                pMesh->performGhostExchange(zipVars[var]);
+        }
+
+
+        
+
+        const unsigned int nPe = pMesh->getNumNodesPerElement();
+        const unsigned int Nrp = pMesh->getElementOrder()+1;
+        const unsigned int eOrder = pMesh -> getElementOrder();
+
+        RefElement refEl(1,eOrder);
+        refEl.computeFilterOp(nc,s);
+
+        const unsigned int refElSz = refEl.getElementSz();
+        const ot::TreeNode* allElements = &(*(pMesh->getAllElements().begin()));
+        const unsigned int * e2n_cg = &(*(pMesh->getE2NMapping().begin()));
+        const double * filterOp = refEl.getFr1D();
+
+        T* nodalVec = new T[nPe*nPe];
+        T* imV1 = new T[nPe*nPe];
+        T* imV2 = new T[nPe*nPe];
+
+        for(unsigned int var=0;var<numVars;var++)
+        {
+            for(unsigned int ele=pMesh->getElementLocalBegin();ele<pMesh->getElementLocalEnd();ele++)
+            {
+                pMesh->getElementNodalValues(zipVars[var],nodalVec,ele);
+
+                DENDRO_TENSOR_IIAX_APPLY_ELEM(Nrp,filterOp,nodalVec,imV1);
+                DENDRO_TENSOR_IAIX_APPLY_ELEM(Nrp,filterOp,imV1,imV2);
+                DENDRO_TENSOR_AIIX_APPLY_ELEM(Nrp,filterOp,imV2,nodalVec);
+
+                /*
+                no need to scale by the jacobian
+                const unsigned int szX = GRIDX_TO_X(allElements[ele].maxX()) - GRIDX_TO_X(allElements[ele].minX());
+                const unsigned int szY = GRIDY_TO_Y(allElements[ele].maxY()) - GRIDY_TO_Y(allElements[ele].minY());
+                const unsigned int szZ = GRIDZ_TO_Z(allElements[ele].maxZ()) - GRIDZ_TO_Z(allElements[ele].minZ());
+                
+                const double Jx = 1.0/(refElSz/(double (szX)));
+                const double Jy = 1.0/(refElSz/(double (szY)));
+                const double Jz = 1.0/(refElSz/(double (szZ)));
+                
+                for(unsigned int node=0;node<nPe;node++)
+                    nodalVec[node]*= (Jx*Jy*Jz);*/
+
+                
+                for(unsigned int k=0; k < Nrp; k++)
+                    for(unsigned int j=0; j < Nrp; j++)
+                        for(unsigned int i=0; i < Nrp; i++)
+                        {
+                            if(pMesh->isNodeLocal(ele,i,j,k) && !(pMesh->isNodeHanging(ele,i,j,k)))
+                                zipVars[var][e2n_cg[ele * nPe + k * Nrp * Nrp + j * Nrp + i]] = nodalVec[k * Nrp * Nrp + j * Nrp + i];
+                        }
+
+            }
+
+        }
+
+
+        delete [] nodalVec;
+        delete [] imV1;
+        delete [] imV2;
+
+
+    }
+
 
 } // end of namespace bssn
 

@@ -208,7 +208,7 @@ void RK_BSSN::applyInitialConditions(DendroScalar** zipIn)
 {
     unsigned int nodeLookUp_CG;
     unsigned int nodeLookUp_DG;
-    unsigned int x,y,z,len;
+    double x,y,z,len;
     const ot::TreeNode * pNodes=&(*(m_uiMesh->getAllElements().begin()));
     unsigned int ownerID,ii_x,jj_y,kk_z;
     unsigned int eleOrder=m_uiMesh->getElementOrder();
@@ -222,6 +222,8 @@ void RK_BSSN::applyInitialConditions(DendroScalar** zipIn)
     double* var=new double[bssn::BSSN_NUM_VARS];
 
     double mp, mm, mp_adm, mm_adm, E, J1, J2, J3;
+    // set the TP communicator. 
+    MPI_TP_COMM = m_uiComm;
 
     for(unsigned int elem=m_uiMesh->getElementLocalBegin(); elem<m_uiMesh->getElementLocalEnd(); elem++)
     {
@@ -236,11 +238,11 @@ void RK_BSSN::applyInitialConditions(DendroScalar** zipIn)
                     {
                         nodeLookUp_DG=e2n_dg[elem*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
                         m_uiMesh->dg2eijk(nodeLookUp_DG,ownerID,ii_x,jj_y,kk_z);
-                        len=1u<<(m_uiMaxDepth-pNodes[ownerID].getLevel());
+                        len=(double)(1u<<(m_uiMaxDepth-pNodes[ownerID].getLevel()));
                         x=pNodes[ownerID].getX()+ ii_x*(len/(eleOrder));
                         y=pNodes[ownerID].getY()+ jj_y*(len/(eleOrder));
                         z=pNodes[ownerID].getZ()+ kk_z*(len/(eleOrder));
-                        assert(len%eleOrder==0);
+                        
                         if (bssn::BSSN_ID_TYPE == 0) {
                             TwoPunctures((double)x,(double)y,(double)z,var,
                                          &mp, &mm, &mp_adm, &mm_adm, &E, &J1, &J2, &J3);
@@ -302,18 +304,19 @@ void RK_BSSN::initialGridConverge()
     do
     {
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+        #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
         unzipVars_async(m_uiPrevVar,m_uiUnzipVar);
-#else
+        #else
         performGhostExchangeVars(m_uiPrevVar);
         unzipVars(m_uiPrevVar,m_uiUnzipVar);
-#endif
+        #endif
 
 
         if(bssn::BSSN_ENABLE_BLOCK_ADAPTIVITY)
             isRefine=false;
         else
-            isRefine=m_uiMesh->isReMeshUnzip((const DendroScalar **)m_uiUnzipVar,refineVarIds,refineNumVars,waveletTolFunc,bssn::BSSN_DENDRO_AMR_FAC);
+            isRefine=bssn::isRemeshEH(m_uiMesh,(const double **)m_uiUnzipVar,bssn::VAR::U_ALPHA,bssn::BSSN_EH_REFINE_VAL,bssn::BSSN_EH_COARSEN_VAL);
+            //m_uiMesh->isReMeshUnzip((const DendroScalar **)m_uiUnzipVar,refineVarIds,refineNumVars,waveletTolFunc,bssn::BSSN_DENDRO_AMR_FAC);
 
         if(isRefine)
         {
@@ -329,7 +332,7 @@ void RK_BSSN::initialGridConverge()
 
 
             // performs the inter-grid transfer
-            intergridTransferVars(m_uiPrevVar,newMesh);
+            intergridTransferVars(m_uiPrevVar,newMesh,bssn::BSSN_USE_FD_GRID_TRANSFER);
 
             for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
             {
@@ -351,7 +354,7 @@ void RK_BSSN::initialGridConverge()
 
             }
 
-            for(unsigned int stage=0; stage<bssn::BSSN_RK4_STAGES; stage++)
+            for(unsigned int stage=0; stage<m_uiNumRKStages; stage++)
                 for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                 {
                     delete [] m_uiStage[stage][index];
@@ -374,10 +377,10 @@ void RK_BSSN::initialGridConverge()
             std::swap(newMesh,m_uiMesh);
             delete newMesh;
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+            #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
             // reallocates mpi resources for the the new mesh. (this will deallocate the old resources)
             reallocateMPIResources();
-#endif
+            #endif
 
             if(m_uiMesh->isActive())
             {
@@ -454,7 +457,7 @@ void RK_BSSN::reallocateMPIResources()
 
 }
 
-void RK_BSSN::writeToVTU(DendroScalar **evolZipVarIn, DendroScalar ** constrZipVarIn, unsigned int numEvolVars,unsigned int numConstVars,const unsigned int * evolVarIndices, const unsigned int * constVarIndices)
+void RK_BSSN::writeToVTU(DendroScalar **evolZipVarIn, DendroScalar ** constrZipVarIn, unsigned int numEvolVars,unsigned int numConstVars,const unsigned int * evolVarIndices, const unsigned int * constVarIndices, bool zslice)
 {
     bssn::timer::t_ioVtu.start();
 
@@ -486,7 +489,16 @@ void RK_BSSN::writeToVTU(DendroScalar **evolZipVarIn, DendroScalar ** constrZipV
     char fPrefix[256];
     sprintf(fPrefix,"%s_%d",bssn::BSSN_VTU_FILE_PREFIX.c_str(),m_uiCurrentStep);
 
-    io::vtk::mesh2vtuFine(m_uiMesh,fPrefix,2,fDataNames,fData,(numEvolVars+numConstVars),(const char **)&pDataNames_char[0],(const double **)pData);
+    if(zslice)
+    {
+        unsigned int s_val[3]= {1u<<(m_uiMaxDepth-1), 1u<<(m_uiMaxDepth-1), 1u<<(m_uiMaxDepth-1)};
+        unsigned int s_norm[3] ={0,0,1};
+        io::vtk::mesh2vtu_slice(m_uiMesh,s_val, s_norm, fPrefix,2,fDataNames,fData,(numEvolVars+numConstVars),(const char **)&pDataNames_char[0],(const double **)pData);
+
+    }else{
+        io::vtk::mesh2vtuFine(m_uiMesh,fPrefix,2,fDataNames,fData,(numEvolVars+numConstVars),(const char **)&pDataNames_char[0],(const double **)pData);
+    }
+    
 
     bssn::timer::t_ioVtu.stop();
 
@@ -504,12 +516,27 @@ void RK_BSSN::performGhostExchangeVars(DendroScalar** zipIn)
 
 }
 
-void RK_BSSN::intergridTransferVars(DendroScalar**& zipIn, const ot::Mesh* pnewMesh)
+void RK_BSSN::intergridTransferVars(DendroScalar**& zipIn, const ot::Mesh* pnewMesh,bool useUnzip)
 {
     bssn::timer::t_gridTransfer.start();
 
-    for(unsigned int v=0; v<bssn::BSSN_NUM_VARS; v++)
-        m_uiMesh->interGridTransfer(zipIn[v],pnewMesh);
+    if(!useUnzip)
+    {
+        for(unsigned int v=0; v<bssn::BSSN_NUM_VARS; v++)
+            m_uiMesh->interGridTransfer(zipIn[v],pnewMesh);
+    }else
+    {
+        unzipVars_async(zipIn,m_uiUnzipVar);
+        for(unsigned int v=0; v<bssn::BSSN_NUM_VARS; v++)
+        {
+            m_uiMesh->interGridTransferUnzip(m_uiUnzipVar[v],zipIn[v],pnewMesh);
+        }
+        
+    }
+
+
+
+    
 
     bssn::timer::t_gridTransfer.stop();
 
@@ -580,19 +607,19 @@ void RK_BSSN::performSingleIteration()
     {
         double current_t=m_uiCurrentTime;
         double current_t_adv=current_t;
-#if 0
-        sprintf(frawName,"rkU_%d",3*m_uiCurrentStep);
-        io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiPrevVar,bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif
+        #if 0
+            sprintf(frawName,"rkU_%d",3*m_uiCurrentStep);
+            io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiPrevVar,bssn::BSSN_NUM_VARS,NULL,frawName);
+        #endif
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+        #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
         unzipVars_async(m_uiPrevVar,m_uiUnzipVar);
-#else
+        #else
         //1. perform ghost exchange.
         performGhostExchangeVars(m_uiPrevVar);
         //2. unzip all the variables.
         unzipVars(m_uiPrevVar,m_uiUnzipVar);
-#endif
+        #endif
 
 
         int rank =m_uiMesh->getMPIRank();
@@ -627,17 +654,17 @@ void RK_BSSN::performSingleIteration()
                enforce_bssn_constraints(m_uiStage[0], node);
             }
             
-#if 0            
+            #if 0            
             sprintf(frawName,"rkU_%d",3*m_uiCurrentStep + 1);
             io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiStage[0],bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif            
+            #endif            
             
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+            #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                 unzipVars_async(m_uiStage[0],m_uiUnzipVar);
-#else
+            #else
                 performGhostExchangeVars(m_uiStage[0]);
                 unzipVars(m_uiStage[0],m_uiUnzipVar);
-#endif
+            #endif
             
             bssnRHS(m_uiUnzipVarRHS,(const DendroScalar **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size());
             zipVars(m_uiUnzipVarRHS,m_uiStage[1]);
@@ -653,17 +680,17 @@ void RK_BSSN::performSingleIteration()
                enforce_bssn_constraints(m_uiStage[1], node);
             }
             
-#if 0
+            #if 0
             sprintf(frawName,"rkU_%d",3*m_uiCurrentStep + 2);
             io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiStage[1],bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif
+            #endif
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+            #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                 unzipVars_async(m_uiStage[1],m_uiUnzipVar);
-#else
+            #else
                 performGhostExchangeVars(m_uiStage[1]);
                 unzipVars(m_uiStage[1],m_uiUnzipVar);
-#endif            
+            #endif            
             
             
                 
@@ -688,10 +715,10 @@ void RK_BSSN::performSingleIteration()
             // stage 0   f(u_k)
             bssnRHS(m_uiUnzipVarRHS,(const DendroScalar **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size());    
             zipVars(m_uiUnzipVarRHS,m_uiStage[0]);
-#if 0
+            #if 0
             sprintf(frawName,"rk3_step_%d_stage_%d",m_uiCurrentStep,0);
-            io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiStage[0],bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif            
+            io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiStage[0],bssn::BSSN_NUM_VARS,NULL,frawName);    
+            #endif            
             // u1
             for(unsigned int node=nodeLocalBegin; node<nodeLocalEnd; node++)
             {
@@ -703,27 +730,27 @@ void RK_BSSN::performSingleIteration()
                enforce_bssn_constraints(m_uiVarIm, node);
             }
             
-#if 0
+            #if 0
             sprintf(frawName,"rkU_%d",3*m_uiCurrentStep+(1));
             io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiVarIm,bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif            
+            #endif            
             current_t_adv=current_t+m_uiT_h;
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+            #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                 unzipVars_async(m_uiVarIm,m_uiUnzipVar);
-#else
+            #else
                 performGhostExchangeVars(m_uiVarIm);
                 unzipVars(m_uiVarIm,m_uiUnzipVar);
-#endif
+            #endif
 
                 
             // stage 1
             bssnRHS(m_uiUnzipVarRHS,(const DendroScalar **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size());    
             zipVars(m_uiUnzipVarRHS,m_uiStage[1]);
-#if 0      
+            #if 0      
             sprintf(frawName,"rk3_step_%d_stage_%d",m_uiCurrentStep,1);
             io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiStage[1],bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif
+            #endif
 
             // u2
             for(unsigned int node=nodeLocalBegin; node<nodeLocalEnd; node++)
@@ -736,27 +763,27 @@ void RK_BSSN::performSingleIteration()
                enforce_bssn_constraints(m_uiVarIm, node);
             }
             
-#if 0
+            #if 0
             sprintf(frawName,"rkU_%d",3*m_uiCurrentStep+(2));
             io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiVarIm,bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif            
+            #endif            
             current_t_adv=current_t+m_uiT_h;
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+            #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                 unzipVars_async(m_uiVarIm,m_uiUnzipVar);
-#else
+            #else
                 performGhostExchangeVars(m_uiVarIm);
                 unzipVars(m_uiVarIm,m_uiUnzipVar);
-#endif
+            #endif
             
             // stage 2.     
             bssnRHS(m_uiUnzipVarRHS,(const DendroScalar **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size());    
             zipVars(m_uiUnzipVarRHS,m_uiStage[2]);
 
-#if 0
+            #if 0
             sprintf(frawName,"rk3_step_%d_stage_%d",m_uiCurrentStep,2);
             io::varToRawData((const ot::Mesh*)m_uiMesh,(const double **)m_uiStage[1],bssn::BSSN_NUM_VARS,NULL,frawName);
-#endif            
+            #endif            
             
             // u_(k+1)
             for(unsigned int node=nodeLocalBegin; node<nodeLocalEnd; node++)
@@ -777,13 +804,13 @@ void RK_BSSN::performSingleIteration()
             {
 
 
-#ifdef DEBUG_RK_SOLVER
+            #ifdef DEBUG_RK_SOLVER
                 if(!rank)std::cout<<" stage: "<<stage<<" begin: "<<std::endl;
                 for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                     ot::test::isUnzipNaN(m_uiMesh,m_uiUnzipVar[index]);
-#endif
+            #endif
 
-#ifdef BSSN_ENABLE_CUDA
+            #ifdef BSSN_ENABLE_CUDA
                 cuda::BSSNComputeParams bssnParams;
                 bssnParams.BSSN_LAMBDA[0]=bssn::BSSN_LAMBDA[0];
                 bssnParams.BSSN_LAMBDA[1]=bssn::BSSN_LAMBDA[1];
@@ -804,7 +831,7 @@ void RK_BSSN::performSingleIteration()
 
                 dim3 threadBlock(16,16,1);
                 cuda::computeRHS(m_uiUnzipVarRHS,(const double **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size(),(const cuda::BSSNComputeParams*) &bssnParams,threadBlock,pt_min,pt_max,1);
-#else
+            #else
 
                 for(unsigned int blk=0; blk<blkList.size(); blk++)
                 {
@@ -828,33 +855,33 @@ void RK_BSSN::performSingleIteration()
                     ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
 
-#ifdef BSSN_RHS_STAGED_COMP
+            #ifdef BSSN_RHS_STAGED_COMP
 
                     bssnrhs_sep(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#else
+            #else
                     bssnrhs(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#endif
+            #endif
 
 
                 }
-#endif
+            #endif
 
-#ifdef DEBUG_RK_SOLVER
+            #ifdef DEBUG_RK_SOLVER
                 if(!rank)std::cout<<" stage: "<<stage<<" af rhs UNZIP RHS TEST:"<<std::endl;
                 for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                     ot::test::isUnzipInternalNaN(m_uiMesh,m_uiUnzipVarRHS[index]);
-#endif
+            #endif
 
 
 
                 zipVars(m_uiUnzipVarRHS,m_uiStage[stage]);
 
 
-#ifdef DEBUG_RK_SOLVER
+            #ifdef DEBUG_RK_SOLVER
                 for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                     if(seq::test::isNAN(m_uiStage[stage][index]+m_uiMesh->getNodeLocalBegin(),m_uiMesh->getNumLocalMeshNodes()))
                         std::cout<<" var: "<<index<<" contains nan af zip  stage: "<<stage<<std::endl;
-#endif
+            #endif
 
                 /*for(unsigned int index=0;index<bssn::BSSN_NUM_VARS;index++)
                      for(unsigned int node=nodeLocalBegin;node<nodeLocalEnd;node++)
@@ -876,12 +903,12 @@ void RK_BSSN::performSingleIteration()
 
 
                 current_t_adv=current_t+RK4_T[stage+1]*m_uiT_h;
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+            #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                 unzipVars_async(m_uiVarIm,m_uiUnzipVar);
-#else
+            #else
                 performGhostExchangeVars(m_uiVarIm);
                 unzipVars(m_uiVarIm,m_uiUnzipVar);
-#endif
+            #endif
 
 
             }
@@ -889,14 +916,14 @@ void RK_BSSN::performSingleIteration()
             current_t_adv=current_t+RK4_T[(bssn::BSSN_RK4_STAGES-1)]*m_uiT_h;
 
 
-#ifdef DEBUG_RK_SOLVER
+            #ifdef DEBUG_RK_SOLVER
             if(!rank)std::cout<<" stage: "<<(bssn::BSSN_RK4_STAGES-1)<<" begin: "<<std::endl;
 
             for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                 ot::test::isUnzipNaN(m_uiMesh,m_uiUnzipVar[index]);
-#endif
+            #endif
 
-#ifdef BSSN_ENABLE_CUDA
+            #ifdef BSSN_ENABLE_CUDA
             cuda::BSSNComputeParams bssnParams;
             bssnParams.BSSN_LAMBDA[0]=bssn::BSSN_LAMBDA[0];
             bssnParams.BSSN_LAMBDA[1]=bssn::BSSN_LAMBDA[1];
@@ -917,7 +944,7 @@ void RK_BSSN::performSingleIteration()
 
             dim3 threadBlock(16,16,1);
             cuda::computeRHS(m_uiUnzipVarRHS,(const double **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size(),(const cuda::BSSNComputeParams*) &bssnParams,threadBlock,pt_min,pt_max,1);
-#else
+            #else
 
 
             for(unsigned int blk=0; blk<blkList.size(); blk++)
@@ -943,23 +970,23 @@ void RK_BSSN::performSingleIteration()
                 ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
 
-#ifdef BSSN_RHS_STAGED_COMP
+            #ifdef BSSN_RHS_STAGED_COMP
 
                 bssnrhs_sep(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#else
+            #else
                 bssnrhs(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#endif
+            #endif
 
 
             }
 
-#endif
+        #endif
 
-#ifdef DEBUG_RK_SOLVER
+        #ifdef DEBUG_RK_SOLVER
             if(!rank)std::cout<<" stage: "<<(bssn::BSSN_RK4_STAGES-1)<<" af rhs UNZIP RHS TEST:"<<std::endl;
             for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                 ot::test::isUnzipInternalNaN(m_uiMesh,m_uiUnzipVarRHS[index]);
-#endif
+        #endif
 
             zipVars(m_uiUnzipVarRHS,m_uiStage[(bssn::BSSN_RK4_STAGES-1)]);
 
@@ -999,15 +1026,15 @@ void RK_BSSN::performSingleIteration()
                 {
                     double current_t=m_uiCurrentTime;
                     double current_t_adv=current_t;
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+                    #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                     unzipVars_async(m_uiPrevVar,m_uiUnzipVar);
-#else
+                    #else
                     //1. perform ghost exchange.
                     performGhostExchangeVars(m_uiPrevVar);
 
                     //2. unzip all the variables.
                     unzipVars(m_uiPrevVar,m_uiUnzipVar);
-#endif
+                    #endif
 
 
                     int rank =m_uiMesh->getMPIRank();
@@ -1032,14 +1059,14 @@ void RK_BSSN::performSingleIteration()
                     {
 
 
-#ifdef DEBUG_RK_SOLVER
+                        #ifdef DEBUG_RK_SOLVER
                         if(!rank)std::cout<<" stage: "<<stage<<" begin: "<<std::endl;
                         for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                             ot::test::isUnzipNaN(m_uiMesh,m_uiUnzipVar[index]);
-#endif
+                        #endif
 
 
-#ifdef BSSN_ENABLE_CUDA
+                        #ifdef BSSN_ENABLE_CUDA
                         cuda::BSSNComputeParams bssnParams;
                         bssnParams.BSSN_LAMBDA[0]=bssn::BSSN_LAMBDA[0];
                         bssnParams.BSSN_LAMBDA[1]=bssn::BSSN_LAMBDA[1];
@@ -1060,7 +1087,7 @@ void RK_BSSN::performSingleIteration()
 
                         dim3 threadBlock(16,16,1);
                         cuda::computeRHS(m_uiUnzipVarRHS,(const double **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size(),(const cuda::BSSNComputeParams*) &bssnParams,threadBlock,pt_min,pt_max,1);
-#else
+                        #else
 
                         for(unsigned int blk=0; blk<blkList.size(); blk++)
                         {
@@ -1084,34 +1111,34 @@ void RK_BSSN::performSingleIteration()
                             ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
 
-#ifdef BSSN_RHS_STAGED_COMP
+                            #ifdef BSSN_RHS_STAGED_COMP
 
                             bssnrhs_sep(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#else
+                            #else
                             bssnrhs(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#endif
+                            #endif
 
 
                         }
-#endif
+                        #endif
 
 
-#ifdef DEBUG_RK_SOLVER
+                        #ifdef DEBUG_RK_SOLVER
                         if(!rank)std::cout<<" stage: "<<stage<<" af rhs UNZIP RHS TEST:"<<std::endl;
                         for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                             ot::test::isUnzipInternalNaN(m_uiMesh,m_uiUnzipVarRHS[index]);
-#endif
+                        #endif
 
 
 
                         zipVars(m_uiUnzipVarRHS,m_uiStage[stage]);
 
 
-#ifdef DEBUG_RK_SOLVER
+                    #ifdef DEBUG_RK_SOLVER
                         for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                             if(seq::test::isNAN(m_uiStage[stage][index]+m_uiMesh->getNodeLocalBegin(),m_uiMesh->getNumLocalMeshNodes()))
                                 std::cout<<" var: "<<index<<" contains nan af zip  stage: "<<stage<<std::endl;
-#endif
+                    #endif
 
                         /*for(unsigned int index=0;index<bssn::BSSN_NUM_VARS;index++)
                             for(unsigned int node=nodeLocalBegin;node<nodeLocalEnd;node++)
@@ -1134,12 +1161,12 @@ void RK_BSSN::performSingleIteration()
 
 
                         current_t_adv=current_t+RK_T[stage+1]*m_uiT_h;
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+                    #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                         unzipVars_async(m_uiVarIm,m_uiUnzipVar);
-#else
+                    #else
                         performGhostExchangeVars(m_uiVarIm);
                         unzipVars(m_uiVarIm,m_uiUnzipVar);
-#endif
+                    #endif
 
 
                     }
@@ -1147,16 +1174,16 @@ void RK_BSSN::performSingleIteration()
                     current_t_adv=current_t+RK_T[(bssn::BSSN_RK45_STAGES-1)];
 
 
-#ifdef DEBUG_RK_SOLVER
+                    #ifdef DEBUG_RK_SOLVER
                     if(!rank)std::cout<<" stage: "<<(bssn::BSSN_RK45_STAGES-1)<<" begin: "<<std::endl;
 
                     for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                         ot::test::isUnzipNaN(m_uiMesh,m_uiUnzipVar[index]);
-#endif
+                    #endif
 
 
 
-#ifdef BSSN_ENABLE_CUDA
+                    #ifdef BSSN_ENABLE_CUDA
                     cuda::BSSNComputeParams bssnParams;
                     bssnParams.BSSN_LAMBDA[0]=bssn::BSSN_LAMBDA[0];
                     bssnParams.BSSN_LAMBDA[1]=bssn::BSSN_LAMBDA[1];
@@ -1177,7 +1204,7 @@ void RK_BSSN::performSingleIteration()
 
                     dim3 threadBlock(16,16,1);
                     cuda::computeRHS(m_uiUnzipVarRHS,(const double **)m_uiUnzipVar,&(*(blkList.begin())),blkList.size(),(const cuda::BSSNComputeParams*) &bssnParams,threadBlock,pt_min,pt_max,1);
-#else
+                #else
 
                     for(unsigned int blk=0; blk<blkList.size(); blk++)
                     {
@@ -1201,24 +1228,24 @@ void RK_BSSN::performSingleIteration()
                         ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
 
-#ifdef BSSN_RHS_STAGED_COMP
+                        #ifdef BSSN_RHS_STAGED_COMP
 
                         bssnrhs_sep(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#else
+                        #else
                         bssnrhs(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-#endif
+                        #endif
 
 
                     }
 
-#endif
+                #endif
 
-#ifdef DEBUG_RK_SOLVER
+                #ifdef DEBUG_RK_SOLVER
                     if(!rank)std::cout<<" stage: "<<(bssn::BSSN_RK45_STAGES-1)<<" af rhs UNZIP RHS TEST:"<<std::endl;
 
                     for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                         ot::test::isUnzipInternalNaN(m_uiMesh,m_uiUnzipVarRHS[index]);
-#endif
+                #endif
 
                     zipVars(m_uiUnzipVarRHS,m_uiStage[(bssn::BSSN_RK45_STAGES-1)]);
 
@@ -1315,7 +1342,8 @@ void RK_BSSN::rkSolve()
 
     if(m_uiCurrentStep==0)
     {
-        applyInitialConditions(m_uiPrevVar);
+        //applyInitialConditions(m_uiPrevVar);
+        initialGridConverge();
     }
 
     bool isRefine=true;
@@ -1366,19 +1394,19 @@ void RK_BSSN::rkSolve()
         if((m_uiCurrentStep%bssn::BSSN_REMESH_TEST_FREQ)==0)
         {
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+            #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
             unzipVars_async(m_uiPrevVar,m_uiUnzipVar);
-#else
+            #else
             performGhostExchangeVars(m_uiPrevVar);
             //isRefine=m_uiMesh->isReMesh((const double **)m_uiPrevVar,refineVarIds,refineNumVars,bssn::BSSN_WAVELET_TOL);
             unzipVars(m_uiPrevVar,m_uiUnzipVar);
-#endif
+            #endif
 
-//                     char fPrefix[256];
-//                     sprintf(fPrefix,"%s_wavelets_%d",bssn::BSSN_VTU_FILE_PREFIX.c_str(),m_uiCurrentStep);
-//                     io::vtk::waveletsToVTU(m_uiMesh,(const double **)m_uiPrevVar,(const double**)m_uiUnzipVar,refineVarIds,refineNumVars,(const char*)fPrefix);
+            //                     char fPrefix[256];
+            //                     sprintf(fPrefix,"%s_wavelets_%d",bssn::BSSN_VTU_FILE_PREFIX.c_str(),m_uiCurrentStep);
+            //                     io::vtk::waveletsToVTU(m_uiMesh,(const double **)m_uiPrevVar,(const double**)m_uiUnzipVar,refineVarIds,refineNumVars,(const char*)fPrefix);
 
-#ifdef DEBUG_RK_SOLVER
+        #ifdef DEBUG_RK_SOLVER
             if(m_uiMesh->isActive())
             {
                 if(!m_uiMesh->getMPIRank())std::cout<<" isRemesh Unzip : "<<std::endl;
@@ -1387,19 +1415,45 @@ void RK_BSSN::rkSolve()
 
             }
 
-#endif
+        #endif
             bssn::timer::t_isReMesh.start();
+            //const double r[3] ={3.0,3.0,3.0};
             if(bssn::BSSN_ENABLE_BLOCK_ADAPTIVITY)
                 isRefine=false;
             else
-                isRefine=m_uiMesh->isReMeshUnzip((const double **)m_uiUnzipVar,refineVarIds,refineNumVars,waveletTolFunc,bssn::BSSN_DENDRO_AMR_FAC);
+            {
+                if(bssn::BSSN_REFINEMENT_MODE == bssn::RefinementMode::WAMR)
+                {
+                    isRefine=m_uiMesh->isReMeshUnzip((const double **)m_uiUnzipVar,refineVarIds,refineNumVars,waveletTolFunc,bssn::BSSN_DENDRO_AMR_FAC); 
+
+                }else if(bssn::BSSN_REFINEMENT_MODE == bssn::RefinementMode::EH)
+                {
+                    isRefine = bssn::isRemeshEH(m_uiMesh,(const double **)m_uiUnzipVar,bssn::VAR::U_ALPHA,bssn::BSSN_EH_REFINE_VAL,bssn::BSSN_EH_COARSEN_VAL,true);
+
+                }else if(bssn::BSSN_REFINEMENT_MODE == bssn::RefinementMode::EH_WAMR)
+                {
+                    const bool isR1 = m_uiMesh->isReMeshUnzip((const double **)m_uiUnzipVar,refineVarIds,refineNumVars,waveletTolFunc,bssn::BSSN_DENDRO_AMR_FAC); 
+                    const bool isR2 = bssn::isRemeshEH(m_uiMesh,(const double **)m_uiUnzipVar,bssn::VAR::U_ALPHA,bssn::BSSN_EH_REFINE_VAL,bssn::BSSN_EH_COARSEN_VAL,false);
+
+                    isRefine = (isR1 || isR2);
+                    
+                }else
+                {
+                    std::cout<<" Error : "<<__func__<<" invalid refinement mode specified "<<std::endl;
+                    MPI_Abort(m_uiComm,0);
+                }
+                
+                
+            }
+                
+                
             bssn::timer::t_isReMesh.stop();
 
             if(isRefine)
             {
 
 
-#ifdef DEBUG_IS_REMESH
+            #ifdef DEBUG_IS_REMESH
                 unsigned int rank=m_uiMesh->getMPIRankGlobal();
                 MPI_Comm globalComm=m_uiMesh->getMPIGlobalCommunicator();
                 std::vector<ot::TreeNode> unChanged;
@@ -1460,7 +1514,7 @@ void RK_BSSN::rkSolve()
                 io::vtk::oct2vtu(&(*(coarsened.begin())),coarsened.size(),fN3,globalComm);
                 io::vtk::oct2vtu(&(*(localBlocks.begin())),localBlocks.size(),fN4,globalComm);
 
-#endif
+            #endif
                 bssn::timer::t_mesh.start();
                 ot::Mesh* newMesh=m_uiMesh->ReMesh(bssn::BSSN_DENDRO_GRAIN_SZ,bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX);
                 bssn::timer::t_mesh.stop();
@@ -1475,7 +1529,7 @@ void RK_BSSN::rkSolve()
 
 
                 // performs the inter-grid transfer
-                intergridTransferVars(m_uiPrevVar,newMesh);
+                intergridTransferVars(m_uiPrevVar,newMesh,bssn::BSSN_USE_FD_GRID_TRANSFER);
 
                 for(unsigned int index=0; index<bssn::BSSN_NUM_VARS; index++)
                 {
@@ -1522,10 +1576,18 @@ void RK_BSSN::rkSolve()
                 std::swap(newMesh,m_uiMesh);
                 delete newMesh;
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
-                // reallocates mpi resources for the the new mesh. (this will deallocate the old resources)
-                reallocateMPIResources();
-#endif
+                if(m_uiCurrentStep == 0)
+                    applyInitialConditions(m_uiPrevVar);
+
+
+                unsigned int lmin, lmax;
+                m_uiMesh->computeMinMaxLevel(lmin,lmax);    
+                bssn::BSSN_RK45_TIME_STEP_SIZE=bssn::BSSN_CFL_FACTOR*((bssn::BSSN_COMPD_MAX[0]-bssn::BSSN_COMPD_MIN[0])*((1u<<(m_uiMaxDepth-lmax))/((double) bssn::BSSN_ELE_ORDER))/((double)(1u<<(m_uiMaxDepth)))); 
+
+                #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+                    // reallocates mpi resources for the the new mesh. (this will deallocate the old resources)
+                    reallocateMPIResources();
+                #endif
 
                 if(m_uiMesh->isActive())
                 {
@@ -1537,6 +1599,7 @@ void RK_BSSN::rkSolve()
 
                 }
 
+                
 
 
             }
@@ -1546,18 +1609,18 @@ void RK_BSSN::rkSolve()
 
 
 
-        if((m_uiCurrentStep%bssn::BSSN_IO_OUTPUT_FREQ)==0)
+        if((m_uiCurrentStep % bssn::BSSN_GW_EXTRACT_FREQ)==0)
         {
 
-#ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
+        #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
             unzipVars_async(m_uiPrevVar,m_uiUnzipVar);
-#else
+        #else
             performGhostExchangeVars(m_uiPrevVar);
             unzipVars(m_uiPrevVar,m_uiUnzipVar);
-#endif
+        #endif
 
 
-#ifdef BSSN_COMPUTE_CONSTRAINTS
+        #ifdef BSSN_COMPUTE_CONSTRAINTS
 
             const std::vector<ot::Block> blkList=m_uiMesh->getLocalBlockList();
 
@@ -1603,22 +1666,23 @@ void RK_BSSN::rkSolve()
             }
 
             bssn::extractConstraints(m_uiMesh,(const DendroScalar **)m_uiConstraintVars,m_uiPrevVar[BHLOC::EXTRACTION_VAR_ID],BHLOC::EXTRACTION_TOL,m_uiCurrentStep);
-#ifndef BSSN_KERR_SCHILD_TEST
-    #ifdef BSSN_EXTRACT_GRAVITATIONAL_WAVES
+        #ifndef BSSN_KERR_SCHILD_TEST
+            #ifdef BSSN_EXTRACT_GRAVITATIONAL_WAVES
             GW::extractFarFieldPsi4(m_uiMesh,(const DendroScalar **)m_uiConstraintVars,m_uiCurrentStep,m_uiCurrentTime);
+            #endif
+        #endif
+
     #endif
-#endif
 
-#endif
-
-#ifdef BSSN_ENABLE_VTU_OUTPUT
-            writeToVTU(m_uiPrevVar,m_uiConstraintVars,bssn::BSSN_NUM_EVOL_VARS_VTU_OUTPUT,bssn::BSSN_NUM_CONST_VARS_VTU_OUTPUT,bssn::BSSN_VTU_OUTPUT_EVOL_INDICES,bssn::BSSN_VTU_OUTPUT_CONST_INDICES);
-#endif
+        #ifdef BSSN_ENABLE_VTU_OUTPUT
+            if((m_uiCurrentStep % bssn::BSSN_IO_OUTPUT_FREQ) ==0)
+                writeToVTU(m_uiPrevVar,m_uiConstraintVars,bssn::BSSN_NUM_EVOL_VARS_VTU_OUTPUT,bssn::BSSN_NUM_CONST_VARS_VTU_OUTPUT,bssn::BSSN_VTU_OUTPUT_EVOL_INDICES,bssn::BSSN_VTU_OUTPUT_CONST_INDICES,bssn::BSSN_VTU_Z_SLICE_ONLY);
+        #endif
 
 
-#ifdef BSSN_EXTRACT_BH_LOCATIONS
+        #ifdef BSSN_EXTRACT_BH_LOCATIONS
             bssn::writeBHCoordinates((const ot::Mesh *)m_uiMesh,(const Point *) m_uiBHLoc,2,m_uiCurrentStep);
-#endif
+        #endif
 
 
 
@@ -1633,16 +1697,15 @@ void RK_BSSN::rkSolve()
 
         bssn::timer::t_rkStep.stop();
 
-#ifdef BSSN_EXTRACT_BH_LOCATIONS
-        bssn::extractBHCoords((const ot::Mesh *)m_uiMesh,(const DendroScalar*)m_uiVar[BHLOC::EXTRACTION_VAR_ID],BHLOC::EXTRACTION_TOL,(const Point *) m_uiBHLoc,2,(Point*)bhLoc);
-        m_uiBHLoc[0]=bhLoc[0];
-        m_uiBHLoc[1]=bhLoc[1];
-#endif
-
+        #ifdef BSSN_EXTRACT_BH_LOCATIONS
+            bssn::extractBHCoords((const ot::Mesh *)m_uiMesh,(const DendroScalar*)m_uiVar[BHLOC::EXTRACTION_VAR_ID],BHLOC::EXTRACTION_TOL,(const Point *) m_uiBHLoc,2,(Point*)bhLoc);
+            m_uiBHLoc[0]=bhLoc[0];
+            m_uiBHLoc[1]=bhLoc[1];
+        #endif
 
 
         std::swap(m_uiVar,m_uiPrevVar);
-
+        //bssn::artificial_dissipation(m_uiMesh,m_uiPrevVar,bssn::BSSN_NUM_VARS,bssn::BSSN_DISSIPATION_NC,bssn::BSSN_DISSIPATION_S,false);
         //if(m_uiCurrentStep==1) break;
 
     }

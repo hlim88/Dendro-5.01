@@ -14,6 +14,7 @@
 #endif
 
 #include <iostream>
+#include <ostream>
 #include "dendro.h"
 
 #ifndef DENDRO_5_0_MATRECORD_H
@@ -212,10 +213,45 @@ namespace ot
                 return (!((*this) < other)) ;
             }
 
+            friend std::ostream & operator<< (std::ostream & os, MatRecord const & re) 
+            {
+                return (os << " row : "<<re.getRowID() << " col: "<<re.getColID()<<" rdim: "<<re.getRowDim()<<" cdim: "<<re.getColDim()<< "val: "<<re.getMatVal() );
+            }
+
+            
+
     };
+
 
 }
 
+
+namespace par
+{
+    template<typename T>
+    class Mpi_datatype;
+
+    template <>
+    class Mpi_datatype< ot::MatRecord > 
+    {
+        public:
+            static MPI_Datatype value()
+            {
+                static bool         first = true;
+                static MPI_Datatype datatype;
+
+                if (first)
+                {
+                    first = false;
+                    MPI_Type_contiguous(sizeof(ot::MatRecord), MPI_BYTE, &datatype);
+                    MPI_Type_commit(&datatype);
+                }
+
+                return datatype;
+            }
+    };
+
+}
 
 
 #endif //DENDRO_5_0_MATRECORD_H

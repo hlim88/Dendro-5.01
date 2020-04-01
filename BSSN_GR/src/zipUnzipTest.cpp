@@ -304,7 +304,7 @@ int main (int argc, char** argv)
 
     bssn::timer::t_mesh.start();
 
-    ot::Mesh * mesh=new ot::Mesh(balOct,1,bssn::BSSN_ELE_ORDER,comm,true,bssn::BSSN_DENDRO_GRAIN_SZ,bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX);
+    ot::Mesh * mesh=new ot::Mesh(balOct,1,bssn::BSSN_ELE_ORDER,comm,true,ot::SM_TYPE::FDM,bssn::BSSN_DENDRO_GRAIN_SZ,bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX);
 
     bssn::timer::t_mesh.stop();
 
