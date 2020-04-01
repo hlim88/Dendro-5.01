@@ -2,7 +2,7 @@
 option(QUADGRAV_PROFILE_HUMAN_READABLE " enables human readable profile outputs" ON)
 option(QUADGRAV_CONSEC_COMM_SELECT "rank selection performed using consecative ranks (works with arbitary number of procs.) if off ranks selected in binary tree fashion. (works only with powers of 2)" ON)
 option(QUADGRAV_ENABLE_VTU_OUTPUT "Enables vtu output" ON)
-option(QUADGRAV_COMPUTE_CONSTRAINTS "Enable constraint equation computations" ON)
+option(QUADGRAV_COMPUTE_CONSTRAINTS "Enable constraint equation computations" OFF)
 option(QUADGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT "write constrints to vtu" ON)
 option(QUADGRAV_ETA_FUNCTION "Use function as ETA damping" OFF)
 option(QUADGRAV_KERR_SCHILD_TEST "compare with the analytical Kerr-Schild sol. for a single BH" OFF)

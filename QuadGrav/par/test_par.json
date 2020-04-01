@@ -29,7 +29,7 @@
             "           " : "number of constraint variables to ouput in vtu files",
             "BSSN_NUM_CONST_VARS_VTU_OUTPUT": 6,
             "           " : "constraint variable var ids",
-            "BSSN_VTU_OUTPUT_CONST_INDICES": [0,1,2,3],
+            "BSSN_VTU_OUTPUT_CONST_INDICES": [0,1,2,3,4,5],
     "__comment__" : "=======================================================",
 
 
