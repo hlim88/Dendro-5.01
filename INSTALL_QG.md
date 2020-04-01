@@ -45,7 +45,7 @@ You will need the following tools:
 - Python version > 3.5; (For RHS generation scripts. Not required for 
 building code unless you want to generate RHS during compile time)
 - zlib compression library;
-- Optional : BLAS and LAPACK
+- BLAS and LAPACK
 
 #### Building Dendro
 
@@ -66,7 +66,7 @@ After cloning the repo, follow the configure command:
        -DALLTOALLV_FIX=OFF                       \
        -DHILBERT_ORDERING=ON                     \
        -DPROFILE_TREE_SORT=OFF                   \
-       -DSPLITTER_SELECTION_FIX=OFF              \
+       -DSPLITTER_SELECTION_FIX=ON               \
        -DNUM_NPES_THRESHOLD=2                    \
        -Who-dev
 ```
