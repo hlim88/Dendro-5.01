@@ -25,6 +25,11 @@
 
 #include "TPUtilities.h"
 
+#include "mpi.h"
+
+extern MPI_Comm MPI_TP_COMM;
+
+
 typedef struct DERIVS
 {
   CCTK_REAL *d0, *d1, *d2, *d3, *d11, *d12, *d13, *d22, *d23, *d33;

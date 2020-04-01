@@ -1,18 +1,23 @@
 #include "rhs.h"
 #include "gr.h"
-
-
-#define QUADGRAV_EVOL
-
-//QG related constant
-//TODO : Do we need to make it as params?
-//       Currently, defines as macro, will change to constexpr
-#define a_const 1.0
-#define b_const 1.0
-#define qg_ho_coup 0.0
+#include "hadrhs.h"
 
 using namespace std;
 using namespace bssn;
+
+// Some macro for temporary usage of QA
+// TODO : Fix it for parameter and const expr
+
+// Macro for QG evol vars
+#define QUADGRAV_EVOL 
+
+//QG related constant
+//Alpah_c
+#define a_const 1.0
+//Beta_c
+#define b_const 1.0
+//Tuning param for QG : handling some problematic terms
+#define qg_ho_coup 1e-4
 
 
 void bssnRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks)
@@ -24,6 +29,30 @@ void bssnRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blk
     double dx,dy,dz;
     const Point pt_min(bssn::BSSN_COMPD_MIN[0],bssn::BSSN_COMPD_MIN[1],bssn::BSSN_COMPD_MIN[2]);
     const Point pt_max(bssn::BSSN_COMPD_MAX[0],bssn::BSSN_COMPD_MAX[1],bssn::BSSN_COMPD_MAX[2]);
+
+
+#ifdef BSSN_ENABLE_CUDA
+    cuda::BSSNComputeParams bssnParams;
+    bssnParams.BSSN_LAMBDA[0]=bssn::BSSN_LAMBDA[0];
+    bssnParams.BSSN_LAMBDA[1]=bssn::BSSN_LAMBDA[1];
+    bssnParams.BSSN_LAMBDA[2]=bssn::BSSN_LAMBDA[2];
+    bssnParams.BSSN_LAMBDA[3]=bssn::BSSN_LAMBDA[3];
+
+    bssnParams.BSSN_LAMBDA_F[0]=bssn::BSSN_LAMBDA_F[0];
+    bssnParams.BSSN_LAMBDA_F[1]=bssn::BSSN_LAMBDA_F[1];
+
+    bssnParams.BSSN_ETA_POWER[0]=bssn::BSSN_ETA_POWER[0];
+    bssnParams.BSSN_ETA_POWER[1]=bssn::BSSN_ETA_POWER[1];
+
+    bssnParams.ETA_R0=bssn::ETA_R0;
+    bssnParams.ETA_CONST=bssn::ETA_CONST;
+    bssnParams.ETA_DAMPING=bssn::ETA_DAMPING;
+    bssnParams.ETA_DAMPING_EXP=bssn::ETA_DAMPING_EXP;
+    bssnParams.KO_DISS_SIGMA=bssn::KO_DISS_SIGMA;
+
+    dim3 threadBlock(16,16,1);
+    cuda::computeRHS(uzipVarsRHS,(const double **)uZipVars,blkList,numBlocks,(const cuda::BSSNComputeParams*) &bssnParams,threadBlock,pt_min,pt_max,1);
+#else
 
     for(unsigned int blk=0; blk<numBlocks; blk++)
     {
@@ -47,7 +76,6 @@ void bssnRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blk
         ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
 #ifdef BSSN_RHS_STAGED_COMP
-
         bssnrhs_sep(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
 #else
         bssnrhs(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
@@ -55,6 +83,7 @@ void bssnRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blk
 
 
     }
+#endif
 
 
 
@@ -249,13 +278,26 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
 
                 bssn::timer::t_rhs.start();
 
-#ifdef USE_ETA_FUNC
-#include "bssneqs_eta_func.cpp"
-#else
-#include "bssneqs_eta_const.cpp"
-#endif
+                #ifdef USE_ROCHESTER_GAUGE
+                    #pragma message("BSSN: using rochester gauge")
+                    #ifdef USE_ETA_FUNC
+                        #pragma message("BSSN: using function eta damping")
+                        #include "bssneqs_eta_func_rochester_gauge.cpp"
+                    #else
+                        #pragma message("BSSN: using const eta damping")
+                        #include "bssneqs_eta_const_rochester_gauge.cpp"
+                    #endif
+                #else
+                    #pragma message("BSSN: using standard gauge")
+                    #ifdef USE_ETA_FUNC
+                        #pragma message("BSSN: using function eta damping")
+                        #include "bssneqs_eta_func_standard_gauge.cpp"
+                    #else
+                        #pragma message("BSSN: using const eta damping")
+                        #include "bssneqs_eta_const_standard_gauge.cpp"
+                    #endif
 
-
+                #endif    
 
                 bssn::timer::t_rhs.stop();
 
@@ -331,6 +373,8 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
         bssn_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
 
+        // Boundary condition. Treat same as usual GR varialbes
+        // TODO : Find better values if we need
         #if 1
         #ifdef QUADGRAV_EVOL
         bssn_bcs(Rsc_rhs, Rsc, grad_0_Rsc, grad_1_Rsc, grad_2_Rsc, pmin, pmax,
@@ -347,7 +391,7 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
                  1.0, 1.0, sz, bflag);
         bssn_bcs(Rtt_rhs12, Rtt4, grad_0_Rtt4, grad_1_Rtt4, grad_2_Rtt4, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        bssn_bcs(Rtt_rhs22, Rtt0, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
+        bssn_bcs(Rtt_rhs22, Rtt5, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
         bssn_bcs(Vat_rhs00, Vat0, grad_0_Vat0, grad_1_Vat0, grad_2_Vat0, pmin, pmax,
                  1.0, 1.0, sz, bflag);
@@ -359,10 +403,11 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
                  1.0, 1.0, sz, bflag);
         bssn_bcs(Vat_rhs12, Vat4, grad_0_Vat4, grad_1_Vat4, grad_2_Vat4, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        bssn_bcs(Vat_rhs22, Vat0, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
+        bssn_bcs(Vat_rhs22, Vat5, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
         #endif
         #endif
+
         bssn::timer::t_bdyc.stop();
     }
 
@@ -488,7 +533,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     const double *Vat5 = &uZipVars[VAR::U_SYMVAT5][offset];
     #endif
     #endif
-    
+
     double *a_rhs = &unzipVarsRHS[VAR::U_ALPHA][offset];
     double *chi_rhs = &unzipVarsRHS[VAR::U_CHI][offset];
     double *K_rhs = &unzipVarsRHS[VAR::U_K][offset];
@@ -532,6 +577,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     double *Vat_rhs22 = &unzipVarsRHS[VAR::U_SYMVAT5][offset];
     #endif
     #endif
+
     const unsigned int nx = sz[0];
     const unsigned int ny = sz[1];
     const unsigned int nz = sz[2];
@@ -805,6 +851,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                  1.0, 0.0, sz, bflag);
         bssn_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
+
         #if 1
         #ifdef QUADGRAV_EVOL
         bssn_bcs(Rsc_rhs, Rsc, grad_0_Rsc, grad_1_Rsc, grad_2_Rsc, pmin, pmax,
@@ -821,7 +868,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                  1.0, 1.0, sz, bflag);
         bssn_bcs(Rtt_rhs12, Rtt4, grad_0_Rtt4, grad_1_Rtt4, grad_2_Rtt4, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        bssn_bcs(Rtt_rhs22, Rtt0, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
+        bssn_bcs(Rtt_rhs22, Rtt5, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
         bssn_bcs(Vat_rhs00, Vat0, grad_0_Vat0, grad_1_Vat0, grad_2_Vat0, pmin, pmax,
                  1.0, 1.0, sz, bflag);
@@ -833,18 +880,47 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                  1.0, 1.0, sz, bflag);
         bssn_bcs(Vat_rhs12, Vat4, grad_0_Vat4, grad_1_Vat4, grad_2_Vat4, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        bssn_bcs(Vat_rhs22, Vat0, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
+        bssn_bcs(Vat_rhs22, Vat5, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
         #endif
         #endif
+
 #endif
         bssn::timer::t_bdyc.stop();
     }
 
-
-    bssn::timer::t_deriv.start();
+    if (bssn::DISSIPATION_TYPE == 0) {
+        bssn::timer::t_deriv.start();
 #include "bssnrhs_ko_derivs.h"
-    bssn::timer::t_deriv.stop();
+        bssn::timer::t_deriv.stop();
+    }
+    //HL : not need for us
+#if 0
+    else if (bssn::DISSIPATION_TYPE == 1 || bssn::DISSIPATION_TYPE == 2) {
+        std::cout<<"...calling TVB dissipation"<<std::endl;
+        double * lam1=new double[n];
+        double * lam2=new double[n];
+        double * lam3=new double[n];
+        max_spacetime_speeds( lam1, lam2, lam3, 
+                           alpha, beta0, beta1, beta2,
+                           gt0, gt1, gt2, gt3, gt4, gt5,
+                           chi, sz);
+        bssn::timer::t_deriv.start();
+        if (bssn::DISSIPATION_TYPE == 1) {
+#include "bssnrhs_tvb3_derivs.h"
+        }
+        else {
+#include "bssnrhs_tvb5_derivs.h"
+        }
+        bssn::timer::t_deriv.stop();
+        delete [] lam1;
+        delete [] lam2;
+        delete [] lam3;
+    }
+#endif
+    else {
+        std::cout<<"Unknown DISSIPATION_TYPE"<<std::endl;
+    }
 
 // remove the block write once the ko is fully debuged,
     /*    double bxMin[3]={bssn::BSSN_BLK_MIN_X,bssn::BSSN_BLK_MIN_Y,bssn::BSSN_BLK_MIN_Z};
@@ -1071,7 +1147,51 @@ void bssn_bcs(double *f_rhs, const double *f,
  *
  *
  *----------------------------------------------------------------------*/
+void max_spacetime_speeds( 
+                           double * const lambda1max, double * const lambda2max, double * const lambda3max, 
+                           const double * const alpha, 
+                           const double * const beta1, const double * const beta2, const double * const beta3,
+                           const double * const gtd11, const double * const gtd12, const double * const gtd13,
+                           const double * const gtd22, const double * const gtd23, const double * const gtd33,
+                           const double * const chi, const unsigned int *sz)
+{
 
+    const unsigned int nx = sz[0];
+    const unsigned int ny = sz[1];
+    const unsigned int nz = sz[2];
+
+    unsigned int ib = 3;
+    unsigned int jb = 3;
+    unsigned int kb = 3;
+    unsigned int ie = sz[0]-3;
+    unsigned int je = sz[1]-3;
+    unsigned int ke = sz[2]-3;
+
+    for (unsigned int k = kb; k < ke; k++) {
+        for (unsigned int j = jb; j < je; j++) {
+            for (unsigned int i = ib; i < ie; i++) {
+                unsigned int pp = IDX(i,j,k);
+               /* note: gtu is the inverse tilde metric. It should have detgtd = 1. So, for the purposes of 
+                * calculating wavespeeds, I simple set detgtd = 1. */
+                double gtu11 = gtd22[pp]*gtd33[pp] - gtd23[pp]*gtd23[pp];
+                double gtu22 = gtd11[pp]*gtd33[pp] - gtd13[pp]*gtd13[pp];
+                double gtu33 = gtd11[pp]*gtd22[pp] - gtd12[pp]*gtd12[pp];
+                if (gtu11 < 0.0 || gtu22 < 0.0 || gtu33 < 0.0) {
+                    std::cout<<"Problem computing spacetime characteristics"<<std::endl;
+                    std::cout<<"gtu11 = "<<gtu11<<", gtu22 = "<<gtu22<<", gtu33 = "<<gtu33<<std::endl;
+                    gtu11 = 1.0; gtu22 = 1.0; gtu33 = 1.0;
+                }
+                double t1 = alpha[pp] * sqrt(gtu11 * chi[pp]);
+                double t2 = alpha[pp] * sqrt(gtu22 * chi[pp]);
+                double t3 = alpha[pp] * sqrt(gtu33 * chi[pp]);
+                lambda1max[pp] = std::max( abs(-beta1[pp] + t1), abs(-beta1[pp] - t1) );
+                lambda2max[pp] = std::max( abs(-beta2[pp] + t2), abs(-beta2[pp] - t2) );
+                lambda3max[pp] = std::max( abs(-beta3[pp] + t3), abs(-beta3[pp] - t3) );
+            }
+        }
+    }
+ 
+}
 
 /*----------------------------------------------------------------------;
  *
@@ -1149,6 +1269,19 @@ void freeze_bcs(double *f_rhs, const unsigned int *sz, const unsigned int &bflag
     }
 
 }
+
+#if 0
+
+/*----------------------------------------------------------------------;
+ *
+ * HAD RHS
+ *
+ *----------------------------------------------------------------------*/
+void call_HAD_rhs()
+{
+    had_bssn_rhs_();
+}
+#endif
 
 #if 0
 /*--------------------------------------------------------------

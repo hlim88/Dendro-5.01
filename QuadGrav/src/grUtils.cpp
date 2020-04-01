@@ -1,4 +1,3 @@
-//
 /**
 *@brief Contains utility functions for BSSN simulation.
 */
@@ -39,7 +38,7 @@ namespace bssn
             bssn::BSSN_PROFILE_FILE_PREFIX=parFile["BSSN_PROFILE_FILE_PREFIX"].get<std::string>();
             bssn::BSSN_RESTORE_SOLVER=parFile["BSSN_RESTORE_SOLVER"];
             bssn::BSSN_ENABLE_BLOCK_ADAPTIVITY=parFile["BSSN_ENABLE_BLOCK_ADAPTIVITY"];
-            bssn::BSSN_ID_TYPE=parFile["BSSN_ID_TYPE"];
+	        bssn::BSSN_ID_TYPE=parFile["BSSN_ID_TYPE"];
             bssn::BSSN_BLK_MIN_X=parFile["BSSN_BLK_MIN_X"];
             bssn::BSSN_BLK_MIN_Y=parFile["BSSN_BLK_MIN_Y"];
             bssn::BSSN_BLK_MIN_Z=parFile["BSSN_BLK_MIN_Z"];
@@ -75,8 +74,19 @@ namespace bssn
             bssn::BSSN_LAMBDA[3]=(unsigned int) parFile["BSSN_LAMBDA"]["BSSN_LAMBDA_4"];
             bssn::BSSN_LAMBDA_F[0]=parFile["BSSN_LAMBDA_F"]["BSSN_LAMBDA_F0"];
             bssn::BSSN_LAMBDA_F[1]=parFile["BSSN_LAMBDA_F"]["BSSN_LAMBDA_F1"];
+
+            bssn::BSSN_XI[0] = (unsigned int ) parFile["BSSN_XI"]["BSSN_XI_0"];
+            bssn::BSSN_XI[1] = (unsigned int ) parFile["BSSN_XI"]["BSSN_XI_1"];
+            bssn::BSSN_XI[2] = (unsigned int ) parFile["BSSN_XI"]["BSSN_XI_2"];
+            
+            if(parFile.find("BSSN_ELE_ORDER")!= parFile.end())
+                bssn::BSSN_ELE_ORDER = parFile["BSSN_ELE_ORDER"];
+            
             bssn::CHI_FLOOR=parFile["CHI_FLOOR"];
             bssn::BSSN_TRK0=parFile["BSSN_TRK0"];
+            if (parFile.find("DISSIPATION_TYPE") != parFile.end()) {
+                bssn::DISSIPATION_TYPE=parFile["DISSIPATION_TYPE"];
+            }
             bssn::KO_DISS_SIGMA=parFile["KO_DISS_SIGMA"];
 
   	        //Parameters for eta_damping function
@@ -107,6 +117,15 @@ namespace bssn
                 bssn::BSSN_CFL_FACTOR=parFile["BSSN_CFL_FACTOR"];
             }
 
+            if(parFile.find("BSSN_VTU_Z_SLICE_ONLY") != parFile.end())
+                bssn::BSSN_VTU_Z_SLICE_ONLY=parFile["BSSN_VTU_Z_SLICE_ONLY"];
+
+            if (parFile.find("BSSN_GW_EXTRACT_FREQ") != parFile.end()) {
+                bssn::BSSN_GW_EXTRACT_FREQ=parFile["BSSN_GW_EXTRACT_FREQ"];
+            }else
+            {
+                bssn::BSSN_GW_EXTRACT_FREQ=std::max(1u,bssn::BSSN_IO_OUTPUT_FREQ>>1u);
+            }
 
            /* Parameters for TPID */
             TPID::target_M_plus=parFile["TPID_TARGET_M_PLUS"];
@@ -172,11 +191,30 @@ namespace bssn
                 GW::BSSN_GW_L_MODES[i]=parFile["BSSN_GW_L_MODES"][i];
 
 
+            if(parFile.find("BSSN_USE_FD_GRID_TRANSFER")!=parFile.end())
+            {
+                bssn::BSSN_USE_FD_GRID_TRANSFER=parFile["BSSN_USE_FD_GRID_TRANSFER"];
+            }
+
+            if(parFile.find("BSSN_EH_COARSEN_VAL")!= parFile.end())
+            {
+                bssn::BSSN_EH_COARSEN_VAL = parFile["BSSN_EH_COARSEN_VAL"];
+            }
+
+            if(parFile.find("BSSN_EH_REFINE_VAL")!=parFile.end())
+            {
+                bssn::BSSN_EH_REFINE_VAL = parFile["BSSN_EH_REFINE_VAL"];
+            }
+
+            if(parFile.find("BSSN_REFINEMENT_MODE")!=parFile.end())
+            {
+                bssn::BSSN_REFINEMENT_MODE = static_cast<bssn::RefinementMode>(parFile["BSSN_REFINEMENT_MODE"]);
+            }
 
 
         }
 
-
+        par::Mpi_Bcast(&BSSN_ELE_ORDER,1,0,comm);
         par::Mpi_Bcast(&BSSN_IO_OUTPUT_FREQ,1,0,comm);
         par::Mpi_Bcast(&BSSN_REMESH_TEST_FREQ,1,0,comm);
         par::Mpi_Bcast(&BSSN_CHECKPT_FREQ,1,0,comm);
@@ -189,6 +227,8 @@ namespace bssn
         par::Mpi_Bcast(&BSSN_DENDRO_GRAIN_SZ,1,0,comm);
         par::Mpi_Bcast(&BSSN_DENDRO_AMR_FAC,1,0,comm);
         par::Mpi_Bcast(&BSSN_ASYNC_COMM_K,1,0,comm);
+        par::Mpi_Bcast((int*)&BSSN_REFINEMENT_MODE,1,0,comm);
+        par::Mpi_Bcast(&BSSN_GW_EXTRACT_FREQ,1,0,comm);
 
         char vtu_name[vtu_len+1];
         char chp_name[chp_len+1];
@@ -282,12 +322,14 @@ namespace bssn
 
         par::Mpi_Bcast(&CHI_FLOOR,1,0,comm);
         par::Mpi_Bcast(&BSSN_TRK0,1,0,comm);
-        par::Mpi_Bcast(&KO_DISS_SIGMA, 1, 0, comm);
-        par::Mpi_Bcast(&BSSN_ETA_R0, 1, 0, comm);
+        par::Mpi_Bcast(&DISSIPATION_TYPE,1,0,comm);
+        par::Mpi_Bcast(&KO_DISS_SIGMA,1,0,comm);
+        par::Mpi_Bcast(&BSSN_ETA_R0,1,0,comm);
 
         MPI_Bcast(&(bssn::BSSN_LAMBDA),4,MPI_UNSIGNED,0,comm);
         MPI_Bcast(&(bssn::BSSN_LAMBDA_F),2,MPI_DOUBLE,0,comm);
         MPI_Bcast(&(bssn::BSSN_ETA_POWER),2,MPI_DOUBLE,0,comm);
+        MPI_Bcast((bssn::BSSN_XI),3,MPI_INT,0,comm);
 
 
         par::Mpi_Bcast(&BSSN_NUM_REFINE_VARS,1,0,comm);
@@ -340,6 +382,10 @@ namespace bssn
 
         par::Mpi_Bcast(GW::BSSN_GW_L_MODES,GW::BSSN_GW_MAX_LMODES,0,comm);
         par::Mpi_Bcast(GW::BSSN_GW_RADAII,GW::BSSN_GW_MAX_RADAII,0,comm);
+        par::Mpi_Bcast(&bssn::BSSN_USE_FD_GRID_TRANSFER,1,0,comm);
+        par::Mpi_Bcast(&bssn::BSSN_VTU_Z_SLICE_ONLY,1,0,comm);
+        par::Mpi_Bcast(&bssn::BSSN_EH_REFINE_VAL,1,0,comm);
+        par::Mpi_Bcast(&bssn::BSSN_EH_COARSEN_VAL,1,0,comm);
 
 
 
@@ -596,24 +642,23 @@ namespace bssn
         var[VAR::U_SYMGT4] = 0.0; //YZ
         var[VAR::U_SYMGT5] = 1.0; //ZZ
 
-        // Define values for QG variables
-        // TODO : find good optimal values
-
+        //Define initial values for QG variables
+        // TODO : find better one
         #ifdef QG_ID_EVOL
-        var[VAR::U_RSC] = 0.0;
-        var[VAR::U_RSCH] = 0.0;
-        var[VAR::U_SYMRTT0] = 0.0;
-        var[VAR::U_SYMRTT1] = 0.0;
-        var[VAR::U_SYMRTT2] = 0.0;
-        var[VAR::U_SYMRTT3] = 0.0;
-        var[VAR::U_SYMRTT4] = 0.0;
-        var[VAR::U_SYMRTT5] = 0.0;
-	var[VAR::U_SYMVAT0] = 0.0;
-        var[VAR::U_SYMVAT1] = 0.0;
-        var[VAR::U_SYMVAT2] = 0.0;
-        var[VAR::U_SYMVAT3] = 0.0;
-        var[VAR::U_SYMVAT4] = 0.0;
-        var[VAR::U_SYMVAT5] = 0.0;
+        var[VAR::U_RSC] = 0.0; 
+        var[VAR::U_RSCH] = 0.0; 
+        var[VAR::U_SYMRTT0] = 0.0; 
+        var[VAR::U_SYMRTT1] = 0.0; 
+        var[VAR::U_SYMRTT2] = 0.0; 
+        var[VAR::U_SYMRTT3] = 0.0; 
+        var[VAR::U_SYMRTT4] = 0.0; 
+        var[VAR::U_SYMRTT5] = 0.0; 
+        var[VAR::U_SYMVAT0] = 0.0; 
+        var[VAR::U_SYMVAT1] = 0.0; 
+        var[VAR::U_SYMVAT2] = 0.0; 
+        var[VAR::U_SYMVAT3] = 0.0; 
+        var[VAR::U_SYMVAT4] = 0.0; 
+        var[VAR::U_SYMVAT5] = 0.0; 
         #endif
 
         for (i1=0;i1<3;i1++) {
@@ -679,6 +724,664 @@ namespace bssn
 
     }
     
+namespace trumpet_data { 
+
+    const unsigned int KMAX = 5000;
+    double dxsav;
+    static double *xp;
+    static double *yp[2];
+
+    void trumpetData(const double xx1,const double yy1,const double zz1, double *var)
+    {
+
+        const double xx=GRIDX_TO_X(xx1);
+        const double yy=GRIDY_TO_Y(yy1);
+        const double zz=GRIDZ_TO_Z(zz1);
+
+        double eps = 1.e-10; // tolerance on the integrator  
+        double h1 = -1.e-5 ; // starting step off the critical point  
+        double hmin = 1.e-25;// min allowed stepsize for adaptive integrator  
+        
+        double  bh_mass = 7.5 ; 
+        double  alpha_c = 0.16227766016837933200 ; 
+        double  C_sq = 1.5543095902183302040 ; 
+        double  bigR_c = 1.5405694150420948330 * bh_mass ; 
+        double  r_c = 0.30405997036 * bh_mass ; 
+
+        static bool firstcall = true;
+
+        const int neq = 2;
+        static double *alpha0;
+        static double *bigR0;
+        static double *r_iso;
+
+        static int np;
+
+        const double third = 1.0 / 3.0 ;
+
+        if (firstcall == true) {
+            // solve ODE system 
+            std::cout<<"trumpetData:  first call. Solve the ODE"<<std::endl;
+
+            xp = new double [KMAX];
+            yp[0] = new double [KMAX];
+            yp[1] = new double [KMAX];
+            alpha0 = new double [KMAX]; 
+            bigR0 = new double [KMAX]; 
+            r_iso = new double [KMAX]; 
+
+            // integrate inward from r_C to r=0.
+            double rmin = 0.0;   // min value for inward r integration
+            double rmax = 1000.0;   // max value for outward r integration
+            double rstart, ystart[2], dydr[2];
+            bndcnd(h1, rstart, ystart, dydr);
+            double rend = rmin + fabs(h1) ; 
+            int nok, nbad;
+            int kount;
+            odeint(ystart,neq,rstart,rend,eps,h1,hmin,&nok,&nbad,derivs,rkqs,kount);
+
+            int kountin = kount;
+            for ( unsigned int i=0; i<kountin; i++ )
+            {  
+                r_iso [i] = xp[kountin - 1 - i] ; 
+                alpha0[i] = yp[0][kountin - 1 - i] ; 
+                bigR0 [i] = yp[1][kountin - 1 - i] ; 
+                //std::cout<<"<in> xp = "<<xp[i]<<", i="<<i<<", alpha0 = "<<yp[0][i]<<", bigR0 = "<<yp[1][i]<<std::endl;
+            }
+
+            // integrate outwards from r_c to large r 
+            h1 = fabs(h1) ; 
+            rend = rmax ;
+      
+            std::cout<<"integrating outwards ... "<<std::endl;
+            bndcnd(h1, rstart, ystart, dydr) ; 
+            odeint(ystart,neq,rstart,rend,eps,h1,hmin,&nok,&nbad,derivs,rkqs,kount) ; 
+
+            int kountout = kount ; 
+            for ( unsigned int i=0; i<kountout; i++ )
+            {  
+              r_iso [i+kountin] = xp[i] ; 
+              alpha0[i+kountin] = yp[0][i] ; 
+              bigR0 [i+kountin] = yp[1][i] ; 
+              //std::cout<<"<out> xp = "<<xp[i]<<", alpha0 = "<<yp[0][i]<<", bigR0 = "<<yp[1][i]<<std::endl;
+            }
+            np = kountin + kountout ;
+
+            firstcall = false;
+        }
+
+        int nrby_indx = np / 2 ;
+        double ax_eps = 1.0e-5 ;
+
+        double tenh1 = 10.0 * fabs(h1) ;
+        double rbar = sqrt( xx*xx + yy*yy + zz*zz ) ;
+        if ( fabs(xx)<tenh1 && fabs(yy)<tenh1 && fabs(zz)<tenh1 ) { 
+            rbar = tenh1 ; 
+        }
+        double alpha = interpolation4(r_iso,alpha0,np,rbar,&nrby_indx) ;  
+        double bigR  = interpolation4(r_iso,bigR0,np,rbar,&nrby_indx) ;  
+
+                if ( fabs(xx)<ax_eps && fabs(yy)<ax_eps && fabs(zz)<ax_eps)
+                { rbar = sqrt( xx*xx + yy*yy + zz*zz + ax_eps*ax_eps) ; 
+                } 
+
+                double f0 = 1.0 - 2.0 * bh_mass / bigR ; 
+
+                double Rsq_dalpha_dR = 4.0 * (   alpha*alpha - f0 
+                                        - 0.5 * bh_mass / bigR ) 
+                                    / ( alpha*alpha - 2.0*alpha - f0 ) 
+                                    * bigR  ;
+
+                double tmp_sqrt = sqrt( alpha*alpha - f0 ) ; 
+
+                double tmp_chi = (rbar*rbar) / (bigR*bigR) ; 
+        
+                double tmp_trK =   2.0 * tmp_sqrt / bigR 
+                          + ( alpha * Rsq_dalpha_dR - bh_mass ) 
+                            / ( tmp_sqrt * bigR * bigR ) ; 
+
+                double tmp_beta = tmp_sqrt / bigR ; 
+
+                double tmp_Atilde = (   (   alpha * Rsq_dalpha_dR 
+                                   - bh_mass 
+                                 ) / tmp_sqrt 
+                               - bigR * tmp_sqrt 
+                             ) / bigR / bigR ;  
+
+
+
+
+
+
+        var[VAR::U_ALPHA] = alpha;
+        var[VAR::U_ALPHA] = std::max(var[VAR::U_ALPHA], CHI_FLOOR);
+
+        var[VAR::U_CHI] = tmp_chi;
+
+        if(var[VAR::U_CHI]<CHI_FLOOR)
+            var[VAR::U_CHI]=CHI_FLOOR;
+
+        var[VAR::U_K] = tmp_trK;
+
+        var[VAR::U_BETA0] = xx * tmp_beta;
+        var[VAR::U_BETA1] = yy * tmp_beta;
+        var[VAR::U_BETA2] = zz * tmp_beta;
+
+        var[VAR::U_GT0] = 0.0;
+        var[VAR::U_GT1] = 0.0;
+        var[VAR::U_GT2] = 0.0;
+
+        var[VAR::U_B0] = 0.0;
+        var[VAR::U_B1] = 0.0;
+        var[VAR::U_B2] = 0.0;
+
+        var[VAR::U_SYMGT0] = 1.0; //XX
+        var[VAR::U_SYMGT1] = 0.0; //XY
+        var[VAR::U_SYMGT2] = 0.0; //XZ
+        var[VAR::U_SYMGT3] = 1.0; //YY
+        var[VAR::U_SYMGT4] = 0.0; //YZ
+        var[VAR::U_SYMGT5] = 1.0; //ZZ
+
+        var[VAR::U_SYMAT0] = tmp_Atilde*( (xx/rbar)*(xx/rbar) - third);
+        var[VAR::U_SYMAT1] = tmp_Atilde*xx * yy /(rbar * rbar);
+        var[VAR::U_SYMAT2] = tmp_Atilde*xx * zz /(rbar * rbar);
+        var[VAR::U_SYMAT3] = tmp_Atilde*( (yy/rbar)*(yy/rbar) - third);
+        var[VAR::U_SYMAT4] = tmp_Atilde*yy * zz /(rbar * rbar);
+        var[VAR::U_SYMAT5] = tmp_Atilde*( (zz/rbar)*(zz/rbar) - third);
+
+
+    }
+
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+void bndcnd(double h, double &x, double y[], double dydx[])
+{
+    
+    double bh_mass = 7.5 ; 
+    double alpha_c = 0.16227766016837933200 ; 
+    double bigR_c = 1.5405694150420948330 * bh_mass ; 
+    double r_c = 0.30405997036 * bh_mass ; 
+
+    double alpha = alpha_c ; 
+    double bigR  = bigR_c ; 
+    double r = r_c;
+
+    double bigRsq = bigR * bigR;
+    double alphasq = alpha * alpha;
+
+    double dbigR_dr = alpha_c * bigR_c / r_c ; 
+
+    double df0_dr = 2.0 * bh_mass / bigRsq * dbigR_dr;
+
+    double tmp1 = 1.5 * bh_mass / bigRsq * dbigR_dr;
+
+    double dalpha_dr =   0.25 * (r*df0_dr + 8.0*alphasq) / (alpha-1.0 )
+                       - 0.25 * sqrt(   pow((r*df0_dr + 8.0*alphasq),2)
+                                      + 32.0*alpha*(1.0-alpha)*r * tmp1
+                                    ) / ( alpha - 1.0 );
+    
+    dalpha_dr = dalpha_dr/r;
+    
+    double ddbigR_drdr  =   ( dalpha_dr * bigR + alpha * dbigR_dr ) / r
+                          - alpha * bigR / (r*r);
+    
+    double ddf0_drdr = - 4.0 * bh_mass * dbigR_dr * dbigR_dr / (bigR*bigRsq)
+                       + 2.0 * bh_mass * ddbigR_drdr / bigRsq;
+    
+    double tmp2 = - 3.00 * bh_mass * dbigR_dr * dbigR_dr / (bigR*bigRsq)
+                  + 1.50 * bh_mass * ddbigR_drdr / bigRsq;
+    
+    double ddalpha_drdr = - 2.0 * pow((r*dalpha_dr),3)
+                          - 3.0 * r*dalpha_dr
+                                * (   2.0 * r*dalpha_dr * (alpha - 1.0)
+                                    - r*df0_dr )
+                          + (r*dalpha_dr) * r*r * ddf0_drdr
+                          +   (8.0 * r*dalpha_dr + 4.0*alpha)
+                            * ( 2.0*alpha * r*dalpha_dr - r*tmp1)
+                          + 4.0*alpha * (   2.0 *pow((r*dalpha_dr),2)
+                                          - r*r * tmp2 );
+        
+    ddalpha_drdr =   ddalpha_drdr
+                   / (   6.0 * pow(r,3) * (alpha-1.0) * dalpha_dr
+                       - 2.0 * pow(r,3) * df0_dr
+                       - 8.0 * r*r * alphasq );
+    
+    x = r + h;
+    
+    y[0] = alpha + h * dalpha_dr + 0.5 * h*h * ddalpha_drdr;
+    y[1] =  bigR + h *  dbigR_dr + 0.5 * h*h *  ddbigR_drdr;
+    
+    dydx[0] = dalpha_dr + h * ddalpha_drdr;
+    dydx[1] =  dbigR_dr + h *  ddbigR_drdr;
+}
+   
+
+
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+void derivs(double x, double y[], double dydx[])
+{
+    
+    double alpha = y[0];
+    double bigR = y[1];
+    double r = x;
+   
+    double bh_mass = 7.5 ; 
+
+    double alpha_sq = alpha * alpha;
+    
+    double alpha_sq_minus_1 = alpha_sq - 1.0;
+    double M_over_R = bh_mass / bigR;
+    
+    double dalpha_dr = 4.0 * alpha * (alpha_sq_minus_1 + 1.5*M_over_R)
+                           / (alpha_sq_minus_1 - 2.0*alpha + 2.0*M_over_R)
+                           / r;
+    
+    double dbigR_dr  = alpha*bigR/r;
+    
+    dydx[0] = dalpha_dr;
+    dydx[1] = dbigR_dr;
+    
+}
+    
+    
+    
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+void hunt(double xx[], int n, double x, int *jlo)
+{
+    unsigned long jm,jhi,inc;
+    int ascnd;
+    
+    ascnd=(xx[n-1] > xx[0]);
+    //if (*jlo < 0 || *jlo > n) 
+    if (*jlo < 0 || *jlo > n-1) {
+        //*jlo=0;
+        *jlo=-1;
+        //jhi=n-1;
+        jhi=n;
+    } else {
+        inc=1;
+            if (x >= xx[*jlo] == ascnd) {
+                if (*jlo == n-1) return;
+                jhi=(*jlo)+1;
+                while (x >= xx[jhi] == ascnd) {
+                    *jlo=jhi;
+                    inc += inc;
+                    jhi=(*jlo)+inc;
+                    if (jhi > n-1) {
+                        jhi=n;
+                    break;
+                }
+            }
+        } else {
+            if (*jlo == 0) {
+                *jlo=-1;
+                return;
+            }
+            jhi=(*jlo)--;
+            while (x < xx[*jlo] == ascnd) {
+                jhi=(*jlo);
+                inc <<= 1;
+                if (inc >= jhi) {
+                    *jlo=-1;
+                    break;
+                }
+                else *jlo=jhi-inc;
+            }
+        }
+    }
+    while (jhi-(*jlo) != 1) {
+        jm=(jhi+(*jlo)) >> 1;
+        if (x > xx[jm] == ascnd)
+            *jlo=jm;
+        else
+            jhi=jm;
+    }
+} /* (C) Copr. 1986-92 Numerical Recipes Software ?421.1-9. */
+   
+
+
+
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+void rkck(   double y[], double dydx[], int n, double x, double h, 
+             double yout[], double yerr[], 
+             void (*derivs)(double, double [], double [])   )
+{
+    int i;
+    static double a2=0.2,a3=0.3,a4=0.6,a5=1.0,a6=0.875,b21=0.2,
+        b31=3.0/40.0,b32=9.0/40.0,b41=0.3,b42 = -0.9,b43=1.2,
+        b51 = -11.0/54.0, b52=2.5,b53 = -70.0/27.0,b54=35.0/27.0,
+        b61=1631.0/55296.0,b62=175.0/512.0,b63=575.0/13824.0,
+        b64=44275.0/110592.0,b65=253.0/4096.0,c1=37.0/378.0,
+        c3=250.0/621.0,c4=125.0/594.0,c6=512.0/1771.0,
+        dc5 = -277.0/14336.0;
+    double dc1=c1-2825.0/27648.0,dc3=c3-18575.0/48384.0,
+        dc4=c4-13525.0/55296.0,dc6=c6-0.25;
+
+    double *ak2 = new double [n];
+    double *ak3= new double [n];
+    double *ak4= new double [n];
+    double *ak5= new double [n];
+    double *ak6= new double [n];
+    double *ytemp= new double [n];
+ 
+    for (i=0;i<n;i++)
+        ytemp[i]=y[i]+b21*h*dydx[i];
+    (*derivs)(x+a2*h,ytemp,ak2);
+    for (i=0;i<n;i++)
+        ytemp[i]=y[i]+h*(b31*dydx[i]+b32*ak2[i]);
+    (*derivs)(x+a3*h,ytemp,ak3);
+    for (i=0;i<n;i++)
+        ytemp[i]=y[i]+h*(b41*dydx[i]+b42*ak2[i]+b43*ak3[i]);
+    (*derivs)(x+a4*h,ytemp,ak4);
+    for (i=0;i<n;i++)
+        ytemp[i]=y[i]+h*(b51*dydx[i]+b52*ak2[i]+b53*ak3[i]+b54*ak4[i]);
+    (*derivs)(x+a5*h,ytemp,ak5);
+    for (i=0;i<n;i++)
+        ytemp[i]=y[i]+h*(b61*dydx[i]+b62*ak2[i]+b63*ak3[i]+b64*ak4[i]+b65*ak5[i]);
+    (*derivs)(x+a6*h,ytemp,ak6);
+    for (i=0;i<n;i++)
+        yout[i]=y[i]+h*(c1*dydx[i]+c3*ak3[i]+c4*ak4[i]+c6*ak6[i]);
+    for (i=0;i<n;i++)
+        yerr[i]=h*(dc1*dydx[i]+dc3*ak3[i]+dc4*ak4[i]+dc5*ak5[i]+dc6*ak6[i]);
+    delete [] ytemp;
+    delete [] ak6;
+    delete [] ak5;
+    delete [] ak4;
+    delete [] ak3;
+    delete [] ak2;
+} /* (C) Copr. 1986-92 Numerical Recipes Software ?421.1-9. */
+
+
+
+
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+void rkqs(   double y[], double dydx[], int n, double *x, double htry, 
+             double eps, double yscal[], double *hdid, double *hnext,
+             void (*derivs)(double, double [], double [])   )
+{
+    const double SAFETY = 0.9;
+    const double PGROW = -0.2;
+    const double PSHRNK = -0.25;
+    const double ERRCON = 1.89e-4;
+    
+    void rkck( double y[], double dydx[], int n, double x, double h,
+               double yout[], double yerr[], 
+               void (*derivs)(double, double [], double []) );
+    int i;
+    double errmax, h, xnew;
+
+    double *yerr = new double [n];
+    double *ytemp = new double [n];
+    h=htry;
+    for (;;) {
+        rkck(y,dydx,n,*x,h,ytemp,yerr,derivs);
+        errmax=0.0;
+        for (i=0;i<n;i++) errmax=std::max(errmax,fabs(yerr[i]/yscal[i]));
+        errmax /= eps;
+        if (errmax > 1.0) {
+            h=SAFETY*h*pow(errmax,PSHRNK);
+            if (h < 0.1*h) h *= 0.1;
+            xnew=(*x)+h;
+            if (xnew == *x) std::cerr<<"stepsize underflow in rkqs"<<std::endl;
+            continue;
+        } else {
+            if (errmax > ERRCON) *hnext=SAFETY*h*pow(errmax,PGROW);
+            else *hnext=5.0*h;
+            *x += (*hdid=h);
+            for (i=0;i<n;i++) y[i]=ytemp[i];
+            break;
+        }
+    }
+    delete [] ytemp;
+    delete [] yerr;
+} /* (C) Copr. 1986-92 Numerical Recipes Software ?421.1-9. */
+    
+    
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+void odeint(  double ystart[], int nvar, double x1, double x2, 
+              double eps, double h1, double hmin, int *nok, int *nbad, 
+              void (*derivs)( double, double [], double [] ),
+              void  (*rkqs) ( double [], double [], int, double *, 
+                              double, double, double [], double *, 
+                              double *, 
+                              void (*)( double, double [], double [] ) ), 
+              int kount )
+{
+    int nstp,i;
+    double xsav,x,hnext,hdid,h;
+    const int MAXSTP = 10000;
+    const double TINY = 1.0e-30;
+
+    double *yscal = new double [nvar];
+    double *y = new double [nvar];
+    double *dydx = new double [nvar];
+    x=x1;
+    h=copysign(h1,x2-x1);
+    *nok = (*nbad) = kount = 0;
+    for (i=0;i<nvar;i++) y[i]=ystart[i];
+    if (KMAX > 0) xsav=x-dxsav*2.0;
+    for (nstp=0;nstp<MAXSTP;nstp++) {
+        //std::cout<<"odeint: nstp="<<nstp<<", kount="<<kount<<std::endl;
+        (*derivs)(x,y,dydx);
+        for (i=0;i<nvar;i++)
+            yscal[i]=fabs(y[i])+fabs(dydx[i]*h)+TINY;
+        if (KMAX > 0 && kount < KMAX-1 && fabs(x-xsav) > fabs(dxsav)) {
+            xp[kount]=x;
+            for (i=0;i<nvar;i++) yp[i][kount]=y[i];
+            xsav=x;
+            kount++;
+        }
+        if ((x+h-x2)*(x+h-x1) > 0.0) h=x2-x;
+        (*rkqs)(y,dydx,nvar,&x,h,eps,yscal,&hdid,&hnext,derivs);
+        if (hdid == h) ++(nok); else ++(nbad);
+        if ((x-x2)*(x2-x1) >= 0.0) {
+            for (i=0;i<nvar;i++) ystart[i]=y[i];
+            if (KMAX) {
+                xp[kount]=x;
+                for (i=0;i<nvar;i++) yp[i][kount]=y[i];
+                kount++;
+            }
+            delete [] dydx;
+            delete [] y;
+            delete [] yscal;
+            return;
+        }
+        if (fabs(hnext) <= hmin) std::cerr<<"Step size too small in odeint"<<std::endl;
+        h=hnext;
+    }
+    std::cerr<<"Too many steps in routine odeint"<<std::endl;
+} 
+/* (C) Copr. 1986-92 Numerical Recipes Software ?421.1-9. */
+
+
+
+
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+double interpolation3( double xp[], double yp[], int np, double xb, 
+                       int *n_nearest_pt )
+{
+    int  k ;      /* index of 1st point */
+    int  m = 4;   /* degree of interpolation */
+    double y ;    /* intermediate value */
+
+    hunt ( xp, np, xb, n_nearest_pt );
+
+    k = std::min  ( std::max( (*n_nearest_pt) - (m-1)/2 ,
+                      1
+                    ) ,
+               np+1-m
+             );
+    
+    double DBL_EPSILON = 1.e-12 ; 
+
+    if ( xb==xp[k] || xb==xp[k+1] || xb==xp[k+2] || xb==xp[k+3] )
+    { xb += 3.0 * DBL_EPSILON; }
+
+    y=     (xb-xp[k+1])
+         * (xb-xp[k+2])
+         * (xb-xp[k+3])
+         * yp[k  ] / (   (xp[k  ]-xp[k+1])
+                       * (xp[k  ]-xp[k+2])
+                       * (xp[k  ]-xp[k+3])  )
+
+       +   (xb-xp[k  ])
+         * (xb-xp[k+2])
+         * (xb-xp[k+3])
+         * yp[k+1] / (   (xp[k+1]-xp[k  ])
+                       * (xp[k+1]-xp[k+2])
+                       * (xp[k+1]-xp[k+3])  )
+
+       +   (xb-xp[k  ])
+         * (xb-xp[k+1])
+         * (xb-xp[k+3])
+         * yp[k+2] / (   (xp[k+2]-xp[k  ])
+                       * (xp[k+2]-xp[k+1])
+                       * (xp[k+2]-xp[k+3])  )
+
+       +   (xb-xp[k  ])
+         * (xb-xp[k+1])
+         * (xb-xp[k+2])
+         * yp[k+3] / (   (xp[k+3]-xp[k  ])
+                       * (xp[k+3]-xp[k+1])
+                       * (xp[k+3]-xp[k+2])  );
+
+    return (y);
+}
+
+
+
+/*---------------------------------------------------------------------
+ *  
+ *  
+ *  
+ *---------------------------------------------------------------------*/ 
+double interpolation4( double xx[], double yy[], int np, double xb, 
+                       int *n_nearest_pt  )
+{ 
+    int  k    ;   /* index of 1st point */
+    int  m = 5;   /* degree of interpolation */
+    double y;     /* intermediate value */
+
+    hunt ( xx, np, xb, n_nearest_pt );
+    
+    k = std::min ( std::max ( (*n_nearest_pt) - (m-1)/2 ,
+                      1
+                    ) , 
+               np+1-m
+             );
+
+#if 0
+    if ( fabs( xb - 1.0 ) < 1.e-13 )
+    { // xb is 1.0 so just return with the corresponding y value -- no interp necessary 
+        y = yy[np] ;
+        return(y) ;
+    }
+    if ( fabs( xb ) < 1.e-13 )
+    { // xb is zero so just return with the corresponding y value -- no interp necessary 
+        y = yy[0] ;
+        return(y) ;
+    }
+#endif 
+
+
+    double DBL_EPSILON = 1.e-12 ; 
+    
+    if ( xb==xx[k] || xb==xx[k+1] || xb==xx[k+2] || xb==xx[k+3] || xb==xx[k+4] )
+    { xb += 3.0 * DBL_EPSILON; }
+    
+    double xtmp0 = xb - xx[k  ] ;
+    double xtmp1 = xb - xx[k+1] ;
+    double xtmp2 = xb - xx[k+2] ;
+    double xtmp3 = xb - xx[k+3] ;
+    double xtmp4 = xb - xx[k+4] ;
+    double xdiff01 = xx[k  ] - xx[k+1] ;
+    double xdiff02 = xx[k  ] - xx[k+2] ;
+    double xdiff03 = xx[k  ] - xx[k+3] ;
+    double xdiff04 = xx[k  ] - xx[k+4] ;
+    double xdiff12 = xx[k+1] - xx[k+2] ;
+    double xdiff13 = xx[k+1] - xx[k+3] ;
+    double xdiff14 = xx[k+1] - xx[k+4] ;
+    double xdiff23 = xx[k+2] - xx[k+3] ;
+    double xdiff24 = xx[k+2] - xx[k+4] ;
+    double xdiff34 = xx[k+3] - xx[k+4] ;
+  
+    y=     xtmp1
+         * xtmp2
+         * xtmp3
+         * xtmp4
+         * yy[k  ] / (   xdiff01
+                       * xdiff02
+                       * xdiff03
+                       * xdiff04  )
+ 
+       -   xtmp0
+         * xtmp2
+         * xtmp3
+         * xtmp4
+         * yy[k+1] / (   xdiff01
+                       * xdiff12
+                       * xdiff13
+                       * xdiff14  )
+
+       +   xtmp0
+         * xtmp1
+         * xtmp3
+         * xtmp4
+         * yy[k+2] / (   xdiff02
+                       * xdiff12
+                       * xdiff23
+                       * xdiff24  )
+
+       -   xtmp0
+         * xtmp1
+         * xtmp2
+         * xtmp4
+         * yy[k+3] / (   xdiff03
+                       * xdiff13
+                       * xdiff23
+                       * xdiff34  )
+       +   xtmp0
+         * xtmp1
+         * xtmp2
+         * xtmp3
+         * yy[k+4] / (   xdiff04
+                       * xdiff14
+                       * xdiff24
+                       * xdiff34  );
+    
+    return (y);
+}
+
+
+
+    }  // end of namespace trumpet_data
    
 
     void KerrSchildData(const double xx1,const double yy1,const double zz1, double *var)
@@ -710,8 +1413,8 @@ namespace bssn
 	    double alpha, Gamt[3];
 	    double Chi, TrK, Betau[3];
 
-#include "ks_vars.cpp"
-#include "ksinit.cpp"
+        #include "ks_vars.cpp"
+        #include "ksinit.cpp"
  	
         var[VAR::U_ALPHA] = alpha;
         var[VAR::U_CHI] = Chi;
@@ -743,40 +1446,58 @@ namespace bssn
 	    var[VAR::U_SYMAT4] = Atd[1][2];
 	    var[VAR::U_SYMAT5] = Atd[2][2];
 
+        //TODO : Find better one
+        #ifdef QG_ID_EVOL
+        var[VAR::U_RSC] = 0.0; 
+        var[VAR::U_RSCH] = 0.0; 
+        var[VAR::U_SYMRTT0] = 0.0; 
+        var[VAR::U_SYMRTT1] = 0.0; 
+        var[VAR::U_SYMRTT2] = 0.0; 
+        var[VAR::U_SYMRTT3] = 0.0; 
+        var[VAR::U_SYMRTT4] = 0.0; 
+        var[VAR::U_SYMRTT5] = 0.0; 
+        var[VAR::U_SYMVAT0] = 0.0; 
+        var[VAR::U_SYMVAT1] = 0.0; 
+        var[VAR::U_SYMVAT2] = 0.0; 
+        var[VAR::U_SYMVAT3] = 0.0; 
+        var[VAR::U_SYMVAT4] = 0.0; 
+        var[VAR::U_SYMVAT5] = 0.0; 
+        #endif
+
         //std::cout<<"KS init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
 
-#if 0
-	//BSSN vars for Kerr-Schild
-        var[VAR::U_ALPHA] = sqrt(rv1/(2.0*M+rv1));
-        var[VAR::U_CHI] = 1.0/pow(1.0+2.0*M/rv1, 1.0/3.0);
-        var[VAR::U_K] = 2.0*M*sqrt(rv1/(2.0*M+rv1))*(rv1+3.0*M)/(rv1*rv1*(2.0*M+rv1));
+        #if 0
+            //BSSN vars for Kerr-Schild
+            var[VAR::U_ALPHA] = sqrt(rv1/(2.0*M+rv1));
+            var[VAR::U_CHI] = 1.0/pow(1.0+2.0*M/rv1, 1.0/3.0);
+            var[VAR::U_K] = 2.0*M*sqrt(rv1/(2.0*M+rv1))*(rv1+3.0*M)/(rv1*rv1*(2.0*M+rv1));
 
-        var[VAR::U_BETA0] = 2.0*M*x1/(rv1*(2.0*M+rv1));
-        var[VAR::U_BETA1] = 2.0*M*y1/(rv1*(2.0*M+rv1));
-        var[VAR::U_BETA2] = 2.0*M*z1/(rv1*(2.0*M+rv1));
+            var[VAR::U_BETA0] = 2.0*M*x1/(rv1*(2.0*M+rv1));
+            var[VAR::U_BETA1] = 2.0*M*y1/(rv1*(2.0*M+rv1));
+            var[VAR::U_BETA2] = 2.0*M*z1/(rv1*(2.0*M+rv1));
 
-        var[VAR::U_GT0] = pow(2,8.0/3.0)*M*x1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
-        var[VAR::U_GT1] = pow(2,8.0/3.0)*M*y1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
-        var[VAR::U_GT2] = pow(2,8.0/3.0)*M*z1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
+            var[VAR::U_GT0] = pow(2,8.0/3.0)*M*x1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
+            var[VAR::U_GT1] = pow(2,8.0/3.0)*M*y1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
+            var[VAR::U_GT2] = pow(2,8.0/3.0)*M*z1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
 
-        var[VAR::U_B0] = M*x1/(500.0*rv1*(M/5.0+rv1));
-        var[VAR::U_B1] = M*y1/(500.0*rv1*(M/5.0+rv1));
-        var[VAR::U_B2] = M*z1/(500.0*rv1*(M/5.0+rv1));
+            var[VAR::U_B0] = M*x1/(500.0*rv1*(M/5.0+rv1));
+            var[VAR::U_B1] = M*y1/(500.0*rv1*(M/5.0+rv1));
+            var[VAR::U_B2] = M*z1/(500.0*rv1*(M/5.0+rv1));
 
-        var[VAR::U_SYMGT0] = (M*x1*x1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //XX
-        var[VAR::U_SYMGT1] = M*x1*y1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XY
-        var[VAR::U_SYMGT2] = M*x1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XZ
-        var[VAR::U_SYMGT3] = (M*y1*y1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //YY
-        var[VAR::U_SYMGT4] = M*y1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //YZ
-        var[VAR::U_SYMGT5] = (M*z1*z1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //ZZ
+            var[VAR::U_SYMGT0] = (M*x1*x1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //XX
+            var[VAR::U_SYMGT1] = M*x1*y1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XY
+            var[VAR::U_SYMGT2] = M*x1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XZ
+            var[VAR::U_SYMGT3] = (M*y1*y1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //YY
+            var[VAR::U_SYMGT4] = M*y1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //YZ
+            var[VAR::U_SYMGT5] = (M*z1*z1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //ZZ
 
-        var[VAR::U_SYMAT0] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*x1*x1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XX
-        var[VAR::U_SYMAT1] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*y1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XY
-        var[VAR::U_SYMAT2] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XZ
-        var[VAR::U_SYMAT3] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*y1*y1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YY
-        var[VAR::U_SYMAT4] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*y1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YZ
-        var[VAR::U_SYMAT5] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*z1*z1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //ZZ
-#endif
+            var[VAR::U_SYMAT0] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*x1*x1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XX
+            var[VAR::U_SYMAT1] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*y1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XY
+            var[VAR::U_SYMAT2] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XZ
+            var[VAR::U_SYMAT3] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*y1*y1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YY
+            var[VAR::U_SYMAT4] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*y1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YZ
+            var[VAR::U_SYMAT5] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*z1*z1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //ZZ
+        #endif
 
     }
 
@@ -1203,6 +1924,11 @@ namespace bssn
 
     }
 
+
+    unsigned int getOctantWeight(const ot::TreeNode* pNode)
+    {
+        return pNode->getLevel();
+    }
 
 }// end of namespace bssn
 
@@ -2170,5 +2896,107 @@ namespace bssn
 
 
     }
+
+}
+
+
+
+namespace GW
+{
+    void psi4ShpereDump(const ot::Mesh* mesh, DendroScalar ** cVar,unsigned int timestep,double time, double dtheta, double dphi)
+    {
+        
+        unsigned int rankGlobal=mesh->getMPIRankGlobal();
+        unsigned int npesGlobal=mesh->getMPICommSizeGlobal();
+        MPI_Comm commGlobal=mesh->getMPIGlobalCommunicator();
+
+
+        const unsigned int nTheta = (M_PI)/dtheta;
+        const unsigned int nPhi = (2*M_PI)/dphi;
+        const unsigned int numPts = nTheta * nPhi ;
+
+        
+        unsigned int totalModes=0;
+        for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            totalModes+=2*BSSN_GW_L_MODES[l]+1;
+
+        const unsigned int TOTAL_MODES=totalModes;
+
+        DendroComplex * swsh_coeff = new DendroComplex[BSSN_GW_NUM_RADAII*TOTAL_MODES];
+        DendroComplex * swsh_coeff_g = new DendroComplex[BSSN_GW_NUM_RADAII*TOTAL_MODES];
+
+        std::vector<unsigned int> lmCounts;
+        std::vector<unsigned int> lmOffset;
+
+        lmCounts.resize(BSSN_GW_NUM_LMODES);
+        lmOffset.resize(BSSN_GW_NUM_LMODES);
+
+        for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
+            lmCounts[l]=2*BSSN_GW_L_MODES[l]+1;
+
+
+        lmOffset[0]=0;
+        omp_par::scan(&(*(lmCounts.begin())),&(*(lmOffset.begin())),BSSN_GW_NUM_LMODES);
+
+        if(mesh->isActive())
+        {
+
+            const unsigned int rankActive=mesh->getMPIRank();
+            const unsigned int npesActive=mesh->getMPICommSize();
+
+            std::vector<double> coords;
+            coords.reserve(3*numPts);
+
+            std::vector<double> psi4_real;
+            psi4_real.resize(numPts);
+
+            std::vector<double> psi4_imag;
+            psi4_imag.resize(numPts);
+
+            Point grid_limits[2];
+            Point domain_limits[2];
+
+            grid_limits[0] = Point(bssn::BSSN_OCTREE_MIN[0], bssn::BSSN_OCTREE_MIN[1], bssn::BSSN_OCTREE_MIN[2]);
+            grid_limits[1] = Point(bssn::BSSN_OCTREE_MAX[0], bssn::BSSN_OCTREE_MAX[1], bssn::BSSN_OCTREE_MAX[2]);
+
+            domain_limits[0] = Point(bssn::BSSN_COMPD_MIN[0], bssn::BSSN_COMPD_MIN[1], bssn::BSSN_COMPD_MIN[2]);
+            domain_limits[1] = Point(bssn::BSSN_COMPD_MAX[0], bssn::BSSN_COMPD_MAX[1], bssn::BSSN_COMPD_MAX[2]);
+
+
+            std::vector<unsigned int > validIndex;
+
+            for(unsigned int k=0;k<BSSN_GW_NUM_RADAII;k++)
+            {
+                for (unsigned int i=0; i< nTheta ; i++ )
+                    for(unsigned int j=0; j< nPhi ; j++)
+                    {
+                        double x = BSSN_GW_RADAII[k]*sin(j*dtheta) * cos(i*dphi) ;
+                        double y = BSSN_GW_RADAII[k]*sin(j*dtheta) * sin(i*dphi) ;
+                        double z = BSSN_GW_RADAII[k]*cos(j*dtheta);
+
+                        coords.push_back(x);
+                        coords.push_back(y);
+                        coords.push_back(z);
+
+                    }
+
+
+                validIndex.clear();
+                ot::da::interpolateToCoords(mesh,cVar[bssn::VAR_CONSTRAINT::C_PSI4_REAL],&(*(coords.begin())),coords.size(), grid_limits, domain_limits , &(*(psi4_real.begin())),validIndex);
+
+                validIndex.clear();
+                ot::da::interpolateToCoords(mesh,cVar[bssn::VAR_CONSTRAINT::C_PSI4_IMG],&(*(coords.begin())),coords.size(),  grid_limits, domain_limits ,&(*(psi4_imag.begin())),validIndex);
+
+            }
+
+
+        }
+
+
+
+
+
+    }
+
 
 }

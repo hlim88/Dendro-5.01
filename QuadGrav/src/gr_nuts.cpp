@@ -1,7 +1,14 @@
 /**
-*@brief Header file for the GR simulation.
-*/
-//
+ * @file gr_nuts.cpp
+ * @author Milinda Fernando (milinda@cs.utah.edu)
+ * @brief Solving BSSN equations using non uniform time stepping. 
+ * @version 0.1
+ * @date 2020-03-04
+ * 
+ * @copyright Copyright (c) 2020, School of Computing, University of Utah. 
+ * 
+ */
+
 
 #include "gr.h"
 #include "grUtils.h"
@@ -10,16 +17,25 @@
 #include "mesh.h"
 #include <vector>
 #include <iostream>
-#include "rkQUADGRAV.h"
+#include "rkBSSN.h"
 #include "octUtils.h"
 #include "meshUtils.h"
 
+
 int main (int argc, char** argv)
 {
-
-
+    // 0- NUTS 1-UTS
+    unsigned int ts_mode=0;     
+    
     if(argc<2)
-        std::cout<<"Usage: "<<argv[0]<<" paramFile"<<std::endl;
+    {
+        std::cout<<"Usage: "<<argv[0]<<"paramFile TSMode(0){0-Spatially Adaptive Time Stepping(SATS, "<<GRN<<"default"<<NRM<<") , 1- Uniform Time Stepping.  }"<<std::endl;
+        return 0;
+    }
+        
+    if(argc>2)
+        ts_mode = std::atoi(argv[2]);
+
 
     MPI_Init(&argc,&argv);
     MPI_Comm comm=MPI_COMM_WORLD;
@@ -28,9 +44,6 @@ int main (int argc, char** argv)
     MPI_Comm_rank(comm,&rank);
     MPI_Comm_size(comm,&npes);
 
-    bssn::timer::initFlops();
-
-    bssn::timer::total_runtime.start();
 
     // Print out CMAKE options
     if (!rank) {
@@ -94,10 +107,11 @@ int main (int argc, char** argv)
 
     }
 
-
     //1 . read the parameter file.
     if(!rank) std::cout<<" reading parameter file :"<<argv[1]<<std::endl;
     bssn::readParamFile(argv[1],comm);
+
+
 
     if(rank==1|| npes==1)
     {
@@ -284,27 +298,295 @@ int main (int argc, char** argv)
         function2Octree(f_init,bssn::BSSN_NUM_VARS,varIndex,interpVars,tmpNodes,m_uiMaxDepth,bssn::BSSN_WAVELET_TOL,bssn::BSSN_ELE_ORDER,comm);
     }
 
-    ot::Mesh * mesh= ot::createMesh(tmpNodes.data(),tmpNodes.size(),bssn::BSSN_ELE_ORDER,comm,1,ot::SM_TYPE::FDM,bssn::BSSN_DENDRO_GRAIN_SZ,bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX, bssn::getOctantWeight);
+    //std::vector<ot::TreeNode> f2Octants(tmpNodes);
+
+    //ot::Mesh * mesh = ot::createMesh(tmpNodes.data(),tmpNodes.size(),bssn::BSSN_ELE_ORDER,comm,1,ot::SM_TYPE::FDM,bssn::BSSN_DENDRO_GRAIN_SZ,bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX, bssn::getOctantWeight, (m_uiMaxDepth-MAXDEAPTH_LEVEL_DIFF-1));
+    ot::Mesh * mesh = ot::createMesh(tmpNodes.data(),tmpNodes.size(),bssn::BSSN_ELE_ORDER,comm,1,ot::SM_TYPE::FDM,bssn::BSSN_DENDRO_GRAIN_SZ,bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX, bssn::getOctantWeight, 0);
+    DendroIntL lblocks = mesh->getLocalBlockList().size();
+    DendroIntL gblocks =0; 
+    par::Mpi_Reduce(&lblocks,&gblocks,1,MPI_SUM,0,comm);
+    if(!rank)
+      std::cout<<" number of blocks for coarset block level : "<<(m_uiMaxDepth-MAXDEAPTH_LEVEL_DIFF-1)<<" # blocks: "<<gblocks<<std::endl;
     unsigned int lmin, lmax;
     mesh->computeMinMaxLevel(lmin,lmax);    
     bssn::BSSN_RK45_TIME_STEP_SIZE=bssn::BSSN_CFL_FACTOR*((bssn::BSSN_COMPD_MAX[0]-bssn::BSSN_COMPD_MIN[0])*((1u<<(m_uiMaxDepth-lmax))/((double) bssn::BSSN_ELE_ORDER))/((double)(1u<<(m_uiMaxDepth))));
     par::Mpi_Bcast(&bssn::BSSN_RK45_TIME_STEP_SIZE,1,0,comm);
 
 
-    ode::solver::RK_BSSN rk_bssn(mesh,bssn::BSSN_RK_TIME_BEGIN,bssn::BSSN_RK_TIME_END,bssn::BSSN_RK45_TIME_STEP_SIZE,(RKType)bssn::BSSN_RK_TYPE);
-    
-    if(bssn::BSSN_RESTORE_SOLVER==1)
-        rk_bssn.restoreCheckPoint(bssn::BSSN_CHKPT_FILE_PREFIX.c_str(),comm);
+    if(!rank)
+      std::cout<<"ts_mode: "<<ts_mode<<std::endl;    
 
-    bssn::timer::t_rkSolve.start();
-    rk_bssn.rkSolve();
-    bssn::timer::t_rkSolve.stop();
+    if(ts_mode == 0)
+    { 
+        //NUTS
+        assert(ot::test::isBlkFlagsValid(mesh));
+        //std::cout<<"unzip : "<<mesh->getDegOfFreedomUnZip()<<" all : "<<mesh->getDegOfFreedomUnZip()*24<<" sz _per dof : "<<((mesh->getDegOfFreedomUnZip()*24)/24)<<std::endl;
+        
+        bssn::BSSNCtx *  bssnCtx = new bssn::BSSNCtx(mesh); 
+        ts::ExplicitNUTS<DendroScalar,bssn::BSSNCtx>*  enuts = new ts::ExplicitNUTS<DendroScalar,bssn::BSSNCtx>(bssnCtx);
 
-    bssn::timer::total_runtime.stop();
-    rk_bssn.freeMesh();
+        //double * vec = mesh->createVector<double>(f_init_alpha);
+        //bool state =ot::test::isSubScatterMapValid<double>(mesh,enuts->get_sub_scatter_maps(),vec);
+        //std::cout<<" subSM valid : "<<state<<std::endl;
+        //delete [] vec;
+        
+        std::vector<double> ld_stat_g;
+        enuts->set_evolve_vars(bssnCtx->get_evolution_vars());
+        
+        if((RKType)bssn::BSSN_RK_TYPE == RKType::RK3)
+            enuts->set_ets_coefficients(ts::ETSType::RK3);
+        else if((RKType)bssn::BSSN_RK_TYPE == RKType::RK4)
+            enuts->set_ets_coefficients(ts::ETSType::RK4);
+        else if((RKType)bssn::BSSN_RK_TYPE == RKType::RK45)
+            enuts->set_ets_coefficients(ts::ETSType::RK5);
+        
+        const unsigned int rank_global = enuts->get_global_rank();
+        for(enuts->init(); enuts->curr_time() < bssn::BSSN_RK_TIME_END ; enuts->evolve())
+        {
+            const DendroIntL step = enuts->curr_step();
+            const DendroScalar time = enuts->curr_time();    
 
-    
+            const bool isActive = enuts->is_active();
+            
+
+            if(!rank_global)
+                std::cout<<GRN<<"[Explicit NUTS]: Executing step :  "<<enuts->curr_step()<<std::setw(10)<<"\tcurrent time :"<<enuts->curr_time()<<std::setw(10)<<"\t dt(min):"<<enuts->get_dt_min()<<std::setw(10)<<"\t dt(max):"<<enuts->get_dt_max()<<std::setw(10)<<"\t"<<NRM<<std::endl;
+
+            bssnCtx->terminal_output();  
+
+            bool isRemesh = false;    
+            if( (step % bssn::BSSN_REMESH_TEST_FREQ) == 0 )
+                isRemesh = bssnCtx->is_remesh();
+
+            
+            
+            if(isRemesh)
+            {
+                if(!rank_global)
+                    std::cout<<"[Explicit NUTS]: Remesh triggered "<<std::endl;;
+
+                bssnCtx->remesh(bssn::BSSN_DENDRO_GRAIN_SZ, bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX,true,false,false);
+                bssnCtx->terminal_output();
+
+            }
+            
+        
+            enuts->sync_with_mesh();
+
+            if((step % bssn::BSSN_IO_OUTPUT_FREQ) == 0 )
+            bssnCtx -> write_vtu();   
+
+            if( (step % bssn::BSSN_CHECKPT_FREQ) == 0 )
+            bssnCtx -> write_checkpt();
+            
+        }
+
+        delete bssnCtx->get_mesh();    
+        delete bssnCtx;
+
+        delete enuts;
+
+    }else if(ts_mode==1)
+    { 
+        //UTS
+        bssn::BSSNCtx *  bssnCtx = new bssn::BSSNCtx(mesh);
+        ts::ETS<DendroScalar,bssn::BSSNCtx>* ets = new ts::ETS<DendroScalar,bssn::BSSNCtx>(bssnCtx);
+        ets->set_evolve_vars(bssnCtx->get_evolution_vars());
+        
+        if((RKType)bssn::BSSN_RK_TYPE == RKType::RK3)
+            ets->set_ets_coefficients(ts::ETSType::RK3);
+        else if((RKType)bssn::BSSN_RK_TYPE == RKType::RK4)
+            ets->set_ets_coefficients(ts::ETSType::RK4);
+        else if((RKType)bssn::BSSN_RK_TYPE == RKType::RK45)
+            ets->set_ets_coefficients(ts::ETSType::RK5);
+
+
+        for(ets->init(); ets->curr_time() < bssn::BSSN_RK_TIME_END ; ets->evolve())
+        {
+            const DendroIntL   step = ets->curr_step();
+            const DendroScalar time = ets->curr_time();    
+
+            const bool isActive = ets->is_active();
+            const unsigned int rank_global = ets->get_global_rank();
+
+            if(!rank_global)
+            std::cout<<"[ETS] : Executing step :  "<<ets->curr_step()<<"\tcurrent time :"<<ets->curr_time()<<"\t dt:"<<ets->ts_size()<<"\t"<<std::endl;
+
+            bssnCtx->terminal_output();  
+
+            bool isRemesh = false;    
+            if( (step % bssn::BSSN_REMESH_TEST_FREQ) == 0 )
+            isRemesh = bssnCtx->is_remesh();
+
+            if(isRemesh)
+            {
+                if(!rank_global)
+                    std::cout<<"[ETS] : Remesh is triggered.  \n";
+
+                bssnCtx->remesh(bssn::BSSN_DENDRO_GRAIN_SZ, bssn::BSSN_LOAD_IMB_TOL,bssn::BSSN_SPLIT_FIX,true,false,false);
+                bssnCtx->terminal_output();
+
+            }
+            
+            ets->sync_with_mesh();
+
+            if((step % bssn::BSSN_IO_OUTPUT_FREQ) == 0 )
+            bssnCtx -> write_vtu();   
+
+            if( (step % bssn::BSSN_CHECKPT_FREQ) == 0 )
+            bssnCtx -> write_checkpt();
+            
+        }
+
+        delete bssnCtx->get_mesh();    
+        delete bssnCtx;
+        delete ets;
+
+    }else if(ts_mode ==2)
+    {
+        profiler_t t_rt;
+        t_rt.clear();
+
+
+        // perform a comparison test between ets and enuts. 
+        bssn::BSSNCtx *  bssnCtx_enuts = new bssn::BSSNCtx(mesh); 
+        bssn::BSSNCtx *  bssnCtx_ets = new bssn::BSSNCtx(mesh); 
+
+        ts::ExplicitNUTS<DendroScalar,bssn::BSSNCtx>*  enuts = new ts::ExplicitNUTS<DendroScalar,bssn::BSSNCtx>(bssnCtx_enuts);
+        ts::ETS<DendroScalar,bssn::BSSNCtx>*           ets   = new ts::ETS<DendroScalar,bssn::BSSNCtx>(bssnCtx_ets);
+
+
+        ets   -> set_evolve_vars(bssnCtx_ets->get_evolution_vars());
+        enuts -> set_evolve_vars(bssnCtx_enuts->get_evolution_vars());
+        
+
+        if((RKType)bssn::BSSN_RK_TYPE == RKType::RK3)
+        {
+            ets   -> set_ets_coefficients(ts::ETSType::RK3);
+            enuts -> set_ets_coefficients(ts::ETSType::RK3);
+
+        }else if((RKType)bssn::BSSN_RK_TYPE == RKType::RK4)
+        {
+            ets   -> set_ets_coefficients(ts::ETSType::RK4);
+            enuts -> set_ets_coefficients(ts::ETSType::RK4);
+
+        }else if((RKType)bssn::BSSN_RK_TYPE == RKType::RK45)
+        {
+            ets   -> set_ets_coefficients(ts::ETSType::RK5);
+            enuts -> set_ets_coefficients(ts::ETSType::RK5);
+        }
+        
+        unsigned int num_steps = ( enuts->get_dt_max() / enuts->get_dt_min() );
+        const unsigned int rank_global = ets->get_global_rank();
+
+        if(!rank_global) 
+          std::cout<<" num_steps: "<<num_steps<<std::endl;
+
+        //enuts->dump_load_statistics(std::cout);
+
+        
+        t_rt.start();
+
+        for(ets->init(); ets->curr_step() < num_steps ; ets->evolve())
+        {
+            if(!rank_global)
+                std::cout<<"[ETS] : Executing step :  "<<ets->curr_step()<<"\tcurrent time :"<<ets->curr_time()<<"\t dt:"<<ets->ts_size()<<"\t"<<std::endl;
+
+        }
+
+        t_rt.stop();
+        t_stat=t_rt.snap;
+        bssn::timer::computeOverallStats(&t_stat, t_stat_g, comm);
+
+
+        if(!rank_global)
+                std::cout<<"[ETS] : Executing step :  "<<ets->curr_step()<<"\tcurrent time :"<<ets->curr_time()<<"\t dt:"<<ets->ts_size()<<"\t"<<std::endl;
+
+        if(!rank_global)
+          printf("[ETS] time (s): (min, mean, max): (%f, %f , %f)\n", t_stat_g[0], t_stat_g[1], t_stat_g[2]);
+
+        
+        DVec evar_ets = bssnCtx_ets->get_evolution_vars();
+
+        t_rt.snapreset();
+
+        t_rt.start();
+        for(enuts->init(); enuts->curr_step() < 1 ; enuts->evolve());
+        t_rt.stop();
+
+        t_stat=t_rt.snap;
+        bssn::timer::computeOverallStats(&t_stat, t_stat_g, comm);
+
+        if(!rank_global)
+          std::cout<<GRN<<"[Explicit NUTS]: Executing step :  "<<enuts->curr_step()<<std::setw(10)<<"\tcurrent time :"<<enuts->curr_time()<<std::setw(10)<<"\t dt(min):"<<enuts->get_dt_min()<<std::setw(10)<<"\t dt(max):"<<enuts->get_dt_max()<<std::setw(10)<<"\t"<<NRM<<std::endl;
+
+        if(!rank_global)
+          printf("[ENUTS] time (s): (min, mean, max): (%f, %f , %f)\n", t_stat_g[0], t_stat_g[1], t_stat_g[2]);
+
+
+        DVec evar_enuts = bssnCtx_enuts->get_evolution_vars();
+
+        DVec evar_diff;
+        evar_diff.VecCopy(evar_ets,false);
+               
+
+        if(!rank)
+          std::cout<<"\n\n\n"<<std::endl;
+
+        for(unsigned int v=0; v < evar_diff.GetDof(); v++)
+        {
+          double min,max;
+          evar_diff.VecMinMax(mesh, min, max, v);
+          if(!rank)
+            std::cout<<"[ETS] vec(min, max): ( "<<min<<" \t"<<", "<<max<<" ) "<<std::endl;
+        }
+
+        evar_diff.VecCopy(evar_enuts,true);
+
+        if(!rank)
+          std::cout<<"\n\n\n"<<std::endl;
+
+        for(unsigned int v=0; v < evar_diff.GetDof(); v++)
+        {
+          double min,max;
+          evar_diff.VecMinMax(mesh, min, max, v);
+          if(!rank)
+            std::cout<<"[ENUTS] vec(min, max): ( "<<min<<" \t"<<", "<<max<<" ) "<<std::endl;
+        }
+
+
+        evar_diff.VecFMA(mesh,evar_ets,1,-1,true);
+
+        if(!rank)
+          std::cout<<"\n\n\n"<<std::endl;
+
+
+        for(unsigned int v=0; v < evar_diff.GetDof(); v++)
+        {
+          double min,max;
+          evar_diff.VecMinMax(mesh, min, max, v);
+          if(!rank)
+            std::cout<<"[diff] vec(min, max): ( "<<min<<" \t"<<", "<<max<<" ) "<<std::endl;
+        
+        }
+
+
+        evar_diff.VecDestroy();
+
+        delete bssnCtx_enuts->get_mesh();    
+        delete bssnCtx_enuts;
+        delete bssnCtx_ets;
+        delete enuts;
+        delete ets;
+
+        
+
+
+    }
+
+
     MPI_Finalize();
-    return 0;
+    return 0; 
+
 
 }

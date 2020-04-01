@@ -45,7 +45,7 @@
             "           " : "dimensionality of the octree, (meshing is supported only for 3D)",
             "BSSN_DIM": 3,
             "           " : "maximum level of refinement of the mesh",
-            "BSSN_MAXDEPTH": 8,
+            "BSSN_MAXDEPTH": 5,
             "BSSN_ELE_ORDER": 6,
     "__comment__" : "=======================================================",
 

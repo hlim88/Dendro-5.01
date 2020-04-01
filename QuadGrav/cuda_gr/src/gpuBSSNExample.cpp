@@ -1,19 +1,16 @@
 //
-// Created by milinda on 11/5/18.
+// Created by milinda on 8/20/18.
 //
 
-/**
- * @brief This file contains the tests to measure the efficiency of the zip/unzip computations.
- * */
+
+#include "gpuBSSNExample.h"
 
 
-#include "zipUnzipTest.h"
 
 int main (int argc, char** argv)
 {
-
     if(argc<2)
-        std::cout<<"Usage: "<<argv[0]<<" paramFile regGrid"<<std::endl;
+        std::cout<<"Usage: "<<argv[0]<<" paramFile"<<std::endl;
 
     MPI_Init(&argc,&argv);
     MPI_Comm comm=MPI_COMM_WORLD;
@@ -27,14 +24,9 @@ int main (int argc, char** argv)
     bssn::timer::total_runtime.start();
 
 
-    //1 . read the parameter file.
+//1 . read the parameter file.
     if(!rank) std::cout<<" reading parameter file :"<<argv[1]<<std::endl;
     bssn::readParamFile(argv[1],comm);
-
-    double regRange=10;
-    if(argc>2)
-        regRange=atof(argv[2]);
-
 
 
 
@@ -151,18 +143,18 @@ int main (int argc, char** argv)
 
     bssn::BSSN_RK45_TIME_STEP_SIZE=bssn::BSSN_CFL_FACTOR*(bssn::BSSN_COMPD_MAX[0]-bssn::BSSN_COMPD_MIN[0])*(1.0/(double)(1u<<bssn::BSSN_MAXDEPTH));
 
-    //2. generate the initial grid.
+//2. generate the initial grid.
     std::vector<ot::TreeNode> tmpNodes;
     std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){bssn::punctureData(x,y,z,var);};
-    //std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){bssn::KerrSchildData(x,y,z,var);};
+//std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){bssn::KerrSchildData(x,y,z,var);};
 
     const unsigned int interpVars=bssn::BSSN_NUM_VARS;
     unsigned int varIndex[interpVars];
     for(unsigned int i=0;i<bssn::BSSN_NUM_VARS;i++)
         varIndex[i]=i;
 
-    /*varIndex[0]=bssn::VAR::U_ALPHA;
-    varIndex[1]=bssn::VAR::U_CHI;*/
+/*varIndex[0]=bssn::VAR::U_ALPHA;
+varIndex[1]=bssn::VAR::U_CHI;*/
     DendroIntL localSz,globalSz;
     double t_stat;
     double t_stat_g[3];
@@ -172,11 +164,8 @@ int main (int argc, char** argv)
     if(bssn::BSSN_ENABLE_BLOCK_ADAPTIVITY)
     {
         if(!rank) std::cout<<YLW<<"Using block adaptive mesh. AMR disabled "<<NRM<<std::endl;
-        /*const Point pt_min(bssn::BSSN_BLK_MIN_X,bssn::BSSN_BLK_MIN_Y,bssn::BSSN_BLK_MIN_Z);
-        const Point pt_max(bssn::BSSN_BLK_MAX_X,bssn::BSSN_BLK_MAX_Y,bssn::BSSN_BLK_MAX_Z);*/
-
-        const Point pt_min(-regRange,-regRange,-regRange);
-        const Point pt_max(regRange,regRange,regRange);
+        const Point pt_min(bssn::BSSN_BLK_MIN_X,bssn::BSSN_BLK_MIN_Y,bssn::BSSN_BLK_MIN_Z);
+        const Point pt_max(bssn::BSSN_BLK_MAX_X,bssn::BSSN_BLK_MAX_Y,bssn::BSSN_BLK_MAX_Z);
 
         bssn::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);
     }else
@@ -213,7 +202,7 @@ int main (int argc, char** argv)
     (std::abs(p_npes_prev-p_npes)<=std::abs(p_npes_next-p_npes)) ? p_npes=p_npes_prev : p_npes=p_npes_next;
 
     if(p_npes>npes) p_npes=npes;
-    // quick fix to enforce the npes>=2 for any given grain size.
+// quick fix to enforce the npes>=2 for any given grain size.
     if(p_npes<=1 && npes>1) p_npes=2;
 
     if(p_npes==npes)
@@ -223,7 +212,7 @@ int main (int argc, char** argv)
 
     }else
     {
-        //isActive=(rank*grainSz<globalSz);
+//isActive=(rank*grainSz<globalSz);
         isActive=isRankSelected(npes,rank,p_npes);
         par::splitComm2way(isActive,&commActive,comm);
 
@@ -268,7 +257,7 @@ int main (int argc, char** argv)
         par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,commActive);
         par::Mpi_Reduce(&t_stat,t_stat_g+1,1,MPI_SUM,0,commActive);
         par::Mpi_Reduce(&t_stat,t_stat_g+2,1,MPI_MAX,0,commActive);
-        t_stat_g[1]=t_stat_g[1]/(double)rank_active;
+        t_stat_g[1]=t_stat_g[1]/(double)npes_active;
 
         localSz=tmpNodes.size();
         par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,commActive);
@@ -288,7 +277,7 @@ int main (int argc, char** argv)
         par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,commActive);
         par::Mpi_Reduce(&t_stat,t_stat_g+1,1,MPI_SUM,0,commActive);
         par::Mpi_Reduce(&t_stat,t_stat_g+2,1,MPI_MAX,0,commActive);
-        t_stat_g[1]=t_stat_g[1]/(double)rank_active;
+        t_stat_g[1]=t_stat_g[1]/(double)npes_active;
 
         if(!rank_active) std::cout<<GRN<<" 2:1 balancing max (s): "<<t_stat_g[2]<<NRM<<std::endl;
         localSz=balOct.size();
@@ -299,7 +288,6 @@ int main (int argc, char** argv)
 
     // all reduce act as barrier to sync all procs.
     par::Mpi_Allreduce(&localSz,&globalSz,1,MPI_SUM,comm);
-    unsigned int numBalOcts=globalSz;
     if(!rank) std::cout<<GRN<<" balanced # octants : "<<globalSz<<NRM<<std::endl;
 
     bssn::timer::t_mesh.start();
@@ -316,7 +304,6 @@ int main (int argc, char** argv)
 
     localSz=mesh->getNumLocalMeshNodes();
     par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,comm);
-    unsigned int numCGNodes=globalSz;
     if(!rank) std::cout<<GRN<<" # of CG nodes (vertices) : "<<globalSz<<NRM<<std::endl;
     if(!rank)
     {
@@ -325,187 +312,191 @@ int main (int argc, char** argv)
         std::cout<<"\t"<<GRN<<" e2n (min,mean,max): "<<"( "<<t_e2n_g[0]<<"\t"<<t_e2n_g[1]<<"\t"<<t_e2n_g[2]<<" )"<<NRM<<std::endl;
         std::cout<<"\t"<<GRN<<" sm (min,mean,max): "<<"( "<<t_sm_g[0]<<"\t"<<t_sm_g[1]<<"\t"<<t_sm_g[2]<<" )"<<NRM<<std::endl;
         std::cout<<"\t"<<GRN<<" blk (min,mean,max): "<<"( "<<t_blk_g[0]<<"\t"<<t_blk_g[1]<<"\t"<<t_blk_g[2]<<" )"<<NRM<<std::endl;
-
-
     }
 
-    const std::vector<ot::Block> blkList=mesh->getLocalBlockList();
-    if(!rank) std::cout<<"number of blocks : "<<blkList.size()<<std::endl;
-    /*if(!rank)
+
+    if(mesh->isActive())
     {
-        for(unsigned int blk=0;blk<blkList.size();blk++)
+
+        // variable input
+        double ** varZipIn = new double*[bssn::BSSN_NUM_VARS];
+        double ** varUnzipIn = new double*[bssn::BSSN_NUM_VARS];
+        double ** varUnzipOut = new double*[bssn::BSSN_NUM_VARS];
+
+        //variable output gpu
+        double ** varZipOutGPU=new double*[bssn::BSSN_NUM_VARS];
+        //variable output cpu
+        double ** varZipOutCPU=new double*[bssn::BSSN_NUM_VARS];
+
+
+
+        for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
         {
-            std::cout<<"blk: "<<blk<<" blkNode: "<<blkList[blk].getBlockNode()<<" element begin: "<<blkList[blk].getLocalElementBegin()<<" element end : "<<blkList[blk].getLocalElementEnd()<<std::endl;
+            varZipIn[var]=mesh->createVector<double>();
+            varZipOutGPU[var]=mesh->createVector<double>();
+            varZipOutCPU[var]=mesh->createVector<double>();
+
+            varUnzipIn[var]=mesh->createUnZippedVector<double>();
+            varUnzipOut[var]=mesh->createUnZippedVector<double>();
+
         }
-    }*/
 
-    unsigned int octByLev[m_uiMaxDepth];
-    unsigned int octByLev_g[m_uiMaxDepth];
-    double regGridPrecentage;
+        cuda::applyIntilCondition(varZipIn,mesh);
 
-    computeOctreeStats(&(*(mesh->getAllElements().begin()+mesh->getElementLocalBegin())),mesh->getNumLocalMeshElements(),octByLev,octByLev_g,regGridPrecentage,mesh->getMPIGlobalCommunicator());
-
-    if(!rank) std::cout<<"regGrid param : "<<regRange<<std::endl;
-    if(!rank)std::cout<<"regGrid precentage: "<<regGridPrecentage<<std::endl;
-
-
-    double ** m_uiZipIn=new double*[bssn::BSSN_NUM_VARS];
-    double ** m_uiZipOut=new double*[bssn::BSSN_NUM_VARS];
-    double ** m_uiUnzipIn=new double*[bssn::BSSN_NUM_VARS];
-    double ** m_uiUnzipOut=new double*[bssn::BSSN_NUM_VARS];
-
-    for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
-    {
-        m_uiZipIn[var]=mesh->createVector<double>();
-        m_uiZipOut[var]=mesh->createVector<double>();
-        m_uiUnzipIn[var]=mesh->createUnZippedVector<double>();
-        m_uiUnzipOut[var]=mesh->createUnZippedVector<double>();
-
-    }
-
-
-    applyInitialConditions(mesh,m_uiZipIn);
-
-    unsigned int NUM_ITER=10;
-
-    for(unsigned int iter=0;iter<NUM_ITER;iter++)
-    {
-
-        bssn::timer::t_ghostEx_sync.start();
 
         for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
-            mesh->performGhostExchange(m_uiZipIn[var]);
-
-        bssn::timer::t_ghostEx_sync.stop();
-
-
-        //if(!rank) std::cout<<" unzip computation begin "<<std::endl;
-
-        bssn::timer::t_unzip_sync.start();
-        for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
-            mesh->unzip(m_uiZipIn[var],m_uiUnzipIn[var]);
-
-        bssn::timer::t_unzip_sync.stop();
-
-        //if(!rank) std::cout<<" unzip computation end   "<<std::endl;
+        {
+            mesh->performGhostExchange(varZipIn[var]);
+            mesh->unzip(varZipIn[var],varUnzipIn[var]);
+        }
 
 
+        if(!rank) std::cout<<GRN<<" CPU computation begin "<<NRM<<std::endl;
 
-        Point pt_min(bssn::BSSN_COMPD_MIN[0],bssn::BSSN_COMPD_MIN[1],bssn::BSSN_COMPD_MIN[2]);
-        Point pt_max(bssn::BSSN_COMPD_MAX[0],bssn::BSSN_COMPD_MAX[1],bssn::BSSN_COMPD_MAX[2]);
+        double t1=MPI_Wtime();
+        std::vector<ot::Block> blkList=mesh->getLocalBlockList();
 
 
-        bssn::timer::t_rhs.start();
+        unsigned int offset,bflag;
+        unsigned int sz[3];
+        double dx,dy,dz;
+        double ptmin[3];
+        double ptmax[3];
+        double hx[3];
+        const Point pt_min(bssn::BSSN_COMPD_MIN[0],bssn::BSSN_COMPD_MIN[1],bssn::BSSN_COMPD_MIN[2]);
+        const Point pt_max(bssn::BSSN_COMPD_MAX[0],bssn::BSSN_COMPD_MAX[1],bssn::BSSN_COMPD_MAX[2]);
 
         for(unsigned int blk=0;blk<blkList.size();blk++)
         {
-            const unsigned int offset = blkList[blk].getOffset();
-            unsigned int sz[3];
-            double hx[3];
-            double ptmin[3];
-            double ptmax[3];
+            offset=blkList[blk].getOffset();
+            sz[0]=blkList[blk].getAllocationSzX();
+            sz[1]=blkList[blk].getAllocationSzY();
+            sz[2]=blkList[blk].getAllocationSzZ();
+
+            bflag=blkList[blk].getBlkNodeFlag();
+
+            dx=blkList[blk].computeDx(pt_min,pt_max);
+            dy=blkList[blk].computeDy(pt_min,pt_max);
+            dz=blkList[blk].computeDz(pt_min,pt_max);
+
+            ptmin[0]=GRIDX_TO_X(blkList[blk].getBlockNode().minX())-3*dx;
+            ptmin[1]=GRIDY_TO_Y(blkList[blk].getBlockNode().minY())-3*dy;
+            ptmin[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().minZ())-3*dz;
+
+            ptmax[0]=GRIDX_TO_X(blkList[blk].getBlockNode().maxX())+3*dx;
+            ptmax[1]=GRIDY_TO_Y(blkList[blk].getBlockNode().maxY())+3*dy;
+            ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
 
-            sz[0] = blkList[blk].getAllocationSzX();
-            sz[1] = blkList[blk].getAllocationSzY();
-            sz[2] = blkList[blk].getAllocationSzZ();
+            bssnrhs_sep(varUnzipOut, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
 
 
-            const unsigned int bflag = blkList[blk].getBlkNodeFlag();
-
-            hx[0]=blkList[blk].computeDx(pt_min, pt_max);
-            hx[1]=blkList[blk].computeDy(pt_min, pt_max);
-            hx[2]=blkList[blk].computeDz(pt_min, pt_max);
-
-            ptmin[0]=GRIDX_TO_X(blkList[blk].getBlockNode().minX())-3*hx[0];
-            ptmin[1]=GRIDY_TO_Y(blkList[blk].getBlockNode().minY())-3*hx[1];
-            ptmin[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().minZ())-3*hx[2];
-
-
-            ptmax[0]=GRIDX_TO_X(blkList[blk].getBlockNode().maxX())+3*hx[0];
-            ptmax[1]=GRIDY_TO_Y(blkList[blk].getBlockNode().maxY())+3*hx[1];
-            ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*hx[2];
-
-
-            bssnrhs(m_uiUnzipOut,(const double **)m_uiUnzipIn,offset,ptmin, ptmax,sz,bflag);
         }
 
-        bssn::timer::t_rhs.stop();
-
-
-        bssn::timer::t_zip.start();
         for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
-            mesh->zip(m_uiUnzipOut[var],m_uiZipOut[var]);
-        bssn::timer::t_zip.stop();
+            mesh->zip(varUnzipOut[var],varZipOutCPU[var]);
+
+        double t2=MPI_Wtime();
+
+        t_stat=t2-t1;
+        par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,mesh->getMPICommunicator());
+        par::Mpi_Reduce(&t_stat,t_stat_g+1,1,MPI_SUM,0,mesh->getMPICommunicator());
+        par::Mpi_Reduce(&t_stat,t_stat_g+2,1,MPI_MAX,0,mesh->getMPICommunicator());
+        t_stat_g[1]=t_stat_g[1]/(double)mesh->getMPICommSize();
+        if(!mesh->getMPIRank()) std::cout<<GRN<<" cpu rhs computation (s): "<<t_stat_g[2]<<NRM<<std::endl;
+        if(!rank) std::cout<<GRN<<" CPU computation end "<<NRM<<std::endl;
+
+
+
+#ifdef BSSN_ENABLE_CUDA
+        if(!rank) std::cout<<GRN<<" GPU computation begin "<<NRM<<std::endl;
+
+        t1=MPI_Wtime();
+
+        cuda::BSSNComputeParams bssnParams;
+        bssnParams.BSSN_LAMBDA[0]=bssn::BSSN_LAMBDA[0];
+        bssnParams.BSSN_LAMBDA[1]=bssn::BSSN_LAMBDA[1];
+        bssnParams.BSSN_LAMBDA[2]=bssn::BSSN_LAMBDA[2];
+        bssnParams.BSSN_LAMBDA[3]=bssn::BSSN_LAMBDA[3];
+
+        bssnParams.BSSN_LAMBDA_F[0]=bssn::BSSN_LAMBDA_F[0];
+        bssnParams.BSSN_LAMBDA_F[1]=bssn::BSSN_LAMBDA_F[1];
+
+        bssnParams.BSSN_ETA_POWER[0]=bssn::BSSN_ETA_POWER[0];
+        bssnParams.BSSN_ETA_POWER[1]=bssn::BSSN_ETA_POWER[1];
+
+        bssnParams.ETA_R0=bssn::ETA_R0;
+        bssnParams.ETA_CONST=bssn::ETA_CONST;
+        bssnParams.ETA_DAMPING=bssn::ETA_DAMPING;
+        bssnParams.ETA_DAMPING_EXP=bssn::ETA_DAMPING_EXP;
+        bssnParams.KO_DISS_SIGMA=bssn::KO_DISS_SIGMA;
+
+        dim3 threadBlock(16,16,1);
+
+        cuda::profile::initialize();
+
+        cuda::computeRHS(varUnzipOut,(const double **)varUnzipIn,&(*(blkList.begin())),blkList.size(),(const cuda::BSSNComputeParams*) &bssnParams,threadBlock,pt_min,pt_max,1);
+
+        for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
+            mesh->zip(varUnzipOut[var],varZipOutGPU[var]);
+
+        t2=MPI_Wtime();
+        t_stat=t2-t1;
+        par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,mesh->getMPICommunicator());
+        par::Mpi_Reduce(&t_stat,t_stat_g+1,1,MPI_SUM,0,mesh->getMPICommunicator());
+        par::Mpi_Reduce(&t_stat,t_stat_g+2,1,MPI_MAX,0,mesh->getMPICommunicator());
+        t_stat_g[1]=t_stat_g[1]/(double)mesh->getMPICommSize();
+        if(!mesh->getMPIRank()) std::cout<<GRN<<" gpu rhs computation (s): "<<t_stat_g[2]<<NRM<<std::endl;
+
+        cuda::profile::printOutput(mesh);
+
+
+#endif
+
+        double l2[bssn::BSSN_NUM_VARS];
+        for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
+        {
+            l2[var]=normLInfty(varZipOutCPU[var],varZipOutGPU[var],mesh->getDegOfFreedom(),mesh->getMPICommunicator());
+            if(!(mesh->getMPIRank()))
+                std::cout<<"var: "<<var<<" "<<bssn::BSSN_VAR_NAMES[var]<<" linf : "<<l2[var]<<std::endl;
+        }
+
+
+
+
+        for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
+        {
+            delete [] varZipIn[var];
+            delete [] varZipOutCPU[var];
+            delete [] varZipOutGPU[var];
+
+            delete [] varUnzipIn[var];
+            delete [] varUnzipOut[var];
+
+        }
+
+
+        delete [] varZipIn;
+        delete [] varZipOutCPU;
+        delete [] varZipOutGPU;
+
+        delete [] varUnzipIn;
+        delete [] varUnzipOut;
 
 
     }
 
+    mesh->waitAll();
 
+    delete mesh;
 
-    for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
-    {
-        delete [] m_uiZipIn[var];
-        delete [] m_uiZipOut[var];
-        delete [] m_uiUnzipIn[var];
-        delete [] m_uiUnzipOut[var];
-    }
-
-    delete [] m_uiZipIn;
-    delete [] m_uiZipOut;
-    delete [] m_uiUnzipIn;
-    delete [] m_uiUnzipOut;
-
-    bssn::timer::total_runtime.stop();
-
-    const char separator    = ' ';
-    const int nameWidth     = 30;
-    const int numWidth      = 10;
-
-    t_stat=bssn::timer::total_runtime.seconds;
-    bssn::timer::computeOverallStats(&t_stat, t_stat_g, comm);
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"+runtime(s)";
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[0];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[1];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[2]<<std::endl;
-
-    t_stat=bssn::timer::t_ghostEx_sync.seconds;
-    bssn::timer::computeOverallStats(&t_stat, t_stat_g, comm);
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"-comm(s)";
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[0];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[1];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[2]<<std::endl;
-    double t_comm=t_stat_g[2];
-
-    t_stat=bssn::timer::t_unzip_sync.seconds;
-    bssn::timer::computeOverallStats(&t_stat, t_stat_g, comm);
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"-unzip(s)";
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[0];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[1];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[2]<<std::endl;
-    double t_unzip=t_stat_g[2];
-
-    t_stat=bssn::timer::t_rhs.seconds;
-    bssn::timer::computeOverallStats(&t_stat, t_stat_g, comm);
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"-rhs(s)";
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[0];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[1];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[2]<<std::endl;
-    double t_rhs=t_stat_g[2];
-
-    t_stat=bssn::timer::t_zip.seconds;
-    bssn::timer::computeOverallStats(&t_stat, t_stat_g, comm);
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"-zip(s)";
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[0];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[1];
-    if(!rank)std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat_g[2]<<std::endl;
-    double t_zip=t_stat_g[2];
-
-    std::cout<<"gridRatio\t maxDepth\t numElems\t cgNodes\t unzip\t rhs\t zip\t commun\t"<<std::endl;
-    printf("%f\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t\n",regGridPrecentage,bssn::BSSN_MAXDEPTH,numBalOcts,numCGNodes,t_unzip,t_rhs,t_zip,t_comm);
-
-
-
+    MPI_Finalize();
     return 0;
 
+
+
+
 }
+
+
+

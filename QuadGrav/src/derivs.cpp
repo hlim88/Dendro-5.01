@@ -911,8 +911,6 @@ void deriv42adv_z(double * const  Dzu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-
-
 void ko_deriv42_x(double * const  Du, const double * const  u,
                 const double dx, const unsigned int *sz, unsigned bflag)
 {
@@ -938,7 +936,16 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      /* Du[IDX(ib,j,k)] =  (
+                                 u[IDX(ib+3,j,k)]
+                          -  6.0*u[IDX(ib+2,j,k)]
+                          + 15.0*u[IDX(ib+1,j,k)]
+                          - 19.0*u[IDX(ib,j,k)]
+                          + 12.0*u[IDX(ib-1,j,k)]
+                          -  3.0*u[IDX(ib-2,j,k)]
+                          )/smr1; */
         
+/* 
         Du[IDX(ib,j,k)] = pre_factor_6_dx *
                          (
                          -      u[IDX(ib+4,j,k)]                             
@@ -949,8 +956,9 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
                          +  6.0*u[IDX(ib-1,j,k)]
                          -      u[IDX(ib-2,j,k)]
                          );
+*/
         
-       for (int i = ib+1; i < ie-1; i++) {
+       for (int i = ib; i < ie; i++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dx *
                          (
@@ -963,7 +971,18 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
                          -      u[pp+3]
                          );
        }
-       
+
+       /* Du[IDX(ie-1,j,k)] = (
+                                 u[IDX(ie-4,j,k)]
+                          -  6.0*u[IDX(ie-3,j,k)]
+                          + 15.0*u[IDX(ie-2,j,k)]
+                          - 19.0*u[IDX(ie-1,j,k)]
+                          + 12.0*u[IDX(ie,j,k)]
+                          -  3.0*u[IDX(ie+1,j,k)]
+                           )/spr1; */
+
+      
+/*
        Du[IDX(ie-1,j,k)] = pre_factor_6_dx *
                          (
                          -      u[IDX(ie+1,j,k)]                             
@@ -974,7 +993,7 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
                          +  6.0*u[IDX(ie-4,j,k)]
                          -      u[IDX(ie-5,j,k)]
                          );
-       
+*/       
        
        
     }
@@ -1084,8 +1103,16 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
         
-        
-        Du[IDX(i,jb,k)] = pre_factor_6_dy *
+      /*  Du[IDX(i,jb,k)] =  (
+                                 u[IDX(i,jb+3,k)]
+                          -  6.0*u[IDX(i,jb+2,k)]
+                          + 15.0*u[IDX(i,jb+1,k)]
+                          - 19.0*u[IDX(i,jb,k)]
+                          + 12.0*u[IDX(i,jb-1,k)]
+                          -  3.0*u[IDX(i,jb-2,k)]
+                          )/smr1; */
+/*      
+       Du[IDX(i,jb,k)] = pre_factor_6_dy *
                          (
                          -      u[IDX(i,jb+4,k)]                             
                          +  6.0*u[IDX(i,jb+3,k)]
@@ -1095,8 +1122,9 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
                          +  6.0*u[IDX(i,jb-1,k)]
                          -      u[IDX(i,jb-2,k)]
                          );
+*/
         
-       for (int j = jb+1; j < je-1; j++) {
+       for (int j = jb; j < je; j++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dy *
                          (
@@ -1110,7 +1138,16 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
                          );
        }
        
-       
+       /* Du[IDX(i,je-1,k)] = (
+                                 u[IDX(i,je-4,k)]
+                          -  6.0*u[IDX(i,je-3,k)]
+                          + 15.0*u[IDX(i,je-2,k)]
+                          - 19.0*u[IDX(i,je-1,k)]
+                          + 12.0*u[IDX(i,je,k)]
+                          -  3.0*u[IDX(i,je+1,k)]
+                           )/spr1; */
+
+/*
        Du[IDX(i,je-1,k)] = pre_factor_6_dy *
                          (
                          -      u[IDX(i,je+1,k)]                             
@@ -1121,7 +1158,7 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
                          +  6.0*u[IDX(i,je-4,k)]
                          -      u[IDX(i,je-5,k)]
                          );
-       
+*/     
        
        
        
@@ -1234,7 +1271,17 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+
+        /* Du[IDX(i,j,kb)] =  (
+                                 u[IDX(i,j,kb+3)]
+                          -  6.0*u[IDX(i,j,kb+2)]
+                          + 15.0*u[IDX(i,j,kb+1)]
+                          - 19.0*u[IDX(i,j,kb)]
+                          + 12.0*u[IDX(i,j,kb-1)]
+                          -  3.0*u[IDX(i,j,kb-2)]
+                          )/smr1; */
         
+/*
         Du[IDX(i,j,kb)] = pre_factor_6_dz *
                          (
                          -      u[IDX(i,j,kb+4)]                             
@@ -1245,8 +1292,9 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
                          +  6.0*u[IDX(i,j,kb-1)]
                          -      u[IDX(i,j,kb-2)]
                          );
+*/
         
-       for (int k = kb+1; k < ke-1; k++) {
+       for (int k = kb; k < ke; k++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dz *
                          (
@@ -1259,7 +1307,17 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
                          -      u[pp+3*n]
                          );
        }
-       
+
+         /*  Du[IDX(i,j,ke-1)] = (
+                                 u[IDX(i,j,ke-4)]
+                          -  6.0*u[IDX(i,j,ke-3)]
+                          + 15.0*u[IDX(i,j,ke-2)]
+                          - 19.0*u[IDX(i,j,ke-1)]
+                          + 12.0*u[IDX(i,j,ke)]
+                          -  3.0*u[IDX(i,j,ke+1)]
+                           )/spr1; */
+
+/*
        Du[IDX(i,j,ke-1)] = pre_factor_6_dz *
                          (
                          -      u[IDX(i,j,ke+1)]                             
@@ -1270,7 +1328,7 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
                          +  6.0*u[IDX(i,j,ke-4)]
                          -      u[IDX(i,j,ke-5)]
                          );
-       
+*/     
        
     }
   }
@@ -1347,7 +1405,11 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
 
 
-
+/*----------------------------------------------------------------------
+ *
+ *
+ *
+ *----------------------------------------------------------------------*/
 void cpy_unzip_padd(double * const  Du, const double * const  u,const unsigned int *sz, unsigned bflag)
 {
     const int nx = sz[0];
@@ -1362,3 +1424,709 @@ void cpy_unzip_padd(double * const  Du, const double * const  u,const unsigned i
 
 
 }
+
+/*----------------------------------------------------------------------
+ *
+ *
+ *
+ *----------------------------------------------------------------------*/
+void disstvb3_x(double * const  Du, const double * const  u,
+                const double * const lam,
+                const double dx, const unsigned int *sz, unsigned bflag)
+{
+
+  const double pre_factor = -1.0 / 12.0 / dx;
+
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  const double smr3=59.0/48.0*64*dx;
+  const double smr2=43.0/48.0*64*dx;
+  const double smr1=49.0/48.0*64*dx;
+  const double spr3=smr3;
+  const double spr2=smr2;
+  const double spr1=smr1;
+
+  for (int k = kb; k < ke; k++) {
+    for (int j = jb; j < je; j++) {
+       for (int i = ib+1; i < ie-1; i++) {
+          int pp = IDX(i,j,k);
+          Du[pp] = pre_factor *
+                         (
+                               lam[pp-2]*u[pp-2]
+                         - 4.0*lam[pp-1]*u[pp-1]
+                         + 6.0*lam[pp]*u[pp]
+                         - 4.0*lam[pp+1]*u[pp+1]
+                         +     lam[pp+2]*u[pp+2]
+                         );
+       }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_LEFT)) {
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        Du[IDX(3,j,k)] =  (      u[IDX(6,j,k)]
+                           - 3.0*u[IDX(5,j,k)]
+                           + 3.0*u[IDX(4,j,k)]
+                           -     u[IDX(3,j,k)]
+                          )/smr3;
+        Du[IDX(4,j,k)] =  (
+                                 u[IDX(7,j,k)]
+                          -  6.0*u[IDX(6,j,k)]
+                          + 12.0*u[IDX(5,j,k)]
+                          - 10.0*u[IDX(4,j,k)]
+                          +  3.0*u[IDX(3,j,k)]
+                          )/smr2;
+        Du[IDX(5,j,k)] =  (
+                                 u[IDX(8,j,k)]
+                          -  6.0*u[IDX(7,j,k)]
+                          + 15.0*u[IDX(6,j,k)]
+                          - 19.0*u[IDX(5,j,k)]
+                          + 12.0*u[IDX(4,j,k)]
+                          -  3.0*u[IDX(3,j,k)]
+                          )/smr1;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_RIGHT)) {
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+         Du[IDX(ie-3,j,k)] = (
+                                 u[IDX(ie-6,j,k)]
+                          -  6.0*u[IDX(ie-5,j,k)]
+                          + 15.0*u[IDX(ie-4,j,k)]
+                          - 19.0*u[IDX(ie-3,j,k)]
+                          + 12.0*u[IDX(ie-2,j,k)]
+                          -  3.0*u[IDX(ie-1,j,k)]
+                           )/spr1;
+
+         Du[IDX(ie-2,j,k)] = (
+                                 u[IDX(ie-5,j,k)]
+                          -  6.0*u[IDX(ie-4,j,k)]
+                          + 12.0*u[IDX(ie-3,j,k)]
+                          - 10.0*u[IDX(ie-2,j,k)]
+                          +  3.0*u[IDX(ie-1,j,k)]
+                           )/spr2;
+
+         Du[IDX(ie-1,j,k)] = (
+                                 u[IDX(ie-4,j,k)]
+                          -  3.0*u[IDX(ie-3,j,k)]
+                          +  3.0*u[IDX(ie-2,j,k)]
+                          -      u[IDX(ie-1,j,k)]
+                           )/spr3;
+      }
+    }
+  }
+
+}
+
+/*----------------------------------------------------------------------
+ *
+ *
+ *
+ *----------------------------------------------------------------------*/
+void disstvb3_y(double * const  Du, const double * const  u,
+                const double * const lam,
+                const double dy, const unsigned int *sz, unsigned bflag)
+{
+
+  const double pre_factor = -1.0 / 12.0 / dy;
+
+  double smr3=59.0/48.0*64*dy;
+  double smr2=43.0/48.0*64*dy;
+  double smr1=49.0/48.0*64*dy;
+  double spr3=smr3;
+  double spr2=smr2;
+  double spr1=smr1;
+
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  for (int k = kb; k < ke; k++) {
+    for (int i = ib; i < ie; i++) {
+       for (int j = jb+1; j < je-1; j++) {
+         int pp = IDX(i,j,k);
+         Du[pp] = pre_factor *
+                         (
+                               lam[pp-2*nx]*u[pp-2*nx]
+                         - 4.0*lam[pp-nx]*u[pp-nx]
+                         + 6.0*lam[pp]*u[pp]
+                         - 4.0*lam[pp+nx]*u[pp+nx]
+                         +     lam[pp+2*nx]*u[pp+2*nx]
+                         );
+       }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_DOWN)) {
+    for (int k = kb; k < ke; k++) {
+      for (int i = ib; i < ie; i++) {
+        Du[IDX(i,3,k)] =  (      u[IDX(i,6,k)]
+                           - 3.0*u[IDX(i,5,k)]
+                           + 3.0*u[IDX(i,4,k)]
+                           -     u[IDX(i,3,k)]
+                          )/smr3;
+        Du[IDX(i,4,k)] =  (
+                                 u[IDX(i,7,k)]
+                          -  6.0*u[IDX(i,6,k)]
+                          + 12.0*u[IDX(i,5,k)]
+                          - 10.0*u[IDX(i,4,k)]
+                          +  3.0*u[IDX(i,3,k)]
+                          )/smr2;
+        Du[IDX(i,5,k)] =  (
+                                 u[IDX(i,8,k)]
+                          -  6.0*u[IDX(i,7,k)]
+                          + 15.0*u[IDX(i,6,k)]
+                          - 19.0*u[IDX(i,5,k)]
+                          + 12.0*u[IDX(i,4,k)]
+                          -  3.0*u[IDX(i,3,k)]
+                          )/smr1;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_UP)) {
+    for (int k = kb; k < ke; k++) {
+      for (int i = ib; i < ie; i++) {
+         Du[IDX(i,je-3,k)] = (
+                                 u[IDX(i,je-6,k)]
+                          -  6.0*u[IDX(i,je-5,k)]
+                          + 15.0*u[IDX(i,je-4,k)]
+                          - 19.0*u[IDX(i,je-3,k)]
+                          + 12.0*u[IDX(i,je-2,k)]
+                          -  3.0*u[IDX(i,je-1,k)]
+                           )/spr1;
+
+       Du[IDX(i,je-2,k)] = (
+                                 u[IDX(i,je-5,k)]
+                          -  6.0*u[IDX(i,je-4,k)]
+                          + 12.0*u[IDX(i,je-3,k)]
+                          - 10.0*u[IDX(i,je-2,k)]
+                          +  3.0*u[IDX(i,je-1,k)]
+                           )/spr2;
+
+       Du[IDX(i,je-1,k)] = (
+                                 u[IDX(i,je-4,k)]
+                          -  3.0*u[IDX(i,je-3,k)]
+                          +  3.0*u[IDX(i,je-2,k)]
+                          -      u[IDX(i,je-1,k)]
+                           )/spr3;
+
+      }
+    }
+  }
+
+}
+
+/*----------------------------------------------------------------------
+ *
+ *
+ *
+ *----------------------------------------------------------------------*/
+void disstvb3_z(double * const  Du, const double * const  u,
+                const double * const lam,
+                const double dz, const unsigned *sz, unsigned bflag)
+{
+
+  const double pre_factor = -1.0 / 12.0 / dz;
+
+  double smr3=59.0/48.0*64*dz;
+  double smr2=43.0/48.0*64*dz;
+  double smr1=49.0/48.0*64*dz;
+  double spr3=smr3;
+  double spr2=smr2;
+  double spr1=smr1;
+
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  const int n = nx * ny;
+
+  for (int j = jb; j < je; j++) {
+    for (int i = ib; i < ie; i++) {
+       for (int k = kb+1; k < ke-1; k++) {
+          int pp = IDX(i,j,k);
+          Du[pp] = pre_factor *
+                         (
+                               lam[pp-2*n]*u[pp-2*n]
+                         - 4.0*lam[pp-n]*u[pp-n]
+                         + 6.0*lam[pp]*u[pp]
+                         - 4.0*lam[pp+n]*u[pp+n]
+                         +     lam[pp+2*n]*u[pp+2*n]
+                         );
+       }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_BACK)) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
+        Du[IDX(i,j,3)] =  (      u[IDX(i,j,6)]
+                           - 3.0*u[IDX(i,j,5)]
+                           + 3.0*u[IDX(i,j,4)]
+                           -     u[IDX(i,j,3)]
+                          )/smr3;
+        Du[IDX(i,j,4)] =  (
+                                 u[IDX(i,j,7)]
+                          -  6.0*u[IDX(i,j,6)]
+                          + 12.0*u[IDX(i,j,5)]
+                          - 10.0*u[IDX(i,j,4)]
+                          +  3.0*u[IDX(i,j,3)]
+                          )/smr2;
+        Du[IDX(i,j,5)] =  (
+                                 u[IDX(i,j,8)]
+                          -  6.0*u[IDX(i,j,7)]
+                          + 15.0*u[IDX(i,j,6)]
+                          - 19.0*u[IDX(i,j,5)]
+                          + 12.0*u[IDX(i,j,4)]
+                          -  3.0*u[IDX(i,j,3)]
+                          )/smr1;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_FRONT)) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
+         Du[IDX(i,j,ke-3)] = (
+                                 u[IDX(i,j,ke-6)]
+                          -  6.0*u[IDX(i,j,ke-5)]
+                          + 15.0*u[IDX(i,j,ke-4)]
+                          - 19.0*u[IDX(i,j,ke-3)]
+                          + 12.0*u[IDX(i,j,ke-2)]
+                          -  3.0*u[IDX(i,j,ke-1)]
+                           )/spr1;
+
+         Du[IDX(i,j,ke-2)] = (
+                                 u[IDX(i,j,ke-5)]
+                          -  6.0*u[IDX(i,j,ke-4)]
+                          + 12.0*u[IDX(i,j,ke-3)]
+                          - 10.0*u[IDX(i,j,ke-2)]
+                          +  3.0*u[IDX(i,j,ke-1)]
+                           )/spr2;
+
+         Du[IDX(i,j,ke-1)] = (
+                                 u[IDX(i,j,ke-4)]
+                          -  3.0*u[IDX(i,j,ke-3)]
+                          +  3.0*u[IDX(i,j,ke-2)]
+                          -      u[IDX(i,j,ke-1)]
+                           )/spr3;
+      }
+    }
+  }
+
+}
+
+/*----------------------------------------------------------------------
+ *
+ *
+ *
+ *----------------------------------------------------------------------*/
+void disstvb5_x(double * const  Du, const double * const  u,
+                const double * const lam,
+                const double dx, const unsigned int *sz, unsigned bflag)
+{
+
+  double pre_factor_6_dx = 2.0 / 75.0 / dx;
+
+  double smr3=59.0/48.0*64*dx;
+  double smr2=43.0/48.0*64*dx;
+  double smr1=49.0/48.0*64*dx;
+  double spr3=smr3;
+  double spr2=smr2;
+  double spr1=smr1;
+
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  for (int k = kb; k < ke; k++) {
+    for (int j = jb; j < je; j++) {
+      int pp = IDX(ib,j,k);
+      Du[pp] =  (
+                                 lam[pp+3]*u[pp+3]
+                          -  6.0*lam[pp+2]*u[pp+2]
+                          + 15.0*lam[pp+1]*u[pp+1]
+                          - 19.0*lam[pp]*u[pp]
+                          + 12.0*lam[pp-1]*u[pp-1]
+                          -  3.0*lam[pp-2]*u[pp-2]
+                          ) / smr1;
+        
+      for (int i = ib+1; i < ie-1; i++) {
+        pp = IDX(i,j,k);
+        Du[pp] = pre_factor_6_dx *
+                 ( 
+                          std::max(lam[pp+3],lam[pp+2])*(u[pp+3] - u[pp+2])
+                   -  5.0*std::max(lam[pp+2],lam[pp+1])*(u[pp+2] - u[pp+1])
+                   + 10.0*std::max(lam[pp+1],lam[pp])*(u[pp+1] - u[pp])
+                   - 10.0*std::max(lam[pp],lam[pp-1])*(u[pp] - u[pp-1])
+                   +  5.0*std::max(lam[pp-1],lam[pp-2])*(u[pp-1] - u[pp-2])
+                   -      std::max(lam[pp-2],lam[pp-3])*(u[pp-2] - u[pp-3])
+                 );
+      }
+       
+      pp = IDX(ie-1,j,k);
+      Du[pp] = (
+                                 lam[pp-4]*u[pp-4]
+                          -  6.0*lam[pp-3]*u[pp-3]
+                          + 15.0*lam[pp-2]*u[pp-2]
+                          - 19.0*lam[pp-1]*u[pp-1]
+                          + 12.0*lam[pp]*u[pp]
+                          -  3.0*lam[pp+1]*u[pp+1]
+                           ) / spr1;
+       
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_LEFT)) {
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+        Du[IDX(3,j,k)] =  (      u[IDX(6,j,k)]
+                           - 3.0*u[IDX(5,j,k)]
+                           + 3.0*u[IDX(4,j,k)]
+                           -     u[IDX(3,j,k)]
+                          )/smr3;
+        Du[IDX(4,j,k)] =  (
+                                 u[IDX(7,j,k)]
+                          -  6.0*u[IDX(6,j,k)]
+                          + 12.0*u[IDX(5,j,k)]
+                          - 10.0*u[IDX(4,j,k)]
+                          +  3.0*u[IDX(3,j,k)]
+                          )/smr2;
+        Du[IDX(5,j,k)] =  (
+                                 u[IDX(8,j,k)]
+                          -  6.0*u[IDX(7,j,k)]
+                          + 15.0*u[IDX(6,j,k)]
+                          - 19.0*u[IDX(5,j,k)]
+                          + 12.0*u[IDX(4,j,k)]
+                          -  3.0*u[IDX(3,j,k)]
+                          )/smr1;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_RIGHT)) {
+    for (int k = kb; k < ke; k++) {
+      for (int j = jb; j < je; j++) {
+         Du[IDX(ie-3,j,k)] = (
+                                 u[IDX(ie-6,j,k)]
+                          -  6.0*u[IDX(ie-5,j,k)]
+                          + 15.0*u[IDX(ie-4,j,k)]
+                          - 19.0*u[IDX(ie-3,j,k)]
+                          + 12.0*u[IDX(ie-2,j,k)]
+                          -  3.0*u[IDX(ie-1,j,k)]
+                           )/spr1;
+
+         Du[IDX(ie-2,j,k)] = (
+                                 u[IDX(ie-5,j,k)]
+                          -  6.0*u[IDX(ie-4,j,k)]
+                          + 12.0*u[IDX(ie-3,j,k)]
+                          - 10.0*u[IDX(ie-2,j,k)]
+                          +  3.0*u[IDX(ie-1,j,k)]
+                           )/spr2;
+
+         Du[IDX(ie-1,j,k)] = (
+                                 u[IDX(ie-4,j,k)]
+                          -  3.0*u[IDX(ie-3,j,k)]
+                          +  3.0*u[IDX(ie-2,j,k)]
+                          -      u[IDX(ie-1,j,k)]
+                           )/spr3;
+      }
+    }
+  }
+
+}
+
+
+
+/*----------------------------------------------------------------------
+ *
+ *
+ *
+ *----------------------------------------------------------------------*/
+void disstvb5_y(double * const  Du, const double * const  u,
+                const double * const lam,
+                const double dy, const unsigned int *sz, unsigned bflag)
+{
+
+  double pre_factor_6_dy = 2.0 / 75.0 / dy;
+
+  double smr3=59.0/48.0*64*dy;
+  double smr2=43.0/48.0*64*dy;
+  double smr1=49.0/48.0*64*dy;
+  double spr3=smr3;
+  double spr2=smr2;
+  double spr1=smr1;
+
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  for (int k = kb; k < ke; k++) {
+    for (int i = ib; i < ie; i++) {
+      int pp = IDX(i,jb,k);
+
+      Du[pp] =  (
+                                 lam[pp+3*nx]*u[pp+3*nx]
+                          -  6.0*lam[pp+2*nx]*u[pp+2*nx]
+                          + 15.0*lam[pp+nx]*u[pp+nx]
+                          - 19.0*lam[pp]*u[pp]
+                          + 12.0*lam[pp-nx]*u[pp-nx]
+                          -  3.0*lam[pp-2*nx]*u[pp-2*nx]
+                          )/smr1;
+
+      for (int j = jb+1; j < je-1; j++) {
+        pp = IDX(i,j,k);
+        Du[pp] = pre_factor_6_dy *
+                 (
+                          std::max(lam[pp+3*nx],lam[pp+2*nx])*(u[pp+3*nx] - u[pp+2*nx])
+                   -  5.0*std::max(lam[pp+2*nx],lam[pp+nx])*(u[pp+2*nx] - u[pp+nx])
+                   + 10.0*std::max(lam[pp+nx],lam[pp])*(u[pp+nx] - u[pp])
+                   - 10.0*std::max(lam[pp],lam[pp-nx])*(u[pp] - u[pp-nx])
+                   +  5.0*std::max(lam[pp-nx],lam[pp-2*nx])*(u[pp-nx] - u[pp-2*nx])
+                   -      std::max(lam[pp-2*nx],lam[pp-3*nx])*(u[pp-2*nx] - u[pp-3*nx])
+                 );
+      }
+
+      pp = IDX(i,je-1,k);
+      Du[pp] = (
+                                 lam[pp-4*nx]*u[pp-4*nx]
+                          -  6.0*lam[pp-3*nx]*u[pp-3*nx]
+                          + 15.0*lam[pp-2*nx]*u[pp-2*nx]
+                          - 19.0*lam[pp-nx]*u[pp-nx]
+                          + 12.0*lam[pp]*u[pp]
+                          -  3.0*lam[pp+nx]*u[pp+nx]
+                           ) / spr1;
+       
+       
+       
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_DOWN)) {
+    for (int k = kb; k < ke; k++) {
+      for (int i = ib; i < ie; i++) {
+        Du[IDX(i,3,k)] =  (      u[IDX(i,6,k)]
+                           - 3.0*u[IDX(i,5,k)]
+                           + 3.0*u[IDX(i,4,k)]
+                           -     u[IDX(i,3,k)]
+                          )/smr3;
+        Du[IDX(i,4,k)] =  (
+                                 u[IDX(i,7,k)]
+                          -  6.0*u[IDX(i,6,k)]
+                          + 12.0*u[IDX(i,5,k)]
+                          - 10.0*u[IDX(i,4,k)]
+                          +  3.0*u[IDX(i,3,k)]
+                          )/smr2;
+        Du[IDX(i,5,k)] =  (
+                                 u[IDX(i,8,k)]
+                          -  6.0*u[IDX(i,7,k)]
+                          + 15.0*u[IDX(i,6,k)]
+                          - 19.0*u[IDX(i,5,k)]
+                          + 12.0*u[IDX(i,4,k)]
+                          -  3.0*u[IDX(i,3,k)]
+                          )/smr1;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_UP)) {
+    for (int k = kb; k < ke; k++) {
+      for (int i = ib; i < ie; i++) {
+         Du[IDX(i,je-3,k)] = (
+                                 u[IDX(i,je-6,k)]
+                          -  6.0*u[IDX(i,je-5,k)]
+                          + 15.0*u[IDX(i,je-4,k)]
+                          - 19.0*u[IDX(i,je-3,k)]
+                          + 12.0*u[IDX(i,je-2,k)]
+                          -  3.0*u[IDX(i,je-1,k)]
+                           )/spr1;
+
+       Du[IDX(i,je-2,k)] = (
+                                 u[IDX(i,je-5,k)]
+                          -  6.0*u[IDX(i,je-4,k)]
+                          + 12.0*u[IDX(i,je-3,k)]
+                          - 10.0*u[IDX(i,je-2,k)]
+                          +  3.0*u[IDX(i,je-1,k)]
+                           )/spr2;
+
+       Du[IDX(i,je-1,k)] = (
+                                 u[IDX(i,je-4,k)]
+                          -  3.0*u[IDX(i,je-3,k)]
+                          +  3.0*u[IDX(i,je-2,k)]
+                          -      u[IDX(i,je-1,k)]
+                           )/spr3;
+
+      }
+    }
+  }
+
+}
+
+
+
+/*----------------------------------------------------------------------
+ *
+ *
+ *
+ *----------------------------------------------------------------------*/
+
+void disstvb5_z(double * const  Du, const double * const  u,
+                const double * const lam,
+                const double dz, const unsigned *sz, unsigned bflag)
+{
+
+  double pre_factor_6_dz = -1.0 / 64.0 / dz;
+
+  double smr3=59.0/48.0*64*dz;
+  double smr2=43.0/48.0*64*dz;
+  double smr1=49.0/48.0*64*dz;
+  double spr3=smr3;
+  double spr2=smr2;
+  double spr1=smr1;
+
+  const int nx = sz[0];
+  const int ny = sz[1];
+  const int nz = sz[2];
+  const int ib = 3;
+  const int jb = 3;
+  const int kb = 3;
+  const int ie = sz[0] - 3;
+  const int je = sz[1] - 3;
+  const int ke = sz[2] - 3;
+
+  const int n = nx * ny;
+
+  for (int j = jb; j < je; j++) {
+    for (int i = ib; i < ie; i++) {
+
+      int pp = IDX(i,j,kb);  
+      Du[pp] =  (
+                                 lam[pp+3*n]*u[pp+3*n]
+                          -  6.0*lam[pp+2*n]*u[pp+2*n]
+                          + 15.0*lam[pp+n]*u[pp+n]
+                          - 19.0*lam[pp]*u[pp]
+                          + 12.0*lam[pp-n]*u[pp-n]
+                          -  3.0*lam[pp-2*n]*u[pp-2*n]
+                          )/smr1;
+
+        
+      for (int k = kb+1; k < ke-1; k++) {
+        pp = IDX(i,j,k);
+        Du[pp] = pre_factor_6_dz *
+                 (
+                          std::max(lam[pp+3*n],lam[pp+2*n])*(u[pp+3*n] - u[pp+2*n])
+                   -  5.0*std::max(lam[pp+2*n],lam[pp+n])*(u[pp+2*n] - u[pp+n])
+                   + 10.0*std::max(lam[pp+n],lam[pp])*(u[pp+n] - u[pp])
+                   - 10.0*std::max(lam[pp],lam[pp-n])*(u[pp] - u[pp-n])
+                   +  5.0*std::max(lam[pp-n],lam[pp-2*n])*(u[pp-n] - u[pp-2*n])
+                   -      std::max(lam[pp-2*n],lam[pp-3*n])*(u[pp-2*n] - u[pp-3*n])
+                 );
+      }
+
+      pp = IDX(i,j,ke-1);
+      Du[pp] = (
+                                 lam[pp-4*n]*u[pp-4*n]
+                          -  6.0*lam[pp-3*n]*u[pp-3*n]
+                          + 15.0*lam[pp-2*n]*u[pp-2*n]
+                          - 19.0*lam[pp-n]*u[pp-n]
+                          + 12.0*lam[pp]*u[pp]
+                          -  3.0*lam[pp+n]*u[pp+n]
+                           ) / spr1;
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_BACK)) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
+        Du[IDX(i,j,3)] =  (      u[IDX(i,j,6)]
+                           - 3.0*u[IDX(i,j,5)]
+                           + 3.0*u[IDX(i,j,4)]
+                           -     u[IDX(i,j,3)]
+                          )/smr3;
+        Du[IDX(i,j,4)] =  (
+                                 u[IDX(i,j,7)]
+                          -  6.0*u[IDX(i,j,6)]
+                          + 12.0*u[IDX(i,j,5)]
+                          - 10.0*u[IDX(i,j,4)]
+                          +  3.0*u[IDX(i,j,3)]
+                          )/smr2;
+        Du[IDX(i,j,5)] =  (
+                                 u[IDX(i,j,8)]
+                          -  6.0*u[IDX(i,j,7)]
+                          + 15.0*u[IDX(i,j,6)]
+                          - 19.0*u[IDX(i,j,5)]
+                          + 12.0*u[IDX(i,j,4)]
+                          -  3.0*u[IDX(i,j,3)]
+                          )/smr1;
+      }
+    }
+  }
+
+  if (bflag & (1u<<OCT_DIR_FRONT)) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
+         Du[IDX(i,j,ke-3)] = (
+                                 u[IDX(i,j,ke-6)]
+                          -  6.0*u[IDX(i,j,ke-5)]
+                          + 15.0*u[IDX(i,j,ke-4)]
+                          - 19.0*u[IDX(i,j,ke-3)]
+                          + 12.0*u[IDX(i,j,ke-2)]
+                          -  3.0*u[IDX(i,j,ke-1)]
+                           )/spr1;
+
+         Du[IDX(i,j,ke-2)] = (
+                                 u[IDX(i,j,ke-5)]
+                          -  6.0*u[IDX(i,j,ke-4)]
+                          + 12.0*u[IDX(i,j,ke-3)]
+                          - 10.0*u[IDX(i,j,ke-2)]
+                          +  3.0*u[IDX(i,j,ke-1)]
+                           )/spr2;
+
+         Du[IDX(i,j,ke-1)] = (
+                                 u[IDX(i,j,ke-4)]
+                          -  3.0*u[IDX(i,j,ke-3)]
+                          +  3.0*u[IDX(i,j,ke-2)]
+                          -      u[IDX(i,j,ke-1)]
+                           )/spr3;
+      }
+    }
+  }
+
+}
+
