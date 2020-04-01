@@ -95,6 +95,7 @@ set(QUADGRAV_SRC src/rkQUADGRAV.cpp
 
 set(SOURCE_FILES src/gr.cpp include/gr.h ${QUADGRAV_INC} ${QUADGRAV_SRC})
 add_executable(quadgravSolver ${SOURCE_FILES})
+install(TARGETS quadgravSolver RUNTIME DESTINATION bin)
 
 target_include_directories(quadgravSolver PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(quadgravSolver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

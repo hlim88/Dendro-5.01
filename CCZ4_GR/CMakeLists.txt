@@ -86,6 +86,7 @@ set(CCZ4_SRC src/rk45CCZ4.cpp
 
 set(SOURCE_FILES src/gr.cpp  include/gr.h ${CCZ4_INC} ${CCZ4_SRC})
 add_executable(ccz4Solver ${SOURCE_FILES})
+install(TARGETS ccz4Solver RUNTIME DESTINATION bin)
 target_include_directories(ccz4Solver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(ccz4Solver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 target_include_directories(ccz4Solver PRIVATE ${CMAKE_SOURCE_DIR}/include)

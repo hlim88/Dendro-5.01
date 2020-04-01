@@ -169,7 +169,7 @@ endif()
 
 set(SOURCE_FILES src/gr.cpp include/gr.h ${BSSN_INC} ${BSSN_SRC} ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP})
 add_executable(bssnSolver ${SOURCE_FILES})
-
+install(TARGETS bssnSolver RUNTIME DESTINATION bin)
 target_include_directories(bssnSolver PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(bssnSolver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(bssnSolver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
@@ -196,6 +196,7 @@ target_link_libraries(bssnSolver dendro5 ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${
 
 set(SOURCE_FILES src/checkDerivatives.cpp ${BSSN_INC} ${BSSN_SRC} ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP})
 add_executable(checkDerivs ${SOURCE_FILES})
+install(TARGETS checkDerivs RUNTIME DESTINATION bin)
 target_include_directories(checkDerivs PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(checkDerivs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(checkDerivs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
@@ -223,6 +224,7 @@ target_link_libraries(checkDerivs dendro5 ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} $
 
 set(SOURCE_FILES cuda_gr/src/gpuBSSNExample.cpp ${BSSN_INC} ${BSSN_SRC} ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP})
 add_executable(cudaBSSN ${SOURCE_FILES})
+install(TARGETS cudaBSSN RUNTIME DESTINATION bin)
 target_include_directories(cudaBSSN PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(cudaBSSN PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(cudaBSSN PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
@@ -251,6 +253,7 @@ target_link_libraries(cudaBSSN dendro5 ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${GS
 
 set(SOURCE_FILES cuda_gr/src/gpuTestBed.cpp cuda_gr/include/gpuTestBed.h ${BSSN_INC} ${BSSN_SRC} ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP})
 add_executable(gpuTestBed ${SOURCE_FILES})
+install(TARGETS gpuTestBed RUNTIME DESTINATION bin)
 target_include_directories(gpuTestBed PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(gpuTestBed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(gpuTestBed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
@@ -276,6 +279,7 @@ target_link_libraries(gpuTestBed dendro5 ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${
 
 set(SOURCE_FILES src/rhsTestBed.cpp include/rhsTestBed.h ${BSSN_INC} ${BSSN_SRC} ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP})
 add_executable(rhsTestBed ${SOURCE_FILES})
+install(TARGETS rhsTestBed RUNTIME DESTINATION bin)
 target_include_directories(rhsTestBed PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(rhsTestBed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(rhsTestBed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
@@ -303,6 +307,7 @@ target_link_libraries(rhsTestBed dendro5 ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${
 
 set(SOURCE_FILES src/zipUnzipTest.cpp include/zipUnzipTest.h ${BSSN_INC} ${BSSN_SRC} ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP})
 add_executable(zipUnzipTest ${SOURCE_FILES})
+install(TARGETS zipUnzipTest RUNTIME DESTINATION bin)
 target_include_directories(zipUnzipTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(zipUnzipTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(zipUnzipTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
