@@ -1,13 +1,15 @@
+//
+// Created by milinda on 7/26/17.
 /**
-*@brief Contains utility functions for BSSN simulation.
+*@author Milinda Fernando
+*School of Computing, University of Utah
+*@brief Contains utility functions for QUADGRAV simulation.
 */
 //
 
 #include "grUtils.h"
 
-#define QG_ID_EVOL
-
-namespace bssn
+namespace quadgrav
 {
 
     void readParamFile(const char * fName,MPI_Comm comm)
@@ -29,102 +31,102 @@ namespace bssn
             if(!infile) {std::cout<<fName<<" parameter file open failed "<<std::endl;}
             infile>>parFile;
 
-            bssn::BSSN_IO_OUTPUT_FREQ=parFile["BSSN_IO_OUTPUT_FREQ"];
-            bssn::BSSN_REMESH_TEST_FREQ=parFile["BSSN_REMESH_TEST_FREQ"];
-            bssn::BSSN_CHECKPT_FREQ=parFile["BSSN_CHECKPT_FREQ"];
-            bssn::BSSN_IO_OUTPUT_GAP=parFile["BSSN_IO_OUTPUT_GAP"];
-            bssn::BSSN_VTU_FILE_PREFIX=parFile["BSSN_VTU_FILE_PREFIX"].get<std::string>();
-            bssn::BSSN_CHKPT_FILE_PREFIX=parFile["BSSN_CHKPT_FILE_PREFIX"].get<std::string>();
-            bssn::BSSN_PROFILE_FILE_PREFIX=parFile["BSSN_PROFILE_FILE_PREFIX"].get<std::string>();
-            bssn::BSSN_RESTORE_SOLVER=parFile["BSSN_RESTORE_SOLVER"];
-            bssn::BSSN_ENABLE_BLOCK_ADAPTIVITY=parFile["BSSN_ENABLE_BLOCK_ADAPTIVITY"];
-	        bssn::BSSN_ID_TYPE=parFile["BSSN_ID_TYPE"];
-            bssn::BSSN_BLK_MIN_X=parFile["BSSN_BLK_MIN_X"];
-            bssn::BSSN_BLK_MIN_Y=parFile["BSSN_BLK_MIN_Y"];
-            bssn::BSSN_BLK_MIN_Z=parFile["BSSN_BLK_MIN_Z"];
-            bssn::BSSN_BLK_MAX_X=parFile["BSSN_BLK_MAX_X"];
-            bssn::BSSN_BLK_MAX_Y=parFile["BSSN_BLK_MAX_Y"];
-            bssn::BSSN_BLK_MAX_Z=parFile["BSSN_BLK_MAX_Z"];
-            bssn::BSSN_DENDRO_GRAIN_SZ=parFile["BSSN_DENDRO_GRAIN_SZ"];
-            bssn::BSSN_ASYNC_COMM_K=parFile["BSSN_ASYNC_COMM_K"];
-            bssn::BSSN_DENDRO_AMR_FAC=parFile["BSSN_DENDRO_AMR_FAC"];
-            bssn::BSSN_LOAD_IMB_TOL=parFile["BSSN_LOAD_IMB_TOL"];
-            bssn::BSSN_RK_TIME_BEGIN=parFile["BSSN_RK_TIME_BEGIN"];
-            bssn::BSSN_RK_TIME_END=parFile["BSSN_RK_TIME_END"];
-            bssn::BSSN_RK_TYPE=parFile["BSSN_RK_TYPE"];
-            bssn::BSSN_RK45_TIME_STEP_SIZE=parFile["BSSN_RK45_TIME_STEP_SIZE"];
-            bssn::BSSN_RK45_DESIRED_TOL=parFile["BSSN_RK45_DESIRED_TOL"];
-            bssn::BSSN_DIM=parFile["BSSN_DIM"];
-            bssn::BSSN_MAXDEPTH=parFile["BSSN_MAXDEPTH"];
-            bssn::BH1=BH((double)parFile["BSSN_BH1"]["MASS"],(double)parFile["BSSN_BH1"]["X"],(double)parFile["BSSN_BH1"]["Y"],(double)parFile["BSSN_BH1"]["Z"],(double)parFile["BSSN_BH1"]["V_X"],(double)parFile["BSSN_BH1"]["V_Y"],(double)parFile["BSSN_BH1"]["V_Z"],(double)parFile["BSSN_BH1"]["SPIN"],(double)parFile["BSSN_BH1"]["SPIN_THETA"],(double)parFile["BSSN_BH1"]["SPIN_PHI"]);
-            bssn::BH2=BH((double)parFile["BSSN_BH2"]["MASS"],(double)parFile["BSSN_BH2"]["X"],(double)parFile["BSSN_BH2"]["Y"],(double)parFile["BSSN_BH2"]["Z"],(double)parFile["BSSN_BH2"]["V_X"],(double)parFile["BSSN_BH2"]["V_Y"],(double)parFile["BSSN_BH2"]["V_Z"],(double)parFile["BSSN_BH2"]["SPIN"],(double)parFile["BSSN_BH2"]["SPIN_THETA"],(double)parFile["BSSN_BH2"]["SPIN_PHI"]);
-            bssn::BSSN_GRID_MIN_X=parFile["BSSN_GRID_MIN_X"];
-            bssn::BSSN_GRID_MAX_X=parFile["BSSN_GRID_MAX_X"];
-            bssn::BSSN_GRID_MIN_Y=parFile["BSSN_GRID_MIN_Y"];
-            bssn::BSSN_GRID_MAX_Y=parFile["BSSN_GRID_MAX_Y"];
-            bssn::BSSN_GRID_MIN_Z=parFile["BSSN_GRID_MIN_Z"];
-            bssn::BSSN_GRID_MAX_Z=parFile["BSSN_GRID_MAX_Z"];
-            bssn::ETA_CONST=parFile["ETA_CONST"];
-            bssn::ETA_R0=parFile["ETA_R0"];
-            bssn::ETA_DAMPING=parFile["ETA_DAMPING"];
-            bssn::ETA_DAMPING_EXP=parFile["ETA_DAMPING_EXP"];
-            bssn::BSSN_LAMBDA[0]=(unsigned int) parFile["BSSN_LAMBDA"]["BSSN_LAMBDA_1"];
-            bssn::BSSN_LAMBDA[1]=(unsigned int) parFile["BSSN_LAMBDA"]["BSSN_LAMBDA_2"];
-            bssn::BSSN_LAMBDA[2]=(unsigned int) parFile["BSSN_LAMBDA"]["BSSN_LAMBDA_3"];
-            bssn::BSSN_LAMBDA[3]=(unsigned int) parFile["BSSN_LAMBDA"]["BSSN_LAMBDA_4"];
-            bssn::BSSN_LAMBDA_F[0]=parFile["BSSN_LAMBDA_F"]["BSSN_LAMBDA_F0"];
-            bssn::BSSN_LAMBDA_F[1]=parFile["BSSN_LAMBDA_F"]["BSSN_LAMBDA_F1"];
+            quadgrav::QUADGRAV_IO_OUTPUT_FREQ=parFile["QUADGRAV_IO_OUTPUT_FREQ"];
+            quadgrav::QUADGRAV_REMESH_TEST_FREQ=parFile["QUADGRAV_REMESH_TEST_FREQ"];
+            quadgrav::QUADGRAV_CHECKPT_FREQ=parFile["QUADGRAV_CHECKPT_FREQ"];
+            quadgrav::QUADGRAV_IO_OUTPUT_GAP=parFile["QUADGRAV_IO_OUTPUT_GAP"];
+            quadgrav::QUADGRAV_VTU_FILE_PREFIX=parFile["QUADGRAV_VTU_FILE_PREFIX"].get<std::string>();
+            quadgrav::QUADGRAV_CHKPT_FILE_PREFIX=parFile["QUADGRAV_CHKPT_FILE_PREFIX"].get<std::string>();
+            quadgrav::QUADGRAV_PROFILE_FILE_PREFIX=parFile["QUADGRAV_PROFILE_FILE_PREFIX"].get<std::string>();
+            quadgrav::QUADGRAV_RESTORE_SOLVER=parFile["QUADGRAV_RESTORE_SOLVER"];
+            quadgrav::QUADGRAV_ENABLE_BLOCK_ADAPTIVITY=parFile["QUADGRAV_ENABLE_BLOCK_ADAPTIVITY"];
+	        quadgrav::QUADGRAV_ID_TYPE=parFile["QUADGRAV_ID_TYPE"];
+            quadgrav::QUADGRAV_BLK_MIN_X=parFile["QUADGRAV_BLK_MIN_X"];
+            quadgrav::QUADGRAV_BLK_MIN_Y=parFile["QUADGRAV_BLK_MIN_Y"];
+            quadgrav::QUADGRAV_BLK_MIN_Z=parFile["QUADGRAV_BLK_MIN_Z"];
+            quadgrav::QUADGRAV_BLK_MAX_X=parFile["QUADGRAV_BLK_MAX_X"];
+            quadgrav::QUADGRAV_BLK_MAX_Y=parFile["QUADGRAV_BLK_MAX_Y"];
+            quadgrav::QUADGRAV_BLK_MAX_Z=parFile["QUADGRAV_BLK_MAX_Z"];
+            quadgrav::QUADGRAV_DENDRO_GRAIN_SZ=parFile["QUADGRAV_DENDRO_GRAIN_SZ"];
+            quadgrav::QUADGRAV_ASYNC_COMM_K=parFile["QUADGRAV_ASYNC_COMM_K"];
+            quadgrav::QUADGRAV_DENDRO_AMR_FAC=parFile["QUADGRAV_DENDRO_AMR_FAC"];
+            quadgrav::QUADGRAV_LOAD_IMB_TOL=parFile["QUADGRAV_LOAD_IMB_TOL"];
+            quadgrav::QUADGRAV_RK_TIME_BEGIN=parFile["QUADGRAV_RK_TIME_BEGIN"];
+            quadgrav::QUADGRAV_RK_TIME_END=parFile["QUADGRAV_RK_TIME_END"];
+            quadgrav::QUADGRAV_RK_TYPE=parFile["QUADGRAV_RK_TYPE"];
+            quadgrav::QUADGRAV_RK45_TIME_STEP_SIZE=parFile["QUADGRAV_RK45_TIME_STEP_SIZE"];
+            quadgrav::QUADGRAV_RK45_DESIRED_TOL=parFile["QUADGRAV_RK45_DESIRED_TOL"];
+            quadgrav::QUADGRAV_DIM=parFile["QUADGRAV_DIM"];
+            quadgrav::QUADGRAV_MAXDEPTH=parFile["QUADGRAV_MAXDEPTH"];
+            quadgrav::BH1=BH((double)parFile["QUADGRAV_BH1"]["MASS"],(double)parFile["QUADGRAV_BH1"]["X"],(double)parFile["QUADGRAV_BH1"]["Y"],(double)parFile["QUADGRAV_BH1"]["Z"],(double)parFile["QUADGRAV_BH1"]["V_X"],(double)parFile["QUADGRAV_BH1"]["V_Y"],(double)parFile["QUADGRAV_BH1"]["V_Z"],(double)parFile["QUADGRAV_BH1"]["SPIN"],(double)parFile["QUADGRAV_BH1"]["SPIN_THETA"],(double)parFile["QUADGRAV_BH1"]["SPIN_PHI"]);
+            quadgrav::BH2=BH((double)parFile["QUADGRAV_BH2"]["MASS"],(double)parFile["QUADGRAV_BH2"]["X"],(double)parFile["QUADGRAV_BH2"]["Y"],(double)parFile["QUADGRAV_BH2"]["Z"],(double)parFile["QUADGRAV_BH2"]["V_X"],(double)parFile["QUADGRAV_BH2"]["V_Y"],(double)parFile["QUADGRAV_BH2"]["V_Z"],(double)parFile["QUADGRAV_BH2"]["SPIN"],(double)parFile["QUADGRAV_BH2"]["SPIN_THETA"],(double)parFile["QUADGRAV_BH2"]["SPIN_PHI"]);
+            quadgrav::QUADGRAV_GRID_MIN_X=parFile["QUADGRAV_GRID_MIN_X"];
+            quadgrav::QUADGRAV_GRID_MAX_X=parFile["QUADGRAV_GRID_MAX_X"];
+            quadgrav::QUADGRAV_GRID_MIN_Y=parFile["QUADGRAV_GRID_MIN_Y"];
+            quadgrav::QUADGRAV_GRID_MAX_Y=parFile["QUADGRAV_GRID_MAX_Y"];
+            quadgrav::QUADGRAV_GRID_MIN_Z=parFile["QUADGRAV_GRID_MIN_Z"];
+            quadgrav::QUADGRAV_GRID_MAX_Z=parFile["QUADGRAV_GRID_MAX_Z"];
+            quadgrav::ETA_CONST=parFile["ETA_CONST"];
+            quadgrav::ETA_R0=parFile["ETA_R0"];
+            quadgrav::ETA_DAMPING=parFile["ETA_DAMPING"];
+            quadgrav::ETA_DAMPING_EXP=parFile["ETA_DAMPING_EXP"];
+            quadgrav::QUADGRAV_LAMBDA[0]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_1"];
+            quadgrav::QUADGRAV_LAMBDA[1]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_2"];
+            quadgrav::QUADGRAV_LAMBDA[2]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_3"];
+            quadgrav::QUADGRAV_LAMBDA[3]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_4"];
+            quadgrav::QUADGRAV_LAMBDA_F[0]=parFile["QUADGRAV_LAMBDA_F"]["QUADGRAV_LAMBDA_F0"];
+            quadgrav::QUADGRAV_LAMBDA_F[1]=parFile["QUADGRAV_LAMBDA_F"]["QUADGRAV_LAMBDA_F1"];
 
-            bssn::BSSN_XI[0] = (unsigned int ) parFile["BSSN_XI"]["BSSN_XI_0"];
-            bssn::BSSN_XI[1] = (unsigned int ) parFile["BSSN_XI"]["BSSN_XI_1"];
-            bssn::BSSN_XI[2] = (unsigned int ) parFile["BSSN_XI"]["BSSN_XI_2"];
+            quadgrav::QUADGRAV_XI[0] = (unsigned int ) parFile["QUADGRAV_XI"]["QUADGRAV_XI_0"];
+            quadgrav::QUADGRAV_XI[1] = (unsigned int ) parFile["QUADGRAV_XI"]["QUADGRAV_XI_1"];
+            quadgrav::QUADGRAV_XI[2] = (unsigned int ) parFile["QUADGRAV_XI"]["QUADGRAV_XI_2"];
             
-            if(parFile.find("BSSN_ELE_ORDER")!= parFile.end())
-                bssn::BSSN_ELE_ORDER = parFile["BSSN_ELE_ORDER"];
+            if(parFile.find("QUADGRAV_ELE_ORDER")!= parFile.end())
+                quadgrav::QUADGRAV_ELE_ORDER = parFile["QUADGRAV_ELE_ORDER"];
             
-            bssn::CHI_FLOOR=parFile["CHI_FLOOR"];
-            bssn::BSSN_TRK0=parFile["BSSN_TRK0"];
+            quadgrav::CHI_FLOOR=parFile["CHI_FLOOR"];
+            quadgrav::QUADGRAV_TRK0=parFile["QUADGRAV_TRK0"];
             if (parFile.find("DISSIPATION_TYPE") != parFile.end()) {
-                bssn::DISSIPATION_TYPE=parFile["DISSIPATION_TYPE"];
+                quadgrav::DISSIPATION_TYPE=parFile["DISSIPATION_TYPE"];
             }
-            bssn::KO_DISS_SIGMA=parFile["KO_DISS_SIGMA"];
+            quadgrav::KO_DISS_SIGMA=parFile["KO_DISS_SIGMA"];
 
   	        //Parameters for eta_damping function
-	          bssn::BSSN_ETA_R0=parFile["BSSN_ETA_R0"];
-	          bssn::BSSN_ETA_POWER[0]=parFile["BSSN_ETA_POWER"]["BSSN_ETA_POWER_1"];
-	          bssn::BSSN_ETA_POWER[1]=parFile["BSSN_ETA_POWER"]["BSSN_ETA_POWER_2"];
+	          quadgrav::QUADGRAV_ETA_R0=parFile["QUADGRAV_ETA_R0"];
+	          quadgrav::QUADGRAV_ETA_POWER[0]=parFile["QUADGRAV_ETA_POWER"]["QUADGRAV_ETA_POWER_1"];
+	          quadgrav::QUADGRAV_ETA_POWER[1]=parFile["QUADGRAV_ETA_POWER"]["QUADGRAV_ETA_POWER_2"];
 
-            bssn::BSSN_USE_WAVELET_TOL_FUNCTION=parFile["BSSN_USE_WAVELET_TOL_FUNCTION"];
-            bssn::BSSN_WAVELET_TOL=parFile["BSSN_WAVELET_TOL"];
-            bssn::BSSN_WAVELET_TOL_MAX=parFile["BSSN_WAVELET_TOL_MAX"];
-            bssn::BSSN_WAVELET_TOL_FUNCTION_R0=parFile["BSSN_WAVELET_TOL_FUNCTION_R0"];
-            bssn::BSSN_WAVELET_TOL_FUNCTION_R1=parFile["BSSN_WAVELET_TOL_FUNCTION_R1"];
+            quadgrav::QUADGRAV_USE_WAVELET_TOL_FUNCTION=parFile["QUADGRAV_USE_WAVELET_TOL_FUNCTION"];
+            quadgrav::QUADGRAV_WAVELET_TOL=parFile["QUADGRAV_WAVELET_TOL"];
+            quadgrav::QUADGRAV_WAVELET_TOL_MAX=parFile["QUADGRAV_WAVELET_TOL_MAX"];
+            quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R0=parFile["QUADGRAV_WAVELET_TOL_FUNCTION_R0"];
+            quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R1=parFile["QUADGRAV_WAVELET_TOL_FUNCTION_R1"];
 
-            bssn::BSSN_NUM_REFINE_VARS=parFile["BSSN_NUM_REFINE_VARS"];
-            for(unsigned int i=0;i<bssn::BSSN_NUM_REFINE_VARS;i++)
-                bssn::BSSN_REFINE_VARIABLE_INDICES[i]=parFile["BSSN_REFINE_VARIABLE_INDICES"][i];
+            quadgrav::QUADGRAV_NUM_REFINE_VARS=parFile["QUADGRAV_NUM_REFINE_VARS"];
+            for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_REFINE_VARS;i++)
+                quadgrav::QUADGRAV_REFINE_VARIABLE_INDICES[i]=parFile["QUADGRAV_REFINE_VARIABLE_INDICES"][i];
 
-            bssn::BSSN_NUM_EVOL_VARS_VTU_OUTPUT=parFile["BSSN_NUM_EVOL_VARS_VTU_OUTPUT"];
-            bssn::BSSN_NUM_CONST_VARS_VTU_OUTPUT=parFile["BSSN_NUM_CONST_VARS_VTU_OUTPUT"];
+            quadgrav::QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT=parFile["QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT"];
+            quadgrav::QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT=parFile["QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT"];
 
-            for(unsigned int i=0;i<bssn::BSSN_NUM_EVOL_VARS_VTU_OUTPUT;i++)
-                bssn::BSSN_VTU_OUTPUT_EVOL_INDICES[i]=parFile["BSSN_VTU_OUTPUT_EVOL_INDICES"][i];
+            for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT;i++)
+                quadgrav::QUADGRAV_VTU_OUTPUT_EVOL_INDICES[i]=parFile["QUADGRAV_VTU_OUTPUT_EVOL_INDICES"][i];
 
-            for(unsigned int i=0;i<bssn::BSSN_NUM_CONST_VARS_VTU_OUTPUT;i++)
-                bssn::BSSN_VTU_OUTPUT_CONST_INDICES[i]=parFile["BSSN_VTU_OUTPUT_CONST_INDICES"][i];
+            for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT;i++)
+                quadgrav::QUADGRAV_VTU_OUTPUT_CONST_INDICES[i]=parFile["QUADGRAV_VTU_OUTPUT_CONST_INDICES"][i];
 
-            if (parFile.find("BSSN_CFL_FACTOR") != parFile.end()) {
-                bssn::BSSN_CFL_FACTOR=parFile["BSSN_CFL_FACTOR"];
+            if (parFile.find("QUADGRAV_CFL_FACTOR") != parFile.end()) {
+                quadgrav::QUADGRAV_CFL_FACTOR=parFile["QUADGRAV_CFL_FACTOR"];
             }
 
-            if(parFile.find("BSSN_VTU_Z_SLICE_ONLY") != parFile.end())
-                bssn::BSSN_VTU_Z_SLICE_ONLY=parFile["BSSN_VTU_Z_SLICE_ONLY"];
+            if(parFile.find("QUADGRAV_VTU_Z_SLICE_ONLY") != parFile.end())
+                quadgrav::QUADGRAV_VTU_Z_SLICE_ONLY=parFile["QUADGRAV_VTU_Z_SLICE_ONLY"];
 
-            if (parFile.find("BSSN_GW_EXTRACT_FREQ") != parFile.end()) {
-                bssn::BSSN_GW_EXTRACT_FREQ=parFile["BSSN_GW_EXTRACT_FREQ"];
+            if (parFile.find("QUADGRAV_GW_EXTRACT_FREQ") != parFile.end()) {
+                quadgrav::QUADGRAV_GW_EXTRACT_FREQ=parFile["QUADGRAV_GW_EXTRACT_FREQ"];
             }else
             {
-                bssn::BSSN_GW_EXTRACT_FREQ=std::max(1u,bssn::BSSN_IO_OUTPUT_FREQ>>1u);
+                quadgrav::QUADGRAV_GW_EXTRACT_FREQ=std::max(1u,quadgrav::QUADGRAV_IO_OUTPUT_FREQ>>1u);
             }
 
            /* Parameters for TPID */
@@ -176,59 +178,59 @@ namespace bssn
             }
 
 
-            vtu_len=BSSN_VTU_FILE_PREFIX.size();
-            chp_len=BSSN_CHKPT_FILE_PREFIX.size();
-            prf_len=BSSN_PROFILE_FILE_PREFIX.size();
+            vtu_len=QUADGRAV_VTU_FILE_PREFIX.size();
+            chp_len=QUADGRAV_CHKPT_FILE_PREFIX.size();
+            prf_len=QUADGRAV_PROFILE_FILE_PREFIX.size();
 
 
-            GW::BSSN_GW_NUM_RADAII=parFile["BSSN_GW_NUM_RADAII"];
-            GW::BSSN_GW_NUM_LMODES=parFile["BSSN_GW_NUM_LMODES"];
+            GW::QUADGRAV_GW_NUM_RADAII=parFile["QUADGRAV_GW_NUM_RADAII"];
+            GW::QUADGRAV_GW_NUM_LMODES=parFile["QUADGRAV_GW_NUM_LMODES"];
 
-            for(unsigned int i=0;i<GW::BSSN_GW_NUM_RADAII;i++)
-                GW::BSSN_GW_RADAII[i]=parFile["BSSN_GW_RADAII"][i];
+            for(unsigned int i=0;i<GW::QUADGRAV_GW_NUM_RADAII;i++)
+                GW::QUADGRAV_GW_RADAII[i]=parFile["QUADGRAV_GW_RADAII"][i];
 
-            for(unsigned int i=0;i<GW::BSSN_GW_NUM_LMODES;i++)
-                GW::BSSN_GW_L_MODES[i]=parFile["BSSN_GW_L_MODES"][i];
+            for(unsigned int i=0;i<GW::QUADGRAV_GW_NUM_LMODES;i++)
+                GW::QUADGRAV_GW_L_MODES[i]=parFile["QUADGRAV_GW_L_MODES"][i];
 
 
-            if(parFile.find("BSSN_USE_FD_GRID_TRANSFER")!=parFile.end())
+            if(parFile.find("QUADGRAV_USE_FD_GRID_TRANSFER")!=parFile.end())
             {
-                bssn::BSSN_USE_FD_GRID_TRANSFER=parFile["BSSN_USE_FD_GRID_TRANSFER"];
+                quadgrav::QUADGRAV_USE_FD_GRID_TRANSFER=parFile["QUADGRAV_USE_FD_GRID_TRANSFER"];
             }
 
-            if(parFile.find("BSSN_EH_COARSEN_VAL")!= parFile.end())
+            if(parFile.find("QUADGRAV_EH_COARSEN_VAL")!= parFile.end())
             {
-                bssn::BSSN_EH_COARSEN_VAL = parFile["BSSN_EH_COARSEN_VAL"];
+                quadgrav::QUADGRAV_EH_COARSEN_VAL = parFile["QUADGRAV_EH_COARSEN_VAL"];
             }
 
-            if(parFile.find("BSSN_EH_REFINE_VAL")!=parFile.end())
+            if(parFile.find("QUADGRAV_EH_REFINE_VAL")!=parFile.end())
             {
-                bssn::BSSN_EH_REFINE_VAL = parFile["BSSN_EH_REFINE_VAL"];
+                quadgrav::QUADGRAV_EH_REFINE_VAL = parFile["QUADGRAV_EH_REFINE_VAL"];
             }
 
-            if(parFile.find("BSSN_REFINEMENT_MODE")!=parFile.end())
+            if(parFile.find("QUADGRAV_REFINEMENT_MODE")!=parFile.end())
             {
-                bssn::BSSN_REFINEMENT_MODE = static_cast<bssn::RefinementMode>(parFile["BSSN_REFINEMENT_MODE"]);
+                quadgrav::QUADGRAV_REFINEMENT_MODE = static_cast<quadgrav::RefinementMode>(parFile["QUADGRAV_REFINEMENT_MODE"]);
             }
 
 
         }
 
-        par::Mpi_Bcast(&BSSN_ELE_ORDER,1,0,comm);
-        par::Mpi_Bcast(&BSSN_IO_OUTPUT_FREQ,1,0,comm);
-        par::Mpi_Bcast(&BSSN_REMESH_TEST_FREQ,1,0,comm);
-        par::Mpi_Bcast(&BSSN_CHECKPT_FREQ,1,0,comm);
-        par::Mpi_Bcast(&BSSN_IO_OUTPUT_GAP,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_ELE_ORDER,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_IO_OUTPUT_FREQ,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_REMESH_TEST_FREQ,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_CHECKPT_FREQ,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_IO_OUTPUT_GAP,1,0,comm);
 
         par::Mpi_Bcast(&vtu_len,1,0,comm);
         par::Mpi_Bcast(&chp_len,1,0,comm);
         par::Mpi_Bcast(&prf_len,1,0,comm);
 
-        par::Mpi_Bcast(&BSSN_DENDRO_GRAIN_SZ,1,0,comm);
-        par::Mpi_Bcast(&BSSN_DENDRO_AMR_FAC,1,0,comm);
-        par::Mpi_Bcast(&BSSN_ASYNC_COMM_K,1,0,comm);
-        par::Mpi_Bcast((int*)&BSSN_REFINEMENT_MODE,1,0,comm);
-        par::Mpi_Bcast(&BSSN_GW_EXTRACT_FREQ,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_DENDRO_GRAIN_SZ,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_DENDRO_AMR_FAC,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_ASYNC_COMM_K,1,0,comm);
+        par::Mpi_Bcast((int*)&QUADGRAV_REFINEMENT_MODE,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_GW_EXTRACT_FREQ,1,0,comm);
 
         char vtu_name[vtu_len+1];
         char chp_name[chp_len+1];
@@ -238,13 +240,13 @@ namespace bssn
         if(!rank)
         {
            for(unsigned int k=0;k<vtu_len;k++)
-               vtu_name[k]=BSSN_VTU_FILE_PREFIX[k];
+               vtu_name[k]=QUADGRAV_VTU_FILE_PREFIX[k];
 
             for(unsigned int k=0;k<chp_len;k++)
-                chp_name[k]=BSSN_CHKPT_FILE_PREFIX[k];
+                chp_name[k]=QUADGRAV_CHKPT_FILE_PREFIX[k];
 
             for(unsigned int k=0;k<prf_len;k++)
-                prf_name[k]=BSSN_PROFILE_FILE_PREFIX[k];
+                prf_name[k]=QUADGRAV_PROFILE_FILE_PREFIX[k];
 
             vtu_name[vtu_len]='\0';
             chp_name[chp_len]='\0';
@@ -257,62 +259,62 @@ namespace bssn
         MPI_Bcast(chp_name,chp_len+1,MPI_CHAR,0,comm);
         MPI_Bcast(prf_name,prf_len+1,MPI_CHAR,0,comm);
 
-        BSSN_VTU_FILE_PREFIX=std::string(vtu_name);
-        BSSN_CHKPT_FILE_PREFIX=std::string(chp_name);
-        BSSN_PROFILE_FILE_PREFIX=std::string(prf_name);
+        QUADGRAV_VTU_FILE_PREFIX=std::string(vtu_name);
+        QUADGRAV_CHKPT_FILE_PREFIX=std::string(chp_name);
+        QUADGRAV_PROFILE_FILE_PREFIX=std::string(prf_name);
 
 
-        par::Mpi_Bcast(&BSSN_RESTORE_SOLVER,1,0,comm);
-        par::Mpi_Bcast(&BSSN_ENABLE_BLOCK_ADAPTIVITY,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_RESTORE_SOLVER,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_ENABLE_BLOCK_ADAPTIVITY,1,0,comm);
 
-        par::Mpi_Bcast(&BSSN_USE_WAVELET_TOL_FUNCTION,1,0,comm);
-        par::Mpi_Bcast(&BSSN_WAVELET_TOL,1,0,comm);
-        par::Mpi_Bcast(&BSSN_WAVELET_TOL_MAX,1,0,comm);
-        par::Mpi_Bcast(&BSSN_WAVELET_TOL_FUNCTION_R0,1,0,comm);
-        par::Mpi_Bcast(&BSSN_WAVELET_TOL_FUNCTION_R1,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_USE_WAVELET_TOL_FUNCTION,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL_MAX,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL_FUNCTION_R0,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL_FUNCTION_R1,1,0,comm);
 
 
-        par::Mpi_Bcast(&BSSN_CFL_FACTOR,1,0,comm);
-        par::Mpi_Bcast(&BSSN_LOAD_IMB_TOL,1,0,comm);
-        par::Mpi_Bcast(&BSSN_RK_TIME_BEGIN,1,0,comm);
-        par::Mpi_Bcast(&BSSN_RK_TIME_END,1,0,comm);
-        par::Mpi_Bcast(&BSSN_RK_TYPE,1,0,comm);
-        par::Mpi_Bcast(&BSSN_RK45_TIME_STEP_SIZE,1,0,comm);
-        par::Mpi_Bcast(&BSSN_RK45_DESIRED_TOL,1,0,comm);
-        par::Mpi_Bcast(&BSSN_DIM,1,0,comm);
-        par::Mpi_Bcast(&BSSN_MAXDEPTH,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_CFL_FACTOR,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_LOAD_IMB_TOL,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_RK_TIME_BEGIN,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_RK_TIME_END,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_RK_TYPE,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_RK45_TIME_STEP_SIZE,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_RK45_DESIRED_TOL,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_DIM,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_MAXDEPTH,1,0,comm);
 
-        MPI_Bcast(&(bssn::BH1),sizeof(double)*10,MPI_BYTE,0,comm);
-        MPI_Bcast(&(bssn::BH2),sizeof(double)*10,MPI_BYTE,0,comm);
+        MPI_Bcast(&(quadgrav::BH1),sizeof(double)*10,MPI_BYTE,0,comm);
+        MPI_Bcast(&(quadgrav::BH2),sizeof(double)*10,MPI_BYTE,0,comm);
 
-        par::Mpi_Bcast(&BSSN_ID_TYPE,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_ID_TYPE,1,0,comm);
 
-        par::Mpi_Bcast(&BSSN_GRID_MIN_X,1,0,comm);
-        par::Mpi_Bcast(&BSSN_GRID_MAX_X,1,0,comm);
-        par::Mpi_Bcast(&BSSN_GRID_MIN_Y,1,0,comm);
-        par::Mpi_Bcast(&BSSN_GRID_MAX_Y,1,0,comm);
-        par::Mpi_Bcast(&BSSN_GRID_MIN_Z,1,0,comm);
-        par::Mpi_Bcast(&BSSN_GRID_MAX_Z,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_GRID_MIN_X,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_GRID_MAX_X,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_GRID_MIN_Y,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_GRID_MAX_Y,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_GRID_MIN_Z,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_GRID_MAX_Z,1,0,comm);
 
-        par::Mpi_Bcast(&BSSN_BLK_MIN_X,1,0,comm);
-        par::Mpi_Bcast(&BSSN_BLK_MIN_Y,1,0,comm);
-        par::Mpi_Bcast(&BSSN_BLK_MIN_Z,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_BLK_MIN_X,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_BLK_MIN_Y,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_BLK_MIN_Z,1,0,comm);
 
-        par::Mpi_Bcast(&BSSN_BLK_MAX_X,1,0,comm);
-        par::Mpi_Bcast(&BSSN_BLK_MAX_Y,1,0,comm);
-        par::Mpi_Bcast(&BSSN_BLK_MAX_Z,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_BLK_MAX_X,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_BLK_MAX_Y,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_BLK_MAX_Z,1,0,comm);
 
-        BSSN_OCTREE_MAX[0]=(double )(1u<<bssn::BSSN_MAXDEPTH);
-        BSSN_OCTREE_MAX[1]=(double )(1u<<bssn::BSSN_MAXDEPTH);
-        BSSN_OCTREE_MAX[2]=(double )(1u<<bssn::BSSN_MAXDEPTH);
+        QUADGRAV_OCTREE_MAX[0]=(double )(1u<<quadgrav::QUADGRAV_MAXDEPTH);
+        QUADGRAV_OCTREE_MAX[1]=(double )(1u<<quadgrav::QUADGRAV_MAXDEPTH);
+        QUADGRAV_OCTREE_MAX[2]=(double )(1u<<quadgrav::QUADGRAV_MAXDEPTH);
 
-        BSSN_COMPD_MIN[0]=BSSN_GRID_MIN_X;
-        BSSN_COMPD_MIN[1]=BSSN_GRID_MIN_Y;
-        BSSN_COMPD_MIN[2]=BSSN_GRID_MIN_Z;
+        QUADGRAV_COMPD_MIN[0]=QUADGRAV_GRID_MIN_X;
+        QUADGRAV_COMPD_MIN[1]=QUADGRAV_GRID_MIN_Y;
+        QUADGRAV_COMPD_MIN[2]=QUADGRAV_GRID_MIN_Z;
 
-        BSSN_COMPD_MAX[0]=BSSN_GRID_MAX_X;
-        BSSN_COMPD_MAX[1]=BSSN_GRID_MAX_Y;
-        BSSN_COMPD_MAX[2]=BSSN_GRID_MAX_Z;
+        QUADGRAV_COMPD_MAX[0]=QUADGRAV_GRID_MAX_X;
+        QUADGRAV_COMPD_MAX[1]=QUADGRAV_GRID_MAX_Y;
+        QUADGRAV_COMPD_MAX[2]=QUADGRAV_GRID_MAX_Z;
 
 
         par::Mpi_Bcast(&ETA_CONST,1,0,comm);
@@ -321,29 +323,29 @@ namespace bssn
         par::Mpi_Bcast(&ETA_DAMPING_EXP,1,0,comm);
 
         par::Mpi_Bcast(&CHI_FLOOR,1,0,comm);
-        par::Mpi_Bcast(&BSSN_TRK0,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_TRK0,1,0,comm);
         par::Mpi_Bcast(&DISSIPATION_TYPE,1,0,comm);
         par::Mpi_Bcast(&KO_DISS_SIGMA,1,0,comm);
-        par::Mpi_Bcast(&BSSN_ETA_R0,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_ETA_R0,1,0,comm);
 
-        MPI_Bcast(&(bssn::BSSN_LAMBDA),4,MPI_UNSIGNED,0,comm);
-        MPI_Bcast(&(bssn::BSSN_LAMBDA_F),2,MPI_DOUBLE,0,comm);
-        MPI_Bcast(&(bssn::BSSN_ETA_POWER),2,MPI_DOUBLE,0,comm);
-        MPI_Bcast((bssn::BSSN_XI),3,MPI_INT,0,comm);
-
-
-        par::Mpi_Bcast(&BSSN_NUM_REFINE_VARS,1,0,comm);
-        par::Mpi_Bcast(&BSSN_NUM_EVOL_VARS_VTU_OUTPUT,1,0,comm);
-        par::Mpi_Bcast(&BSSN_NUM_CONST_VARS_VTU_OUTPUT,1,0,comm);
+        MPI_Bcast(&(quadgrav::QUADGRAV_LAMBDA),4,MPI_UNSIGNED,0,comm);
+        MPI_Bcast(&(quadgrav::QUADGRAV_LAMBDA_F),2,MPI_DOUBLE,0,comm);
+        MPI_Bcast(&(quadgrav::QUADGRAV_ETA_POWER),2,MPI_DOUBLE,0,comm);
+        MPI_Bcast((quadgrav::QUADGRAV_XI),3,MPI_INT,0,comm);
 
 
-        if(BSSN_NUM_REFINE_VARS>BSSN_NUM_VARS){std::cout<<"Error[parameter file]: Number of refine variables should be less than number of BSSN_NUM_VARS"<<std::endl; exit(0);}
-        if(BSSN_NUM_EVOL_VARS_VTU_OUTPUT>BSSN_NUM_VARS){std::cout<<"Error[parameter file]: Number of evolution VTU variables should be less than number of BSSN_NUM_VARS"<<std::endl; exit(0);}
-        if(BSSN_NUM_CONST_VARS_VTU_OUTPUT>BSSN_CONSTRAINT_NUM_VARS){std::cout<<"Error[parameter file]: Number of constraint VTU variables should be less than number of BSSN_CONSTRAINT_NUM_VARS"<<std::endl; exit(0);}
+        par::Mpi_Bcast(&QUADGRAV_NUM_REFINE_VARS,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT,1,0,comm);
+        par::Mpi_Bcast(&QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT,1,0,comm);
 
-        par::Mpi_Bcast(BSSN_REFINE_VARIABLE_INDICES,BSSN_NUM_VARS,0,comm);
-        par::Mpi_Bcast(BSSN_VTU_OUTPUT_EVOL_INDICES,BSSN_NUM_VARS,0,comm);
-        par::Mpi_Bcast(BSSN_VTU_OUTPUT_CONST_INDICES,BSSN_CONSTRAINT_NUM_VARS,0,comm);
+
+        if(QUADGRAV_NUM_REFINE_VARS>QUADGRAV_NUM_VARS){std::cout<<"Error[parameter file]: Number of refine variables should be less than number of QUADGRAV_NUM_VARS"<<std::endl; exit(0);}
+        if(QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT>QUADGRAV_NUM_VARS){std::cout<<"Error[parameter file]: Number of evolution VTU variables should be less than number of QUADGRAV_NUM_VARS"<<std::endl; exit(0);}
+        if(QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT>QUADGRAV_CONSTRAINT_NUM_VARS){std::cout<<"Error[parameter file]: Number of constraint VTU variables should be less than number of QUADGRAV_CONSTRAINT_NUM_VARS"<<std::endl; exit(0);}
+
+        par::Mpi_Bcast(QUADGRAV_REFINE_VARIABLE_INDICES,QUADGRAV_NUM_VARS,0,comm);
+        par::Mpi_Bcast(QUADGRAV_VTU_OUTPUT_EVOL_INDICES,QUADGRAV_NUM_VARS,0,comm);
+        par::Mpi_Bcast(QUADGRAV_VTU_OUTPUT_CONST_INDICES,QUADGRAV_CONSTRAINT_NUM_VARS,0,comm);
 
         par::Mpi_Bcast(&TPID::target_M_plus,1,0,comm);
         par::Mpi_Bcast(&TPID::target_M_minus,1,0,comm);
@@ -377,15 +379,15 @@ namespace bssn
 
 
         // gw extraction parameters.
-        par::Mpi_Bcast(&GW::BSSN_GW_NUM_RADAII,1,0,comm);
-        par::Mpi_Bcast(&GW::BSSN_GW_NUM_LMODES,1,0,comm);
+        par::Mpi_Bcast(&GW::QUADGRAV_GW_NUM_RADAII,1,0,comm);
+        par::Mpi_Bcast(&GW::QUADGRAV_GW_NUM_LMODES,1,0,comm);
 
-        par::Mpi_Bcast(GW::BSSN_GW_L_MODES,GW::BSSN_GW_MAX_LMODES,0,comm);
-        par::Mpi_Bcast(GW::BSSN_GW_RADAII,GW::BSSN_GW_MAX_RADAII,0,comm);
-        par::Mpi_Bcast(&bssn::BSSN_USE_FD_GRID_TRANSFER,1,0,comm);
-        par::Mpi_Bcast(&bssn::BSSN_VTU_Z_SLICE_ONLY,1,0,comm);
-        par::Mpi_Bcast(&bssn::BSSN_EH_REFINE_VAL,1,0,comm);
-        par::Mpi_Bcast(&bssn::BSSN_EH_COARSEN_VAL,1,0,comm);
+        par::Mpi_Bcast(GW::QUADGRAV_GW_L_MODES,GW::QUADGRAV_GW_MAX_LMODES,0,comm);
+        par::Mpi_Bcast(GW::QUADGRAV_GW_RADAII,GW::QUADGRAV_GW_MAX_RADAII,0,comm);
+        par::Mpi_Bcast(&quadgrav::QUADGRAV_USE_FD_GRID_TRANSFER,1,0,comm);
+        par::Mpi_Bcast(&quadgrav::QUADGRAV_VTU_Z_SLICE_ONLY,1,0,comm);
+        par::Mpi_Bcast(&quadgrav::QUADGRAV_EH_REFINE_VAL,1,0,comm);
+        par::Mpi_Bcast(&quadgrav::QUADGRAV_EH_COARSEN_VAL,1,0,comm);
 
 
 
@@ -641,25 +643,6 @@ namespace bssn
         var[VAR::U_SYMGT3] = 1.0; //YY
         var[VAR::U_SYMGT4] = 0.0; //YZ
         var[VAR::U_SYMGT5] = 1.0; //ZZ
-
-        //Define initial values for QG variables
-        // TODO : find better one
-        #ifdef QG_ID_EVOL
-        var[VAR::U_RSC] = 0.0; 
-        var[VAR::U_RSCH] = 0.0; 
-        var[VAR::U_SYMRTT0] = 0.0; 
-        var[VAR::U_SYMRTT1] = 0.0; 
-        var[VAR::U_SYMRTT2] = 0.0; 
-        var[VAR::U_SYMRTT3] = 0.0; 
-        var[VAR::U_SYMRTT4] = 0.0; 
-        var[VAR::U_SYMRTT5] = 0.0; 
-        var[VAR::U_SYMVAT0] = 0.0; 
-        var[VAR::U_SYMVAT1] = 0.0; 
-        var[VAR::U_SYMVAT2] = 0.0; 
-        var[VAR::U_SYMVAT3] = 0.0; 
-        var[VAR::U_SYMVAT4] = 0.0; 
-        var[VAR::U_SYMVAT5] = 0.0; 
-        #endif
 
         for (i1=0;i1<3;i1++) {
             for (i2=0;i2<3;i2++) {
@@ -1446,28 +1429,10 @@ double interpolation4( double xx[], double yy[], int np, double xb,
 	    var[VAR::U_SYMAT4] = Atd[1][2];
 	    var[VAR::U_SYMAT5] = Atd[2][2];
 
-        //TODO : Find better one
-        #ifdef QG_ID_EVOL
-        var[VAR::U_RSC] = 0.0; 
-        var[VAR::U_RSCH] = 0.0; 
-        var[VAR::U_SYMRTT0] = 0.0; 
-        var[VAR::U_SYMRTT1] = 0.0; 
-        var[VAR::U_SYMRTT2] = 0.0; 
-        var[VAR::U_SYMRTT3] = 0.0; 
-        var[VAR::U_SYMRTT4] = 0.0; 
-        var[VAR::U_SYMRTT5] = 0.0; 
-        var[VAR::U_SYMVAT0] = 0.0; 
-        var[VAR::U_SYMVAT1] = 0.0; 
-        var[VAR::U_SYMVAT2] = 0.0; 
-        var[VAR::U_SYMVAT3] = 0.0; 
-        var[VAR::U_SYMVAT4] = 0.0; 
-        var[VAR::U_SYMVAT5] = 0.0; 
-        #endif
-
         //std::cout<<"KS init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
 
         #if 0
-            //BSSN vars for Kerr-Schild
+            //QUADGRAV vars for Kerr-Schild
             var[VAR::U_ALPHA] = sqrt(rv1/(2.0*M+rv1));
             var[VAR::U_CHI] = 1.0/pow(1.0+2.0*M/rv1, 1.0/3.0);
             var[VAR::U_K] = 2.0*M*sqrt(rv1/(2.0*M+rv1))*(rv1+3.0*M)/(rv1*rv1*(2.0*M+rv1));
@@ -1652,7 +1617,7 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         u[VAR::U_SYMAT5] = exp(-4.0*cos(x)*sin(y))*(cos(z)-0.3333333333*exp(4*cos(x)*sin(y))/(1+0.2*sin(x))/(1+0.2*cos(y))*(5.0*exp(-4.0*cos(x)*sin(y))/(5.0+sin(x))*cos(x)+5.0*exp(-4.0*cos(x)*sin(y))/(5.0+cos(y))*cos(y)+0.04*(25.0+5.0*cos(y)+5.0*sin(x)+sin(x)*cos(y))*exp(-4.0*cos(x)*sin(y))*cos(z)));
 
 
-        /* Enforce BSSN constraints */
+        /* Enforce QUADGRAV constraints */
         double gtd[3][3], Atd[3][3];
 
         gtd[0][0] = u[VAR::U_SYMGT0];
@@ -1707,7 +1672,7 @@ double interpolation4( double xx[], double yy[], int np, double xb,
 
         if (fabs(detgt_m1) > 1.0e-6) {
             std::cout.precision(14);
-            std::cout<<"enforce_bssn_constraint: det(gtd) != 1. det="<<std::fixed<<det_gtd<<std::endl;
+            std::cout<<"enforce_quadgrav_constraint: det(gtd) != 1. det="<<std::fixed<<det_gtd<<std::endl;
             std::cout<<"      gtd(1,1)="<<gtd[0][0]<<std::endl;
             std::cout<<"      gtd(1,2)="<<gtd[0][1]<<std::endl;
             std::cout<<"      gtd(1,3)="<<gtd[0][2]<<std::endl;
@@ -1753,7 +1718,7 @@ double interpolation4( double xx[], double yy[], int np, double xb,
                                      + Atd[1][2]*gtu[1][2]  );
 
         if (fabs(tr_A) > 1.0e-6) {
-            std::cout<<"enforce_bssn_constraint: tr_A != 0. tr_A="<<tr_A<<std::endl;
+            std::cout<<"enforce_quadgrav_constraint: tr_A != 0. tr_A="<<tr_A<<std::endl;
             std::cout<<"      Atd(1,1)="<<Atd[0][0]<<std::endl;
             std::cout<<"      Atd(1,2)="<<Atd[0][1]<<std::endl;
             std::cout<<"      Atd(1,3)="<<Atd[0][2]<<std::endl;
@@ -1840,20 +1805,20 @@ double interpolation4( double xx[], double yy[], int np, double xb,
     double computeWTol(double x,double y,double z,double tolMin)
     {
        double origin[3];
-       origin[0]=(double)(1u<<bssn::BSSN_MAXDEPTH-1);
-       origin[1]=(double)(1u<<bssn::BSSN_MAXDEPTH-1);
-       origin[2]=(double)(1u<<bssn::BSSN_MAXDEPTH-1);
+       origin[0]=(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH-1);
+       origin[1]=(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH-1);
+       origin[2]=(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH-1);
 
        double r = sqrt(  GRIDX_TO_X(x)*GRIDX_TO_X(x)
                         + GRIDY_TO_Y(y)*GRIDY_TO_Y(y)
                         + GRIDZ_TO_Z(z)*GRIDZ_TO_Z(z)
                         );
 
-       const double tolMax = bssn::BSSN_WAVELET_TOL_MAX;
-       const double R0 = bssn::BSSN_WAVELET_TOL_FUNCTION_R0;
-       const double R1 = bssn::BSSN_WAVELET_TOL_FUNCTION_R1;
+       const double tolMax = quadgrav::QUADGRAV_WAVELET_TOL_MAX;
+       const double R0 = quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R0;
+       const double R1 = quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R1;
 
-       if (bssn::BSSN_USE_WAVELET_TOL_FUNCTION == 1) {
+       if (quadgrav::QUADGRAV_USE_WAVELET_TOL_FUNCTION == 1) {
          return std::min( tolMax, std::max( tolMin, (tolMax - tolMin)/(R1 - R0)*(r - R0) + tolMin));
        }
        else {
@@ -1886,8 +1851,8 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         double hy = (pmax[1] - pmin[1]) / (ny - 1);
         double hz = (pmax[2] - pmin[2]) / (nz - 1);
 
-        const double dx=(bssn::BSSN_COMPD_MAX[0]-bssn::BSSN_COMPD_MIN[0])*(1.0/(double)(1u<<bssn::BSSN_MAXDEPTH));
-        unsigned int level= bssn::BSSN_MAXDEPTH-((unsigned int)(hx/dx)-1);
+        const double dx=(quadgrav::QUADGRAV_COMPD_MAX[0]-quadgrav::QUADGRAV_COMPD_MIN[0])*(1.0/(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH));
+        unsigned int level= quadgrav::QUADGRAV_MAXDEPTH-((unsigned int)(hx/dx)-1);
 
         MPI_Comm comm=MPI_COMM_WORLD;
 
@@ -1902,10 +1867,10 @@ double interpolation4( double xx[], double yy[], int np, double xb,
             return;
 
         double * blkInternal=new double[blkInlSz];
-        for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
+        for(unsigned int var=0;var<quadgrav::QUADGRAV_NUM_VARS;var++)
         {
             char fName[256];
-            sprintf(fName,"%s_%s_n_%d_r_%d_p_%d.bin",fprefix,bssn::BSSN_VAR_NAMES[var],nx,rank,npes);
+            sprintf(fName,"%s_%s_n_%d_r_%d_p_%d.bin",fprefix,quadgrav::QUADGRAV_VAR_NAMES[var],nx,rank,npes);
             FILE* outfile = fopen(fName,"w");
             if(outfile==NULL) {std::cout<<fName<<" file open failed "<<std::endl;}
 
@@ -1930,13 +1895,13 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         return pNode->getLevel();
     }
 
-}// end of namespace bssn
+}// end of namespace quadgrav
 
 
 
 
 
-namespace bssn
+namespace quadgrav
 {
 
     namespace timer
@@ -2088,9 +2053,9 @@ namespace bssn
 
                 outfile<<"active npes : "<<activeNpes<<std::endl;
                 outfile<<"global npes : "<<globalNpes<<std::endl;
-                outfile<<"partition tol : "<<bssn::BSSN_LOAD_IMB_TOL<<std::endl;
-                outfile<<"wavelet tol : "<<bssn::BSSN_WAVELET_TOL<<std::endl;
-                outfile<<"maxdepth : "<<bssn::BSSN_MAXDEPTH<<std::endl;
+                outfile<<"partition tol : "<<quadgrav::QUADGRAV_LOAD_IMB_TOL<<std::endl;
+                outfile<<"wavelet tol : "<<quadgrav::QUADGRAV_WAVELET_TOL<<std::endl;
+                outfile<<"maxdepth : "<<quadgrav::QUADGRAV_MAXDEPTH<<std::endl;
 
             }
 
@@ -2315,7 +2280,7 @@ namespace bssn
             DendroIntL numCalls;
 
 
-#ifdef BSSN_PROFILE_HUMAN_READABLE
+#ifdef QUADGRAV_PROFILE_HUMAN_READABLE
             if(!activeRank)
             {
                 sprintf(fName,"%s_im.prof",filePrefix);
@@ -2325,9 +2290,9 @@ namespace bssn
                 outfile<<"active npes : "<<activeNpes<<std::endl;
                 outfile<<"global npes : "<<globalNpes<<std::endl;
                 outfile<<"current step : "<<currentStep<<std::endl;
-                outfile<<"partition tol : "<<bssn::BSSN_LOAD_IMB_TOL<<std::endl;
-                outfile<<"wavelet tol : "<<bssn::BSSN_WAVELET_TOL<<std::endl;
-                outfile<<"maxdepth : "<<bssn::BSSN_MAXDEPTH<<std::endl;
+                outfile<<"partition tol : "<<quadgrav::QUADGRAV_LOAD_IMB_TOL<<std::endl;
+                outfile<<"wavelet tol : "<<quadgrav::QUADGRAV_WAVELET_TOL<<std::endl;
+                outfile<<"maxdepth : "<<quadgrav::QUADGRAV_MAXDEPTH<<std::endl;
 
             }
 
@@ -2795,9 +2760,9 @@ namespace bssn
             if(!rank) outfile<<currentStep<<"\t ";
             if(!rank) outfile<<activeNpes<<"\t ";
             if(!rank) outfile<<globalNpes<<"\t ";
-            if(!rank) outfile<<bssn::BSSN_LOAD_IMB_TOL<<"\t ";
-            if(!rank) outfile<<bssn::BSSN_WAVELET_TOL<<"\t ";
-            if(!rank) outfile<<bssn::BSSN_MAXDEPTH<<"\t ";
+            if(!rank) outfile<<quadgrav::QUADGRAV_LOAD_IMB_TOL<<"\t ";
+            if(!rank) outfile<<quadgrav::QUADGRAV_WAVELET_TOL<<"\t ";
+            if(!rank) outfile<<quadgrav::QUADGRAV_MAXDEPTH<<"\t ";
 
             localSz=pMesh->getNumLocalMeshElements();
             par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,comm);
@@ -2917,26 +2882,26 @@ namespace GW
 
         
         unsigned int totalModes=0;
-        for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
-            totalModes+=2*BSSN_GW_L_MODES[l]+1;
+        for(unsigned int l=0;l<QUADGRAV_GW_NUM_LMODES;l++)
+            totalModes+=2*QUADGRAV_GW_L_MODES[l]+1;
 
         const unsigned int TOTAL_MODES=totalModes;
 
-        DendroComplex * swsh_coeff = new DendroComplex[BSSN_GW_NUM_RADAII*TOTAL_MODES];
-        DendroComplex * swsh_coeff_g = new DendroComplex[BSSN_GW_NUM_RADAII*TOTAL_MODES];
+        DendroComplex * swsh_coeff = new DendroComplex[QUADGRAV_GW_NUM_RADAII*TOTAL_MODES];
+        DendroComplex * swsh_coeff_g = new DendroComplex[QUADGRAV_GW_NUM_RADAII*TOTAL_MODES];
 
         std::vector<unsigned int> lmCounts;
         std::vector<unsigned int> lmOffset;
 
-        lmCounts.resize(BSSN_GW_NUM_LMODES);
-        lmOffset.resize(BSSN_GW_NUM_LMODES);
+        lmCounts.resize(QUADGRAV_GW_NUM_LMODES);
+        lmOffset.resize(QUADGRAV_GW_NUM_LMODES);
 
-        for(unsigned int l=0;l<BSSN_GW_NUM_LMODES;l++)
-            lmCounts[l]=2*BSSN_GW_L_MODES[l]+1;
+        for(unsigned int l=0;l<QUADGRAV_GW_NUM_LMODES;l++)
+            lmCounts[l]=2*QUADGRAV_GW_L_MODES[l]+1;
 
 
         lmOffset[0]=0;
-        omp_par::scan(&(*(lmCounts.begin())),&(*(lmOffset.begin())),BSSN_GW_NUM_LMODES);
+        omp_par::scan(&(*(lmCounts.begin())),&(*(lmOffset.begin())),QUADGRAV_GW_NUM_LMODES);
 
         if(mesh->isActive())
         {
@@ -2956,23 +2921,23 @@ namespace GW
             Point grid_limits[2];
             Point domain_limits[2];
 
-            grid_limits[0] = Point(bssn::BSSN_OCTREE_MIN[0], bssn::BSSN_OCTREE_MIN[1], bssn::BSSN_OCTREE_MIN[2]);
-            grid_limits[1] = Point(bssn::BSSN_OCTREE_MAX[0], bssn::BSSN_OCTREE_MAX[1], bssn::BSSN_OCTREE_MAX[2]);
+            grid_limits[0] = Point(quadgrav::QUADGRAV_OCTREE_MIN[0], quadgrav::QUADGRAV_OCTREE_MIN[1], quadgrav::QUADGRAV_OCTREE_MIN[2]);
+            grid_limits[1] = Point(quadgrav::QUADGRAV_OCTREE_MAX[0], quadgrav::QUADGRAV_OCTREE_MAX[1], quadgrav::QUADGRAV_OCTREE_MAX[2]);
 
-            domain_limits[0] = Point(bssn::BSSN_COMPD_MIN[0], bssn::BSSN_COMPD_MIN[1], bssn::BSSN_COMPD_MIN[2]);
-            domain_limits[1] = Point(bssn::BSSN_COMPD_MAX[0], bssn::BSSN_COMPD_MAX[1], bssn::BSSN_COMPD_MAX[2]);
+            domain_limits[0] = Point(quadgrav::QUADGRAV_COMPD_MIN[0], quadgrav::QUADGRAV_COMPD_MIN[1], quadgrav::QUADGRAV_COMPD_MIN[2]);
+            domain_limits[1] = Point(quadgrav::QUADGRAV_COMPD_MAX[0], quadgrav::QUADGRAV_COMPD_MAX[1], quadgrav::QUADGRAV_COMPD_MAX[2]);
 
 
             std::vector<unsigned int > validIndex;
 
-            for(unsigned int k=0;k<BSSN_GW_NUM_RADAII;k++)
+            for(unsigned int k=0;k<QUADGRAV_GW_NUM_RADAII;k++)
             {
                 for (unsigned int i=0; i< nTheta ; i++ )
                     for(unsigned int j=0; j< nPhi ; j++)
                     {
-                        double x = BSSN_GW_RADAII[k]*sin(j*dtheta) * cos(i*dphi) ;
-                        double y = BSSN_GW_RADAII[k]*sin(j*dtheta) * sin(i*dphi) ;
-                        double z = BSSN_GW_RADAII[k]*cos(j*dtheta);
+                        double x = QUADGRAV_GW_RADAII[k]*sin(j*dtheta) * cos(i*dphi) ;
+                        double y = QUADGRAV_GW_RADAII[k]*sin(j*dtheta) * sin(i*dphi) ;
+                        double z = QUADGRAV_GW_RADAII[k]*cos(j*dtheta);
 
                         coords.push_back(x);
                         coords.push_back(y);
@@ -2982,10 +2947,10 @@ namespace GW
 
 
                 validIndex.clear();
-                ot::da::interpolateToCoords(mesh,cVar[bssn::VAR_CONSTRAINT::C_PSI4_REAL],&(*(coords.begin())),coords.size(), grid_limits, domain_limits , &(*(psi4_real.begin())),validIndex);
+                ot::da::interpolateToCoords(mesh,cVar[quadgrav::VAR_CONSTRAINT::C_PSI4_REAL],&(*(coords.begin())),coords.size(), grid_limits, domain_limits , &(*(psi4_real.begin())),validIndex);
 
                 validIndex.clear();
-                ot::da::interpolateToCoords(mesh,cVar[bssn::VAR_CONSTRAINT::C_PSI4_IMG],&(*(coords.begin())),coords.size(),  grid_limits, domain_limits ,&(*(psi4_imag.begin())),validIndex);
+                ot::da::interpolateToCoords(mesh,cVar[quadgrav::VAR_CONSTRAINT::C_PSI4_IMG],&(*(coords.begin())),coords.size(),  grid_limits, domain_limits ,&(*(psi4_imag.begin())),validIndex);
 
             }
 

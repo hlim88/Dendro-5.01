@@ -23,8 +23,8 @@ qg_ho_coup = symbols('qg_ho_coup')
 PI = 3.14159265358979323846
 
 # Additional parameters for damping term
-R0 = symbols('BSSN_ETA_R0')
-ep1, ep2 = symbols('BSSN_ETA_POWER[0] BSSN_ETA_POWER[1]')
+R0 = symbols('QUADGRAV_ETA_R0')
+ep1, ep2 = symbols('QUADGRAV_ETA_POWER[0] QUADGRAV_ETA_POWER[1]')
 
 # declare variables
 a   = dendro.scalar("alpha", "[pp]")

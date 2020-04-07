@@ -1,4 +1,4 @@
-    bssn::timer::t_rhs.start();
+    quadgrav::timer::t_rhs.start();
 for (unsigned int k = 3; k < nz-3; k++) { 
     z = pmin[2] + k*hz;
 for (unsigned int j = 3; j < ny-3; j++) { 
@@ -60,4 +60,4 @@ gt_rhs22[pp] = -At5[pp]*DENDRO_0 + DENDRO_13*DENDRO_7 + DENDRO_14*DENDRO_18 - DE
   }
  }
 }
-     bssn::timer::t_rhs.stop();
+     quadgrav::timer::t_rhs.stop();

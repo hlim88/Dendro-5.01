@@ -1,4 +1,4 @@
-    bssn::timer::t_rhs.start();
+    quadgrav::timer::t_rhs.start();
 for (unsigned int k = 3; k < nz-3; k++) { 
     z = pmin[2] + k*hz;
 for (unsigned int j = 3; j < ny-3; j++) { 
@@ -34,4 +34,4 @@ Gt_rhs2[pp] = Gt_rhs_s1_2[pp] - Gt_rhs_s2_2[pp] + (2.0L/3.0L)*Gt_rhs_s3_2[pp] + 
   }
  }
 }
-     bssn::timer::t_rhs.stop();
+     quadgrav::timer::t_rhs.stop();

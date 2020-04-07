@@ -1,4 +1,4 @@
-    bssn::timer::t_rhs.start();
+    quadgrav::timer::t_rhs.start();
 for (unsigned int k = 3; k < nz-3; k++) { 
     z = pmin[2] + k*hz;
 for (unsigned int j = 3; j < ny-3; j++) { 
@@ -34,4 +34,4 @@ a_rhs[pp] = -2*K[pp]*alpha[pp] + lambda[0]*(beta0[pp]*agrad_0_alpha[pp] + beta1[
   }
  }
 }
-     bssn::timer::t_rhs.stop();
+     quadgrav::timer::t_rhs.stop();

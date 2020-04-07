@@ -1,7 +1,7 @@
 #include "physcon.h"
 #include "gr.h"
 
-using namespace bssn;
+using namespace quadgrav;
 
 
 /*----------------------------------------------------------------------

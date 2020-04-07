@@ -1,7 +1,7 @@
 #include "quadgrav_constraints.h"
 #include <limits>
 
-using namespace bssn;
+using namespace quadgrav;
 
 /*----------------------------------------------------------------------;
  *
@@ -9,7 +9,7 @@ using namespace bssn;
  *            det(gt) = 1,  tr(At) = 0,  alpha > 0 and chi >0.
  *
  *----------------------------------------------------------------------*/
-void enforce_bssn_constraints(double **uiVar, const unsigned int node)
+void enforce_quadgrav_constraints(double **uiVar, const unsigned int node)
 {
   const double one_third = 1.0 / 3.0;
 
@@ -68,7 +68,7 @@ void enforce_bssn_constraints(double **uiVar, const unsigned int node)
 
   if (fabs(detgt_m1) > 1.0e-6) {
   std::cout.precision(14);
-  std::cout<<"enforce_bssn_constraint: det(gtd) != 1. det="<<std::fixed<<det_gtd<<std::endl;
+  std::cout<<"enforce_quadgrav_constraint: det(gtd) != 1. det="<<std::fixed<<det_gtd<<std::endl;
     std::cout<<"      gtd(1,1)="<<gtd[0][0]<<std::endl;
     std::cout<<"      gtd(1,2)="<<gtd[0][1]<<std::endl;
     std::cout<<"      gtd(1,3)="<<gtd[0][2]<<std::endl;
@@ -118,7 +118,7 @@ void enforce_bssn_constraints(double **uiVar, const unsigned int node)
 
 
   if (fabs(tr_A) > 1.0e-6) {
-    std::cout<<"enforce_bssn_constraint: tr_A != 0. tr_A="<<tr_A<<std::endl;
+    std::cout<<"enforce_quadgrav_constraint: tr_A != 0. tr_A="<<tr_A<<std::endl;
     std::cout<<"      Atd(1,1)="<<Atd[0][0]<<std::endl;
     std::cout<<"      Atd(1,2)="<<Atd[0][1]<<std::endl;
     std::cout<<"      Atd(1,3)="<<Atd[0][2]<<std::endl;
@@ -148,7 +148,7 @@ void enforce_bssn_constraints(double **uiVar, const unsigned int node)
   if ( uiVar[VAR::U_CHI][node] < CHI_FLOOR ) {
    /* FIXME This needs to be fixed when we add a fluid to the code. */
    /* ! First rescale the densitized fluid variables.
-      ! The include file bssn_puncture_fluid_rescale.inc
+      ! The include file quadgrav_puncture_fluid_rescale.inc
       ! must be provided in the BSSN_*MHD project.
 
       ! Chi must be positive to do the rescaling of fluid variables.

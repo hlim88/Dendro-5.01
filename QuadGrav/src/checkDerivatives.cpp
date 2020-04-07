@@ -3,7 +3,7 @@
 /**
 *@author Milinda Fernando
 *School of Computing, University of Utah
-*@brief check all teh bssn derivs for user specified function.
+*@brief check all teh quadgrav derivs for user specified function.
 */
 //
 

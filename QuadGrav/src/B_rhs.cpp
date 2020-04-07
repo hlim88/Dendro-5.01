@@ -1,7 +1,7 @@
 
 #ifdef USE_ETA_FUNC
 
-bssn::timer::t_rhs.start();
+quadgrav::timer::t_rhs.start();
 for (unsigned int k = 3; k < nz-3; k++) {
 z = pmin[2] + k*hz;
 for (unsigned int j = 3; j < ny-3; j++) {
@@ -49,12 +49,12 @@ std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;
 }
 }
 }
-bssn::timer::t_rhs.stop();
+quadgrav::timer::t_rhs.stop();
 
 
 #else
 const double R0=ETA_R0;
-    bssn::timer::t_rhs.start();
+    quadgrav::timer::t_rhs.start();
 for (unsigned int k = 3; k < nz-3; k++) { 
     z = pmin[2] + k*hz;
 for (unsigned int j = 3; j < ny-3; j++) { 
@@ -242,6 +242,6 @@ B_rhs2[pp] = -B2[pp]*eta + Gt_rhs2[pp] + lambda[2]*(beta0[pp]*agrad_0_B2[pp] + b
   }
  }
 }
-     bssn::timer::t_rhs.stop();
+     quadgrav::timer::t_rhs.stop();
 
 #endif

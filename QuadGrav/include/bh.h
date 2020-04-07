@@ -11,7 +11,7 @@
 #define SFCSORTBENCH_BH_H
 
 #include "point.h"
-namespace bssn
+namespace quadgrav
 {
 
     struct BH
@@ -88,7 +88,7 @@ namespace bssn
 
 
 
-}// end of namespace bssn
+}// end of namespace quadgrav
 
 
 #endif //SFCSORTBENCH_BH_H

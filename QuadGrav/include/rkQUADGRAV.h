@@ -1,10 +1,16 @@
+//
+// Created by milinda on 1/16/19.
+//
+
 /**
- * @brief contains RK time stepper for BSSN equations.
+ * @brief contains RK time stepper for QUADGRAV equations.
+ * @author Milinda Fernando
+ * School of Computing, University of Utah
  *
  * */
 
-#ifndef DENDRO_5_0_RKBSSN_H
-#define DENDRO_5_0_RKBSSN_H
+#ifndef DENDRO_5_0_RKQUADGRAV_H
+#define DENDRO_5_0_RKQUADGRAV_H
 
 #include "rk.h"
 #include "fdCoefficient.h"
@@ -24,7 +30,7 @@
 #include "TwoPunctures.h"
 #include "dataUtils.h"
 #include "rawIO.h"
-#ifdef BSSN_EXTRACT_GRAVITATIONAL_WAVES
+#ifdef QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES
 #include "gwExtract.h"
 #endif
 
@@ -69,7 +75,7 @@ namespace ode
         //=============================================================
 
 
-        class RK_BSSN : public RK{
+        class RK_QUADGRAV : public RK{
 
             /**@brief: defines the RK type*/
             RKType m_uiRKType;
@@ -133,12 +139,12 @@ namespace ode
              * @param[in] pTEnd: RK45 time end
              * @param[in] pTh: times step size.
              * * */
-            RK_BSSN(ot::Mesh *pMesh, DendroScalar pTBegin, DendroScalar pTEnd,DendroScalar pTh,RKType rkType);
+            RK_QUADGRAV(ot::Mesh *pMesh, DendroScalar pTBegin, DendroScalar pTEnd,DendroScalar pTh,RKType rkType);
 
             /**@brief default destructor*/
-            ~RK_BSSN();
+            ~RK_QUADGRAV();
 
-            /** @brief: read parameters related to BSSN simulation and store them in static variables defined in parameters.h*/
+            /** @brief: read parameters related to QUADGRAV simulation and store them in static variables defined in parameters.h*/
             void readConfigFile(const char * fName);
 
             /**@brief: starts the rk-45 solver. */
@@ -201,4 +207,4 @@ namespace ode
 } // end of namespace ode
 
 
-#endif //DENDRO_5_0_RKBSSN_H
+#endif //DENDRO_5_0_RKQUADGRAV_H

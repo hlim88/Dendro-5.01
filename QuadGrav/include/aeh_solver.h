@@ -3,7 +3,7 @@
  * @author: Sharvaree Vadgama
  * @author: Milinda Fernando
  * School of Computing, University of Utah. 
- * @brief : To solve the Apperent event horizon solver for BSSN formulation
+ * @brief : To solve the Apperent event horizon solver for QUADGRAV formulation
  * @version 0.1
  * @date 2019-11-10
  * 
@@ -17,7 +17,7 @@
 #include "mpi.h"
 #include "grDef.h"
 
-namespace bssn
+namespace quadgrav
 {
 
     enum AEHErrorType {SUCCESS, MAX_ITERATIONS_REACHED};
@@ -75,13 +75,13 @@ namespace bssn
      * @tparam T : type of the evolving var (double, float)
      * @param pMesh : underlying mesh from Dendro
      * @param s : surface normal to the Apparent Event Horizon(AEH) 3-vector (initial guess solution to $S_2$)
-     * @param bssnVars : BSSN variables at a given time
+     * @param quadgravVars : QUADGRAV variables at a given time
      * @param tol : tolerance for the time step iterations
      * @param max_iter : maximum number of iterations
      * @return int : error code (0 for success, )
      */
     template<typename T>
-    int aeh_solver(const ot::Mesh* pMesh, T** s, T** bssnVars, T tol, unsigned int max_iter)
+    int aeh_solver(const ot::Mesh* pMesh, T** s, T** quadgravVars, T tol, unsigned int max_iter)
     {
         // Notes: We might need to change the mesh during the solver to adaptively capture the mesh. (Future work)
 

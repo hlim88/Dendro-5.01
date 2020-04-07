@@ -1,4 +1,5 @@
 //
+// Created by milinda on 11/5/18.
 //
 
 /**
@@ -31,7 +32,7 @@ void applyInitialConditions(const ot::Mesh* mesh, T** zipIn)
     const unsigned int nodeLocalEnd=mesh->getNodeLocalEnd();
 
 
-    double* var=new double[bssn::BSSN_NUM_VARS];
+    double* var=new double[quadgrav::QUADGRAV_NUM_VARS];
 
     double mp, mm, mp_adm, mm_adm, E, J1, J2, J3;
 
@@ -53,23 +54,23 @@ void applyInitialConditions(const ot::Mesh* mesh, T** zipIn)
                         y=pNodes[ownerID].getY()+ jj_y*(len/(eleOrder));
                         z=pNodes[ownerID].getZ()+ kk_z*(len/(eleOrder));
                         assert(len%eleOrder==0);
-                        if (bssn::BSSN_ID_TYPE == 0) {
+                        if (quadgrav::QUADGRAV_ID_TYPE == 0) {
                             TwoPunctures((double)x,(double)y,(double)z,var,
                                          &mp, &mm, &mp_adm, &mm_adm, &E, &J1, &J2, &J3);
                         }
-                        else if (bssn::BSSN_ID_TYPE == 1) {
-                            bssn::punctureData((double)x,(double)y,(double)z,var);
+                        else if (quadgrav::QUADGRAV_ID_TYPE == 1) {
+                            quadgrav::punctureData((double)x,(double)y,(double)z,var);
                         }
-                        else if (bssn::BSSN_ID_TYPE == 2) {
-                            bssn::KerrSchildData((double)x,(double)y,(double)z,var);
+                        else if (quadgrav::QUADGRAV_ID_TYPE == 2) {
+                            quadgrav::KerrSchildData((double)x,(double)y,(double)z,var);
                         }
-                        else if (bssn::BSSN_ID_TYPE == 3) {
-                            bssn::noiseData((double)x,(double)y,(double)z,var);
+                        else if (quadgrav::QUADGRAV_ID_TYPE == 3) {
+                            quadgrav::noiseData((double)x,(double)y,(double)z,var);
                         }
                         else {
                             std::cout<<"Unknown ID type"<<std::endl;
                         }
-                        for(unsigned int v=0;v<bssn::BSSN_NUM_VARS;v++)
+                        for(unsigned int v=0;v<quadgrav::QUADGRAV_NUM_VARS;v++)
                             zipIn[v][nodeLookUp_CG]=var[v];
 
 
@@ -81,7 +82,7 @@ void applyInitialConditions(const ot::Mesh* mesh, T** zipIn)
 
 
     for(unsigned int node=mesh->getNodeLocalBegin();node<mesh->getNodeLocalEnd();node++)
-        enforce_bssn_constraints(zipIn,node);
+        enforce_quadgrav_constraints(zipIn,node);
 
 
     delete [] var;

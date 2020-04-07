@@ -9,7 +9,7 @@
 
 #include "profile_params.h"
 
-namespace bssn
+namespace quadgrav
 {
     namespace timer
     {

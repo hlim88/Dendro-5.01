@@ -1,7 +1,11 @@
 /**
- * @file bssnCtx.h
- * @brief Application context class for solving the Einstein equations in BSSNKO formulation. 
+ * @file quadgravCtx.h
+ * @author Milinda Fernando
+ * @brief Application context class for solving the Einstein equations in QUADGRAVKO formulation. 
  * @version 0.1
+ * @date 2019-12-20
+ * 
+ * @copyright Copyright (c) 2019, University of Utah. 
  * 
  */
 
@@ -22,9 +26,9 @@
 #include "quadgrav_constraints.h"
 #include "TwoPunctures.h"
 
-namespace bssn
+namespace quadgrav
 {
-    class BSSNCtx : public ts::Ctx<DendroScalar, DendroIntL>
+    class QUADGRAVCtx : public ts::Ctx<DendroScalar, DendroIntL>
     {
 
         protected:
@@ -55,16 +59,16 @@ namespace bssn
         public :
 
             /**@brief: default constructor*/
-            BSSNCtx(ot::Mesh* pMesh);
+            QUADGRAVCtx(ot::Mesh* pMesh);
 
             /**@brief: default deconstructor*/
-            ~BSSNCtx();
+            ~QUADGRAVCtx();
 
             /**@brief: initial solution*/
             virtual int initialize();
             
             /**
-             * @brief computes the BSSN rhs 
+             * @brief computes the QUADGRAV rhs 
              * 
              * @param in : zipped input
              * @param out : zipped output
@@ -135,11 +139,11 @@ namespace bssn
             virtual int terminal_output();
 
             /**@brief: returns the async communication batch size. */
-            virtual unsigned int get_async_batch_sz() {return bssn::BSSN_ASYNC_COMM_K;}
+            virtual unsigned int get_async_batch_sz() {return quadgrav::QUADGRAV_ASYNC_COMM_K;}
 
 
 
 
     };
 
-}// end of namespace bssn
+}// end of namespace quadgrav

@@ -19,7 +19,7 @@
 #include "grDef.h"
 
 
-namespace bssn
+namespace quadgrav
 {
 
     /**
@@ -66,6 +66,6 @@ namespace bssn
 
 
 
-} // end of namespace bssn
+} // end of namespace quadgrav
 
 #endif //DENDRO_5_0_DATAUTILS_H
