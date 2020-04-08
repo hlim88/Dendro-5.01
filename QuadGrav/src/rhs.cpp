@@ -9,7 +9,7 @@ using namespace quadgrav;
 // TODO : Fix it for parameter and const expr
 
 // Macro for QG evol vars
-#define QUADGRAV_EVOL 
+//#define QUADGRAV_EVOL 
 
 //QG related constant
 //Alpah_c
@@ -243,12 +243,17 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
 #endif
 
     quadgrav::timer::t_deriv.start();
-
-#include "quadgravrhs_memalloc.h"
-#include "quadgravrhs_memalloc_adv.h"
-#include "quadgravrhs_derivs.h"
-#include "quadgravrhs_derivs_adv.h"
-
+#ifdef QUADGRAV_EVOL
+ #include "quadgravrhs_memalloc.h"
+ #include "quadgravrhs_memalloc_adv.h"
+ #include "quadgravrhs_derivs.h"
+ #include "quadgravrhs_derivs_adv.h"
+#else
+ #include "bssnrhs_memalloc.h"
+ #include "bssnrhs_memalloc_adv.h"
+ #include "bssnrhs_derivs.h"
+ #include "bssnrhs_derivs_adv.h"
+#endif
     quadgrav::timer::t_deriv.stop();
 
     register double x;
@@ -299,8 +304,12 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
 
                 #endif
                 #endif
-                
-                #include "quadgraveqs.cpp"
+  
+                #ifdef QUADGRAV_EVOL
+                  #include "quadgraveqs.cpp"
+                #else
+                  #include "bssneqs_eta_const_standard_gauge.cpp"
+                #endif
 
                 quadgrav::timer::t_rhs.stop();
 
@@ -416,7 +425,11 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
 
 
     quadgrav::timer::t_deriv.start();
-#include "quadgravrhs_ko_derivs.h"
+#ifdef QUADGRAV_EVOL
+  #include "quadgravrhs_ko_derivs.h"
+#else
+  #include "bssnrhs_ko_derivs.h"
+#endif
     quadgrav::timer::t_deriv.stop();
 
     quadgrav::timer::t_rhs.start();
@@ -468,8 +481,13 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
 
 
     quadgrav::timer::t_deriv.start();
-#include "quadgravrhs_dealloc.h"
-#include "quadgravrhs_dealloc_adv.h"
+#ifdef QUADGRAV_EVOL
+  #include "quadgravrhs_dealloc.h"
+  #include "quadgravrhs_dealloc_adv.h"
+#else
+  #include "bssnrhs_dealloc.h"
+  #include "bssnrhs_dealloc_adv.h"
+#endif
     quadgrav::timer::t_deriv.stop();
 
 #if 0
@@ -665,12 +683,17 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
 
 
     quadgrav::timer::t_deriv.start();
-
-#include "quadgravrhs_memalloc.h"
-#include "quadgravrhs_memalloc_adv.h"
-#include "quadgravrhs_derivs.h"
-#include "quadgravrhs_derivs_adv.h"
-
+#ifdef QUADGRAV_EVOL
+  #include "quadgravrhs_memalloc.h"
+  #include "quadgravrhs_memalloc_adv.h"
+  #include "quadgravrhs_derivs.h"
+  #include "quadgravrhs_derivs_adv.h"
+#else
+  #include "bssnrhs_memalloc.h"
+  #include "bssnrhs_memalloc_adv.h"
+  #include "bssnrhs_derivs.h"
+  #include "bssnrhs_derivs_adv.h"
+#endif
     quadgrav::timer::t_deriv.stop();
 
     register double x;
@@ -894,7 +917,11 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
 
     if (quadgrav::DISSIPATION_TYPE == 0) {
         quadgrav::timer::t_deriv.start();
-#include "quadgravrhs_ko_derivs.h"
+#ifdef QUADGRAV_EVOL
+  #include "quadgravrhs_ko_derivs.h"
+#else
+  #include "bssnrhs_ko_derivs.h"
+#endif
         quadgrav::timer::t_deriv.stop();
     }
     //HL : not need for us
@@ -979,8 +1006,13 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     //quadgrav::writeBLockToBinary((const double**)unzipVarsRHS,offset,pmin,pmax,bxMin,bxMax,sz,15,1.0,"af_ko");
 
     quadgrav::timer::t_deriv.start();
-#include "quadgravrhs_dealloc.h"
-#include "quadgravrhs_dealloc_adv.h"
+#ifdef QUADGRAV_EVOL
+  #include "quadgravrhs_dealloc.h"
+  #include "quadgravrhs_dealloc_adv.h"
+#else
+  #include "bssnrhs_dealloc.h"
+  #include "bssnrhs_dealloc_adv.h"
+#endif
     quadgrav::timer::t_deriv.stop();
 
 #if 0
