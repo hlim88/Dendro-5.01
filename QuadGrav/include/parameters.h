@@ -15,6 +15,8 @@
 #include <string.h>
 #include <iostream>
 
+//Macro
+#define QUADGRAV_EVOL
 
 namespace quadgrav
 {
@@ -23,8 +25,13 @@ namespace quadgrav
     extern unsigned int QUADGRAV_ELE_ORDER;
 
     /**@brief number of variables*/
-    static const unsigned int QUADGRAV_NUM_VARS=24;
+    #ifdef QUADGRAV_EVOL
 
+    static const unsigned int QUADGRAV_NUM_VARS=38;
+    #else
+    //Turn off QG terms
+    static const unsigned int QUADGRAV_NUM_VARS=24;
+    #endif
     /**@brief number of constraints variables*/
     static const unsigned int QUADGRAV_CONSTRAINT_NUM_VARS=6;
 

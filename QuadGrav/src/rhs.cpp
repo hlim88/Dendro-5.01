@@ -9,7 +9,7 @@ using namespace quadgrav;
 // TODO : Fix it for parameter and const expr
 
 // Macro for QG evol vars
-//#define QUADGRAV_EVOL 
+#define QUADGRAV_EVOL 
 
 //QG related constant
 //Alpah_c
