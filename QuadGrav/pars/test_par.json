@@ -78,7 +78,7 @@
             "           " : "simulation time begin",
             "QUADGRAV_RK_TIME_BEGIN": 0,
             "           " : "simulation time end",
-            "QUADGRAV_RK_TIME_END": 1000,
+            "QUADGRAV_RK_TIME_END": 10,
             "           " : "RK method to use (0- RK3 , 1- RK4, 2-RK45)",
             "QUADGRAV_RK_TYPE" : 1,
             "           " : "prefered time step size (this is overwritten with the specified CFL factor, it is not recommended to use this)",
