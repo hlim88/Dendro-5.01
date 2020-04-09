@@ -21,6 +21,7 @@ b_const = symbols('b_const')
 qg_ho_coup = symbols('qg_ho_coup')
 
 PI = 3.14159265358979323846
+kappa = 1/(16*PI)
 
 # Additional parameters for damping term
 R0 = symbols('QUADGRAV_ETA_R0')
@@ -45,6 +46,7 @@ Rsch = dendro.scalar("Rsch", "[pp]")
 Rtt = dendro.sym_3x3("Rtt", "[pp]")
 Vat = dendro.sym_3x3("Vat", "[pp]")
 
+Qsc = dendro.scalar("sc", "[pp]")
 Yabnp = dendro.sym_3x3("Yabp", "[pp]")
 Yabp = dendro.sym_3x3("Yabnp", "[pp]")
 
@@ -115,25 +117,36 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
 
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
-Rsch_rhs = dendro.lie(b, Rsc) - a*chi*sum(igt[i,j]*d2(i,j,Rsc) for i,j in dendro.e_ij) - \
+Rsch_rhs = dendro.lie(b, Rsch) - a*chi*sum(igt[i,j]*d2(i,j,Rsc) for i,j in dendro.e_ij) - \
            chi*sum(igt[i,j]*d(i,a)*d(j,Rsc) for i,j in dendro.e_ij) + \
            a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
-           a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
-           a*K*Rsch + a*Rsc/(36*PI*(3*b_const-2*a_const))
+           1/2*a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
+           a*K*Rsch + a*Rsc/(32*PI*(3*b_const-2*a_const))
 
+#TODO: not sure if I understand but in the implementation Rtt is a 3D object while in the notes R_ab is still 4D? Same for Vat.
 Rtt_rhs = dendro.lie(b, Rtt, weight) - a * Vat 
 
 #TODO : Check eqns.. somewhat not working
-Yabnp = 1/(16*PI)*Rtt - (2*b_const - a_const)/(128*PI*(3*b_const-a_const))*gt*Rsc 
+
+#TODO: gt refers to 3D metric according to above assignment. in the notes these terms are still 4D metrics.
+#TODO: implement Q terms correctly (in which there appear 1st order time derivatives again) ... presume this works along the lines of usual BSSN
+Yabnp = - kappa*Rtt - \
+	kappa*(2*b_const - a_const)/(8*(3*b_const-a_const))*gt*Rsc
+#TODO: implement problematic terms correctly ... probably requires rewriting of other RHS bits too
 Yabp = Rtt
+
+#TODO: changed to current form in the notes ... terms in line 1 of (4.30) are ommitted for now because there may be a direct implementation of the spatial covariant derivative ... otherwise, I can still generate the expressions via xAct but they are quite huge
+#TODO; confirm that dendro.laplacian(*) works for non-scalar *
 Vat_rhs = Matrix([sum(b[k]*d(k,Vat[i,j]) for k in dendro.e_i) for i,j in dendro.e_ij]) + \
           Matrix([sum(Vat[i,k]*d(j,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) + \
           Matrix([sum(Vat[k,j]*d(i,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) - \
-          a*Matrix([dendro.laplacian(Rtt[i,j],chi) for i,j in dendro.e_ij]) - \
-          Matrix([d(i,a)*d(i,Rtt[i,j]) - 3/(2*chi)*Rtt[i,j]*d(i,chi) for i,j in dendro.e_ij]) + \
-          a*Matrix([K*Vat[i,j] for i,j in dendro.e_ij]) + \
-          Matrix([Yabnp[i,j] for i,j in dendro.e_ij]) + \
-          qg_ho_coup*Matrix([Yabp[i,j] for i,j in dendro.e_ij])
+          a*Matrix([dendro.laplacian(Rtt[i,j],chi) for i,j in dendro.e_ij]) + \
+	  a*Matrix([K*Vat[i,j] for i,j in dendro.e_ij])
+# TODO: commented out Yabnp and Yabp terms since these require rewriting before implementation
+#+ \
+#	  a*Matrix([Yabnp[i,j] for i,j in dendro.e_ij]) + \
+#	  a*qg_ho_coup*Matrix([Yabp[i,j] for i,j in dendro.e_ij])
+
           
 #_I = gt*igt
 #print(simplify(_I))
