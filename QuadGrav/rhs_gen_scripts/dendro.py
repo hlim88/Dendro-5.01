@@ -180,6 +180,28 @@ def DiDj(a):
     m = Matrix([d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i]) for i, j in e_ij])
     return m.reshape(3, 3)
 
+# Covariant derivative acts on tensor type (2,0)
+def DiTu(T)
+
+    global d, C3
+
+    m = Matrix([d(T[i,j],k) + sum([C3[i,k,l]*T[l,j] + C3[j,k,l]*T[i,l] for l in e_i]) for i,j in e_ij])
+    return m.reshape(3,3)
+
+# Covariant derivative acts on tensor type (0,2)
+def DiTd(T)
+
+    global d, C3
+
+    m = Matrix([d(T[i,j],k) - sum([C3[i,k,l]*T[l,j] + C3[j,k,l]*T[i,l] for l in e_i]) for i,j in e_ij])
+    return m.reshape(3,3)
+
+# Laplacian for tensor rank 2
+def DiDjT(T)
+
+    global d2, C3
+    m = 0 
+    return m.reshape(3,3)
 
 def _Di_Dj(a):
     """
