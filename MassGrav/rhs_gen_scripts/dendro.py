@@ -25,6 +25,8 @@ undef = symbols('undefined')
 
 metric = undef
 inv_metric = undef
+ref_metric = undef
+inv_ref_metric = undef
 C1 = undef
 C2 = undef
 # C2_spatial

@@ -20,8 +20,9 @@ lf0, lf1 = symbols('lambda_f[0] lambda_f[1]')
 R0 = symbols('MASSGRAV_ETA_R0')
 ep1, ep2 = symbols('MASSGRAV_ETA_POWER[0] MASSGRAV_ETA_POWER[1]')
 
-# Mass from dRGT
+PI = 3.14159265358979323846
 
+# Mass from dRGT
 M_dRGT = symbols('M_dRGT')
 
 # declare variables
@@ -79,19 +80,28 @@ R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 M_dRGT_sq = M_dRGT*M_dRGT
 
 ginv_f_refMat_00 = a_ref*a_ref + sum([b[i]*b_ref[i] for i in dendro.e_i])
-ginv_f_refMat_01 = -b_ref + sum([b[i]*f_ref[i,j] for i in dendro.e_i])
-ginv_f_refMat_10 = a*a*sum([igt[i,j]*b_ref[i] for i in dendro.e_i]) - b*(a_ref*a_ref+sum([b[i]*b_ref[i] for i in dendro.e_i])
-ginv_f_refMat_11 = a*a*sum([igt[i,j]*f_ref[j,k] for j in dendro.e_i]) - b * (sum([b[i]*f_ref[i,j] for i in dendro.e_i]) - b_ref)
+ginv_f_refMat_01 = Matrix([-b_ref[j] + sum([b[i]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i])
+ginv_f_refMat_10 = Matrix([a*a*sum([igt[i,j]*b_ref[i] for i in dendro.e_i]) - b[j]*(a_ref*a_ref+sum([b[i]*b_ref[i] for i in dendro.e_i])) for j in dendro.e_i])
+ginv_f_refMat_11 = Matrix([a*a*sum([igt[i,l]*f_ref[l,j] for l in dendro.e_i]) - b[i] * (sum([b[l]*f_ref[l,j] for l in dendro.e_i]) - b_ref[j]) for i,j in dendro.e_ij])
+ginv_f_refMat_11 = ginv_f_refMat_11.reshape(3,3)
 
-x_var = a_ref*a_ref + sum([sum([(b_ref[i]*b_ref[j]-b[i]*b[j])*if_ref(i,j) for i in dendro.e_i]) for j in dendro.e_i])
+x_var = a_ref*a_ref + sum([sum([(b_ref[i]*b_ref[j]-b[i]*b[j])*if_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 
 # General potential computations
 V_alpha = 2*M_dRGT_sq*(sum([sum([b[i]*b[j]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i]) - \
           a_ref*a_ref - 2*sum([b[i]*b_ref[i] for i in dendro.e_i]))/(a*a) + \
-          2*M_dRGT_sq*(math.sqrt(ginv_f_refMat_00) + math.sqrt(ginv_f_refMat_11) -3)
-V_beta_i = 2*M_dRGT_sq*sum([b[i]*f_ref[i,j] for i in dendro.e_i])/math.sqrt(x_var)
+          2*M_dRGT_sq*(sqrt(ginv_f_refMat_00) + sqrt(ginv_f_refMat_11[0,0])+sqrt(ginv_f_refMat_11[1,1])+sqrt(ginv_f_refMat_11[2,2])-3)
+V_beta_i = Matrix([2*M_dRGT_sq*sum([b[j]*f_ref[j,i] for j in dendro.e_i])/sqrt(x_var) for i in dendro.e_i])
+calgt = sum([sum([gt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
+V_pi_ij = Matrix([ 2*M_dRGT_sq*a*sqrt(calgt)/2 * ( igt[i,j]) for i,j in dendro.e_ij])
+V_pi_ij = V_pi_ij.reshape(3,3)
 
+#define energy momentum quantities
+rhot = -V_alpha/2
+Sit = -V_beta_i
+Sijt = - V_pi_ij/a
+St = sum([sum([Sijt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 ###################################################################
 # evolution equations
@@ -99,9 +109,6 @@ V_beta_i = 2*M_dRGT_sq*sum([b[i]*f_ref[i,j] for i in dendro.e_i])/math.sqrt(x_va
 
 a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 
-#[ewh] In the had code, this is treated as an advective derivative.
-#      I think this should be:
-#         l2 * dendro.vec_j_del_j(b, b[i])
 b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
         l2 * dendro.vec_j_ad_j(b, b[i])
          for i in dendro.e_i ] + 0*dendro.kodiss(b)
@@ -112,11 +119,9 @@ chi_rhs = dendro.lie(b, chi, weight) + Rational(2,3) * (chi*a*K) + 0*dendro.kodi
 
 AikAkj = Matrix([sum([At[i, k] * sum([dendro.inv_metric[k, l]*At[l, j] for l in dendro.e_i]) for k in dendro.e_i]) for i, j in dendro.e_ij])
 
-#ewh2 At_rhs = dendro.lie(b, At, weight) + dendro.trace_free(chi*(dendro.DiDj(a) + a*R)) + a*(K*At - 2*AikAkj.reshape(3, 3))
-At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
+At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*(R-8*PI*Sijt) - dendro.DiDj(a)) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
 
-#K_rhs = dendro.vec_k_del_k(b, K) - dendro.laplacian(a) + a*(1/3*K*K + dendro.sqr(At))
-K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*dendro.kodiss(K)
+K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*dendro.kodiss(K) + 4*a*PI*(rhot+St)
 
 At_UU = dendro.up_up(At)
 
