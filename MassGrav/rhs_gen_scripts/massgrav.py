@@ -89,12 +89,20 @@ x_var = a_ref*a_ref + sum([sum([(b_ref[i]*b_ref[j]-b[i]*b[j])*if_ref[i,j] for i 
 
 
 # General potential computations
+Tr_ginv_f_ref = sqrt(ginv_f_refMat_00) + sqrt(ginv_f_refMat_11[0,0])+sqrt(ginv_f_refMat_11[1,1])+sqrt(ginv_f_refMat_11[2,2])
 V_alpha = 2*M_dRGT_sq*(sum([sum([b[i]*b[j]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i]) - \
           a_ref*a_ref - 2*sum([b[i]*b_ref[i] for i in dendro.e_i]))/(a*a) + \
-          2*M_dRGT_sq*(sqrt(ginv_f_refMat_00) + sqrt(ginv_f_refMat_11[0,0])+sqrt(ginv_f_refMat_11[1,1])+sqrt(ginv_f_refMat_11[2,2])-3)
+          2*M_dRGT_sq*(Tr_ginv_f_ref-3)
 V_beta_i = Matrix([2*M_dRGT_sq*sum([b[j]*f_ref[j,i] for j in dendro.e_i])/sqrt(x_var) for i in dendro.e_i])
 calgt = sum([sum([gt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
-V_pi_ij = Matrix([ 2*M_dRGT_sq*a*sqrt(calgt)/2 * ( igt[i,j]) for i,j in dendro.e_ij])
+gtjk = Matrix([sum([igt[j,l]*gt[l,k] for l in dendro.e_i]) for j,k in dendro.e_ij])
+gtjk = gtjk.reshape(3,3)
+V_pi_ij = Matrix([ Tr_ginv_f_ref*igt[i,j] for i,j in dendro.e_ij]) + \
+          Matrix([ sqrt(ginv_f_refMat_01[i])*b_ref[j] for i,j in dendro.e_ij]) + \
+          Matrix([ sum([2*sqrt(ginv_f_refMat_11[i,k])*gtjk[j,k] for k in dendro.e_i]) for i,j in dendro.e_ij])
+
+V_pi_ij = 2*M_dRGT_sq*a*sqrt(calgt)/2 * V_pi_ij
+
 V_pi_ij = V_pi_ij.reshape(3,3)
 
 #define energy momentum quantities
@@ -131,7 +139,8 @@ Gt_rhs = Matrix([sum(b[j]*ad(j,Gt[i]) for j in dendro.e_i) for i in dendro.e_i])
          Matrix([sum([igt[j, k] * d2(j, k, b[i]) + igt[i, j] * d2(j, k, b[k])/3 for j, k in dendro.e_ij]) for i in dendro.e_i]) - \
          Matrix([sum([2*At_UU[i, j]*d(j, a) for j in dendro.e_i]) for i in dendro.e_i]) + \
          Matrix([sum([2*a*dendro.C2[i, j, k]*At_UU[j, k] for j,k in dendro.e_ij]) for i in dendro.e_i]) - \
-         Matrix([sum([a*(3/chi*At_UU[i,j]*d(j, chi) + Rational(4,3)*dendro.inv_metric[i, j]*d(j, K)) for j in dendro.e_i]) for i in dendro.e_i])
+         Matrix([sum([a*(3/chi*At_UU[i,j]*d(j, chi) + Rational(4,3)*dendro.inv_metric[i, j]*d(j, K)) for j in dendro.e_i]) for i in dendro.e_i]) - \
+         Matrix([sum([dendro.inv_metric[i,j]*Sit[j] for j in dendro.e_i]) for i in dendro.e_i])
          # + kod(i,Gt[i])
 
 Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
