@@ -181,7 +181,7 @@ def DiDj(a):
     return m.reshape(3, 3)
 
 # Covariant derivative acts on tensor type (2,0)
-def DiTu(T)
+def DiTu(T):
 
     global d, C3
 
@@ -189,7 +189,7 @@ def DiTu(T)
     return m.reshape(3,3)
 
 # Covariant derivative acts on tensor type (0,2)
-def DiTd(T)
+def DiTd(T):
 
     global d, C3
 
@@ -197,7 +197,7 @@ def DiTd(T)
     return m.reshape(3,3)
 
 # Laplacian for tensor rank 2
-def DiDjT(T)
+def DiDjT(T):
 
     global d2, C3
     m = 0 
@@ -391,6 +391,17 @@ def set_metric(g):
 
     metric = g
 
+def set_ref_metric(f):
+    """
+    sets the reference metric variable, so that dendro knows how to compute the derived variables. This should be done fairly
+    early on. e.g.,
+
+    f_ref = dendro.sym_3x3("f_ref")
+    dendro.set_metric(f_ref)
+    """
+    global ref_metric
+
+    ref_metric = f
 
 def get_inverse_metric():
     """
@@ -411,6 +422,24 @@ def get_inverse_metric():
 
     return inv_metric
 
+def get_inverse_ref_metric():
+    """
+    Computes and returns the inverse metric. The variables need for be defined in advance. e.g.,
+
+    f_ref = dendro.sym_3x3("f_ref")
+    dendro.set_ref_metric(f_ref)
+    if_ref = dendro.get_inverse_ref_metric()
+    """
+    global ref_metric, inv_ref_metric, ref_undef
+
+    if ref_metric == undef:
+        raise ValueError('Dendro: Metric not defined.')
+
+    if inv_ref_metric == undef:
+        # method : ('GE', 'LU', or 'ADJ')
+        inv_ref_metric = simplify(ref_metric.inv('ADJ'))
+
+    return inv_ref_metric
 
 def get_first_christoffel():
     """

@@ -6,6 +6,7 @@
 
 
 import dendro
+import math
 from sympy import *
 
 ###################################################################
@@ -15,17 +16,13 @@ from sympy import *
 l1, l2, l3, l4, eta = symbols('lambda[0] lambda[1] lambda[2] lambda[3] eta')
 lf0, lf1 = symbols('lambda_f[0] lambda_f[1]')
 
-#QG related constants
-a_const = symbols('a_const')
-b_const = symbols('b_const')
-qg_ho_coup = symbols('qg_ho_coup')
-
-PI = 3.14159265358979323846
-kappa = 1/(16*PI)
-
 # Additional parameters for damping term
-R0 = symbols('QUADGRAV_ETA_R0')
-ep1, ep2 = symbols('QUADGRAV_ETA_POWER[0] QUADGRAV_ETA_POWER[1]')
+R0 = symbols('MASSGRAV_ETA_R0')
+ep1, ep2 = symbols('MASSGRAV_ETA_POWER[0] MASSGRAV_ETA_POWER[1]')
+
+# Mass from dRGT
+
+M_dRGT = symbols('M_dRGT')
 
 # declare variables
 a   = dendro.scalar("alpha", "[pp]")
@@ -41,14 +38,12 @@ At  = dendro.sym_3x3("At", "[pp]")
 
 Gt_rhs  = dendro.vec3("Gt_rhs", "[pp]")
 
-Rsc = dendro.scalar("Rsc", "[pp]")
-Rsch = dendro.scalar("Rsch", "[pp]")
-Rtt = dendro.sym_3x3("Rtt", "[pp]")
-Vat = dendro.sym_3x3("Vat", "[pp]")
+# declare reference metric related vars
+# TODO : this is not really evolution variables... but somewhat need to be defined
 
-Qsc = dendro.scalar("sc", "[pp]")
-Yabnp = dendro.sym_3x3("Yabp", "[pp]")
-Yabp = dendro.sym_3x3("Yabnp", "[pp]")
+a_ref   = dendro.scalar("alpha_ref", "[pp]")
+b_ref   = dendro.vec3("beta_ref", "[pp]")
+f_ref  = dendro.sym_3x3("f_ref", "[pp]")
 
 # Lie derivative weight
 weight = -Rational(2,3)
@@ -68,17 +63,45 @@ d2 = dendro.d2
 dendro.set_metric(gt)
 igt = dendro.get_inverse_metric()
 
+dendro.set_ref_metric(f_ref)
+if_ref = dendro.get_inverse_ref_metric()
+
+
 C1 = dendro.get_first_christoffel()
 C2 = dendro.get_second_christoffel()
 #what's this...tried to comment it out and python compilation fails
 C2_spatial = dendro.get_complete_christoffel(chi)
 R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
+
+# Compute some energy momentum tensor related values
+# Some precomutation
+
+M_dRGT_sq = M_dRGT*M_dRGT
+
+ginv_f_refMat_00 = a_ref*a_ref + sum([b[i]*b_ref[i] for i in dendro.e_i])
+ginv_f_refMat_01 = -b_ref + sum([b[i]*f_ref[i,j] for i in dendro.e_i])
+ginv_f_refMat_10 = a*a*sum([igt[i,j]*b_ref[i] for i in dendro.e_i]) - b*(a_ref*a_ref+sum([b[i]*b_ref[i] for i in dendro.e_i])
+ginv_f_refMat_11 = a*a*sum([igt[i,j]*f_ref[j,k] for j in dendro.e_i]) - b * (sum([b[i]*f_ref[i,j] for i in dendro.e_i]) - b_ref)
+
+x_var = a_ref*a_ref + sum([sum([(b_ref[i]*b_ref[j]-b[i]*b[j])*if_ref(i,j) for i in dendro.e_i]) for j in dendro.e_i])
+
+
+# General potential computations
+V_alpha = 2*M_dRGT_sq*(sum([sum([b[i]*b[j]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i]) - \
+          a_ref*a_ref - 2*sum([b[i]*b_ref[i] for i in dendro.e_i]))/(a*a) + \
+          2*M_dRGT_sq*(math.sqrt(ginv_f_refMat_00) + math.sqrt(ginv_f_refMat_11) -3)
+V_beta_i = 2*M_dRGT_sq*sum([b[i]*f_ref[i,j] for i in dendro.e_i])/math.sqrt(x_var)
+
+
 ###################################################################
 # evolution equations
 ###################################################################
 
 a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 
+#[ewh] In the had code, this is treated as an advective derivative.
+#      I think this should be:
+#         l2 * dendro.vec_j_del_j(b, b[i])
 b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
         l2 * dendro.vec_j_ad_j(b, b[i])
          for i in dendro.e_i ] + 0*dendro.kodiss(b)
@@ -89,8 +112,10 @@ chi_rhs = dendro.lie(b, chi, weight) + Rational(2,3) * (chi*a*K) + 0*dendro.kodi
 
 AikAkj = Matrix([sum([At[i, k] * sum([dendro.inv_metric[k, l]*At[l, j] for l in dendro.e_i]) for k in dendro.e_i]) for i, j in dendro.e_ij])
 
+#ewh2 At_rhs = dendro.lie(b, At, weight) + dendro.trace_free(chi*(dendro.DiDj(a) + a*R)) + a*(K*At - 2*AikAkj.reshape(3, 3))
 At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
 
+#K_rhs = dendro.vec_k_del_k(b, K) - dendro.laplacian(a) + a*(1/3*K*K + dendro.sqr(At))
 K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*dendro.kodiss(K)
 
 At_UU = dendro.up_up(At)
@@ -112,6 +137,8 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
          l3 * dendro.vec_j_ad_j(b, B[i]) -
          l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
          for i in dendro.e_i]
+
+
 #_I = gt*igt
 #print(simplify(_I))
 
@@ -135,8 +162,8 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
 # generate code
 ###################################################################
 
-outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Rtt_rhs, Vat_rhs]
-vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs','Rtt_rhs','Vat_rhs']
+outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
+vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
 #dendro.generate_debug(outs, vnames)
 dendro.generate(outs, vnames, '[pp]')
 #numVars=len(outs)
