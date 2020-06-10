@@ -39,10 +39,15 @@ Gt_rhs  = dendro.vec3("Gt_rhs", "[pp]")
 
 # declare reference metric related vars
 # TODO : this is not really evolution variables... but somewhat need to be defined
+#a_ref   = dendro.scalar("alpha_ref", "[pp]")
+#b_ref   = dendro.vec3("beta_ref", "[pp]")
+#f_ref  = dendro.sym_3x3("f_ref", "[pp]")
 
-a_ref   = dendro.scalar("alpha_ref", "[pp]")
-b_ref   = dendro.vec3("beta_ref", "[pp]")
-f_ref  = dendro.sym_3x3("f_ref", "[pp]")
+#Alternative ways to have this. Define here since they are not evolution variables
+#Define flat spacetime for reference metric
+a_ref = 1
+b_ref = Matrix([[0,0,0]])
+f_ref = eye(3)
 
 # Lie derivative weight
 weight = -Rational(2,3)

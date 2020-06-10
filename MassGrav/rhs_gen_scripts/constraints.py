@@ -30,9 +30,14 @@ a = dendro.scalar("alpha","[pp]")
 
 # declare reference metric related vars
 # TODO : this is not really evolution variables... but somewhat need to be defined
-a_ref   = dendro.scalar("alpha_ref", "[pp]")
-b_ref   = dendro.vec3("beta_ref", "[pp]")
-f_ref  = dendro.sym_3x3("f_ref", "[pp]")
+#a_ref   = dendro.scalar("alpha_ref", "[pp]")
+#b_ref   = dendro.vec3("beta_ref", "[pp]")
+#f_ref  = dendro.sym_3x3("f_ref", "[pp]")
+
+# Alternative way (same as in evolution eqs part)
+a_ref = 1
+b_ref = Matrix([[0,0,0]])
+f_ref = eye(3)
 
 # Specify the operators needed for computing first and second derivatives
 d = dendro.set_first_derivative('grad')    # first argument is direction
