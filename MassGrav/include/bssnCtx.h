@@ -1,7 +1,7 @@
 /**
- * @file quadgravCtx.h
+ * @file massgravCtx.h
  * @author Milinda Fernando
- * @brief Application context class for solving the Einstein equations in QUADGRAVKO formulation. 
+ * @brief Application context class for solving the Einstein equations in MASSGRAVKO formulation. 
  * @version 0.1
  * @date 2019-12-20
  * 
@@ -23,12 +23,12 @@
 #include "dataUtils.h"
 //#include "gwExtract.h"
 #include "physcon.h"
-#include "quadgrav_constraints.h"
+#include "massgrav_constraints.h"
 #include "TwoPunctures.h"
 
-namespace quadgrav
+namespace massgrav
 {
-    class QUADGRAVCtx : public ts::Ctx<DendroScalar, DendroIntL>
+    class MASSGRAVCtx : public ts::Ctx<DendroScalar, DendroIntL>
     {
 
         protected:
@@ -59,16 +59,16 @@ namespace quadgrav
         public :
 
             /**@brief: default constructor*/
-            QUADGRAVCtx(ot::Mesh* pMesh);
+            MASSGRAVCtx(ot::Mesh* pMesh);
 
             /**@brief: default deconstructor*/
-            ~QUADGRAVCtx();
+            ~MASSGRAVCtx();
 
             /**@brief: initial solution*/
             virtual int initialize();
             
             /**
-             * @brief computes the QUADGRAV rhs 
+             * @brief computes the MASSGRAV rhs 
              * 
              * @param in : zipped input
              * @param out : zipped output
@@ -139,11 +139,11 @@ namespace quadgrav
             virtual int terminal_output();
 
             /**@brief: returns the async communication batch size. */
-            virtual unsigned int get_async_batch_sz() {return quadgrav::QUADGRAV_ASYNC_COMM_K;}
+            virtual unsigned int get_async_batch_sz() {return massgrav::MASSGRAV_ASYNC_COMM_K;}
 
 
 
 
     };
 
-}// end of namespace quadgrav
+}// end of namespace massgrav

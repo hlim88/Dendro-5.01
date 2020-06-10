@@ -13,7 +13,7 @@
 #include "profiler.h"
 
 
-namespace quadgrav
+namespace massgrav
 {
     namespace timer
     {

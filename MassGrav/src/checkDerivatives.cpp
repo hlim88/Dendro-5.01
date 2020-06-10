@@ -1,9 +1,5 @@
-//
-// Created by milinda on 10/5/17.
 /**
-*@author Milinda Fernando
-*School of Computing, University of Utah
-*@brief check all teh quadgrav derivs for user specified function.
+*@brief check all the massgrav derivs for user specified function.
 */
 //
 

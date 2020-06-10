@@ -3,13 +3,13 @@
 /**
 *@author Milinda Fernando
 *School of Computing, University of Utah
-*@brief Contains utility functions for QUADGRAV simulation.
+*@brief Contains utility functions for MASSGRAV simulation.
 */
 //
 
 #include "grUtils.h"
 
-namespace quadgrav
+namespace massgrav
 {
 
     void readParamFile(const char * fName,MPI_Comm comm)
@@ -31,102 +31,102 @@ namespace quadgrav
             if(!infile) {std::cout<<fName<<" parameter file open failed "<<std::endl;}
             infile>>parFile;
 
-            quadgrav::QUADGRAV_IO_OUTPUT_FREQ=parFile["QUADGRAV_IO_OUTPUT_FREQ"];
-            quadgrav::QUADGRAV_REMESH_TEST_FREQ=parFile["QUADGRAV_REMESH_TEST_FREQ"];
-            quadgrav::QUADGRAV_CHECKPT_FREQ=parFile["QUADGRAV_CHECKPT_FREQ"];
-            quadgrav::QUADGRAV_IO_OUTPUT_GAP=parFile["QUADGRAV_IO_OUTPUT_GAP"];
-            quadgrav::QUADGRAV_VTU_FILE_PREFIX=parFile["QUADGRAV_VTU_FILE_PREFIX"].get<std::string>();
-            quadgrav::QUADGRAV_CHKPT_FILE_PREFIX=parFile["QUADGRAV_CHKPT_FILE_PREFIX"].get<std::string>();
-            quadgrav::QUADGRAV_PROFILE_FILE_PREFIX=parFile["QUADGRAV_PROFILE_FILE_PREFIX"].get<std::string>();
-            quadgrav::QUADGRAV_RESTORE_SOLVER=parFile["QUADGRAV_RESTORE_SOLVER"];
-            quadgrav::QUADGRAV_ENABLE_BLOCK_ADAPTIVITY=parFile["QUADGRAV_ENABLE_BLOCK_ADAPTIVITY"];
-	        quadgrav::QUADGRAV_ID_TYPE=parFile["QUADGRAV_ID_TYPE"];
-            quadgrav::QUADGRAV_BLK_MIN_X=parFile["QUADGRAV_BLK_MIN_X"];
-            quadgrav::QUADGRAV_BLK_MIN_Y=parFile["QUADGRAV_BLK_MIN_Y"];
-            quadgrav::QUADGRAV_BLK_MIN_Z=parFile["QUADGRAV_BLK_MIN_Z"];
-            quadgrav::QUADGRAV_BLK_MAX_X=parFile["QUADGRAV_BLK_MAX_X"];
-            quadgrav::QUADGRAV_BLK_MAX_Y=parFile["QUADGRAV_BLK_MAX_Y"];
-            quadgrav::QUADGRAV_BLK_MAX_Z=parFile["QUADGRAV_BLK_MAX_Z"];
-            quadgrav::QUADGRAV_DENDRO_GRAIN_SZ=parFile["QUADGRAV_DENDRO_GRAIN_SZ"];
-            quadgrav::QUADGRAV_ASYNC_COMM_K=parFile["QUADGRAV_ASYNC_COMM_K"];
-            quadgrav::QUADGRAV_DENDRO_AMR_FAC=parFile["QUADGRAV_DENDRO_AMR_FAC"];
-            quadgrav::QUADGRAV_LOAD_IMB_TOL=parFile["QUADGRAV_LOAD_IMB_TOL"];
-            quadgrav::QUADGRAV_RK_TIME_BEGIN=parFile["QUADGRAV_RK_TIME_BEGIN"];
-            quadgrav::QUADGRAV_RK_TIME_END=parFile["QUADGRAV_RK_TIME_END"];
-            quadgrav::QUADGRAV_RK_TYPE=parFile["QUADGRAV_RK_TYPE"];
-            quadgrav::QUADGRAV_RK45_TIME_STEP_SIZE=parFile["QUADGRAV_RK45_TIME_STEP_SIZE"];
-            quadgrav::QUADGRAV_RK45_DESIRED_TOL=parFile["QUADGRAV_RK45_DESIRED_TOL"];
-            quadgrav::QUADGRAV_DIM=parFile["QUADGRAV_DIM"];
-            quadgrav::QUADGRAV_MAXDEPTH=parFile["QUADGRAV_MAXDEPTH"];
-            quadgrav::BH1=BH((double)parFile["QUADGRAV_BH1"]["MASS"],(double)parFile["QUADGRAV_BH1"]["X"],(double)parFile["QUADGRAV_BH1"]["Y"],(double)parFile["QUADGRAV_BH1"]["Z"],(double)parFile["QUADGRAV_BH1"]["V_X"],(double)parFile["QUADGRAV_BH1"]["V_Y"],(double)parFile["QUADGRAV_BH1"]["V_Z"],(double)parFile["QUADGRAV_BH1"]["SPIN"],(double)parFile["QUADGRAV_BH1"]["SPIN_THETA"],(double)parFile["QUADGRAV_BH1"]["SPIN_PHI"]);
-            quadgrav::BH2=BH((double)parFile["QUADGRAV_BH2"]["MASS"],(double)parFile["QUADGRAV_BH2"]["X"],(double)parFile["QUADGRAV_BH2"]["Y"],(double)parFile["QUADGRAV_BH2"]["Z"],(double)parFile["QUADGRAV_BH2"]["V_X"],(double)parFile["QUADGRAV_BH2"]["V_Y"],(double)parFile["QUADGRAV_BH2"]["V_Z"],(double)parFile["QUADGRAV_BH2"]["SPIN"],(double)parFile["QUADGRAV_BH2"]["SPIN_THETA"],(double)parFile["QUADGRAV_BH2"]["SPIN_PHI"]);
-            quadgrav::QUADGRAV_GRID_MIN_X=parFile["QUADGRAV_GRID_MIN_X"];
-            quadgrav::QUADGRAV_GRID_MAX_X=parFile["QUADGRAV_GRID_MAX_X"];
-            quadgrav::QUADGRAV_GRID_MIN_Y=parFile["QUADGRAV_GRID_MIN_Y"];
-            quadgrav::QUADGRAV_GRID_MAX_Y=parFile["QUADGRAV_GRID_MAX_Y"];
-            quadgrav::QUADGRAV_GRID_MIN_Z=parFile["QUADGRAV_GRID_MIN_Z"];
-            quadgrav::QUADGRAV_GRID_MAX_Z=parFile["QUADGRAV_GRID_MAX_Z"];
-            quadgrav::ETA_CONST=parFile["ETA_CONST"];
-            quadgrav::ETA_R0=parFile["ETA_R0"];
-            quadgrav::ETA_DAMPING=parFile["ETA_DAMPING"];
-            quadgrav::ETA_DAMPING_EXP=parFile["ETA_DAMPING_EXP"];
-            quadgrav::QUADGRAV_LAMBDA[0]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_1"];
-            quadgrav::QUADGRAV_LAMBDA[1]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_2"];
-            quadgrav::QUADGRAV_LAMBDA[2]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_3"];
-            quadgrav::QUADGRAV_LAMBDA[3]=(unsigned int) parFile["QUADGRAV_LAMBDA"]["QUADGRAV_LAMBDA_4"];
-            quadgrav::QUADGRAV_LAMBDA_F[0]=parFile["QUADGRAV_LAMBDA_F"]["QUADGRAV_LAMBDA_F0"];
-            quadgrav::QUADGRAV_LAMBDA_F[1]=parFile["QUADGRAV_LAMBDA_F"]["QUADGRAV_LAMBDA_F1"];
+            massgrav::MASSGRAV_IO_OUTPUT_FREQ=parFile["MASSGRAV_IO_OUTPUT_FREQ"];
+            massgrav::MASSGRAV_REMESH_TEST_FREQ=parFile["MASSGRAV_REMESH_TEST_FREQ"];
+            massgrav::MASSGRAV_CHECKPT_FREQ=parFile["MASSGRAV_CHECKPT_FREQ"];
+            massgrav::MASSGRAV_IO_OUTPUT_GAP=parFile["MASSGRAV_IO_OUTPUT_GAP"];
+            massgrav::MASSGRAV_VTU_FILE_PREFIX=parFile["MASSGRAV_VTU_FILE_PREFIX"].get<std::string>();
+            massgrav::MASSGRAV_CHKPT_FILE_PREFIX=parFile["MASSGRAV_CHKPT_FILE_PREFIX"].get<std::string>();
+            massgrav::MASSGRAV_PROFILE_FILE_PREFIX=parFile["MASSGRAV_PROFILE_FILE_PREFIX"].get<std::string>();
+            massgrav::MASSGRAV_RESTORE_SOLVER=parFile["MASSGRAV_RESTORE_SOLVER"];
+            massgrav::MASSGRAV_ENABLE_BLOCK_ADAPTIVITY=parFile["MASSGRAV_ENABLE_BLOCK_ADAPTIVITY"];
+	        massgrav::MASSGRAV_ID_TYPE=parFile["MASSGRAV_ID_TYPE"];
+            massgrav::MASSGRAV_BLK_MIN_X=parFile["MASSGRAV_BLK_MIN_X"];
+            massgrav::MASSGRAV_BLK_MIN_Y=parFile["MASSGRAV_BLK_MIN_Y"];
+            massgrav::MASSGRAV_BLK_MIN_Z=parFile["MASSGRAV_BLK_MIN_Z"];
+            massgrav::MASSGRAV_BLK_MAX_X=parFile["MASSGRAV_BLK_MAX_X"];
+            massgrav::MASSGRAV_BLK_MAX_Y=parFile["MASSGRAV_BLK_MAX_Y"];
+            massgrav::MASSGRAV_BLK_MAX_Z=parFile["MASSGRAV_BLK_MAX_Z"];
+            massgrav::MASSGRAV_DENDRO_GRAIN_SZ=parFile["MASSGRAV_DENDRO_GRAIN_SZ"];
+            massgrav::MASSGRAV_ASYNC_COMM_K=parFile["MASSGRAV_ASYNC_COMM_K"];
+            massgrav::MASSGRAV_DENDRO_AMR_FAC=parFile["MASSGRAV_DENDRO_AMR_FAC"];
+            massgrav::MASSGRAV_LOAD_IMB_TOL=parFile["MASSGRAV_LOAD_IMB_TOL"];
+            massgrav::MASSGRAV_RK_TIME_BEGIN=parFile["MASSGRAV_RK_TIME_BEGIN"];
+            massgrav::MASSGRAV_RK_TIME_END=parFile["MASSGRAV_RK_TIME_END"];
+            massgrav::MASSGRAV_RK_TYPE=parFile["MASSGRAV_RK_TYPE"];
+            massgrav::MASSGRAV_RK45_TIME_STEP_SIZE=parFile["MASSGRAV_RK45_TIME_STEP_SIZE"];
+            massgrav::MASSGRAV_RK45_DESIRED_TOL=parFile["MASSGRAV_RK45_DESIRED_TOL"];
+            massgrav::MASSGRAV_DIM=parFile["MASSGRAV_DIM"];
+            massgrav::MASSGRAV_MAXDEPTH=parFile["MASSGRAV_MAXDEPTH"];
+            massgrav::BH1=BH((double)parFile["MASSGRAV_BH1"]["MASS"],(double)parFile["MASSGRAV_BH1"]["X"],(double)parFile["MASSGRAV_BH1"]["Y"],(double)parFile["MASSGRAV_BH1"]["Z"],(double)parFile["MASSGRAV_BH1"]["V_X"],(double)parFile["MASSGRAV_BH1"]["V_Y"],(double)parFile["MASSGRAV_BH1"]["V_Z"],(double)parFile["MASSGRAV_BH1"]["SPIN"],(double)parFile["MASSGRAV_BH1"]["SPIN_THETA"],(double)parFile["MASSGRAV_BH1"]["SPIN_PHI"]);
+            massgrav::BH2=BH((double)parFile["MASSGRAV_BH2"]["MASS"],(double)parFile["MASSGRAV_BH2"]["X"],(double)parFile["MASSGRAV_BH2"]["Y"],(double)parFile["MASSGRAV_BH2"]["Z"],(double)parFile["MASSGRAV_BH2"]["V_X"],(double)parFile["MASSGRAV_BH2"]["V_Y"],(double)parFile["MASSGRAV_BH2"]["V_Z"],(double)parFile["MASSGRAV_BH2"]["SPIN"],(double)parFile["MASSGRAV_BH2"]["SPIN_THETA"],(double)parFile["MASSGRAV_BH2"]["SPIN_PHI"]);
+            massgrav::MASSGRAV_GRID_MIN_X=parFile["MASSGRAV_GRID_MIN_X"];
+            massgrav::MASSGRAV_GRID_MAX_X=parFile["MASSGRAV_GRID_MAX_X"];
+            massgrav::MASSGRAV_GRID_MIN_Y=parFile["MASSGRAV_GRID_MIN_Y"];
+            massgrav::MASSGRAV_GRID_MAX_Y=parFile["MASSGRAV_GRID_MAX_Y"];
+            massgrav::MASSGRAV_GRID_MIN_Z=parFile["MASSGRAV_GRID_MIN_Z"];
+            massgrav::MASSGRAV_GRID_MAX_Z=parFile["MASSGRAV_GRID_MAX_Z"];
+            massgrav::ETA_CONST=parFile["ETA_CONST"];
+            massgrav::ETA_R0=parFile["ETA_R0"];
+            massgrav::ETA_DAMPING=parFile["ETA_DAMPING"];
+            massgrav::ETA_DAMPING_EXP=parFile["ETA_DAMPING_EXP"];
+            massgrav::MASSGRAV_LAMBDA[0]=(unsigned int) parFile["MASSGRAV_LAMBDA"]["MASSGRAV_LAMBDA_1"];
+            massgrav::MASSGRAV_LAMBDA[1]=(unsigned int) parFile["MASSGRAV_LAMBDA"]["MASSGRAV_LAMBDA_2"];
+            massgrav::MASSGRAV_LAMBDA[2]=(unsigned int) parFile["MASSGRAV_LAMBDA"]["MASSGRAV_LAMBDA_3"];
+            massgrav::MASSGRAV_LAMBDA[3]=(unsigned int) parFile["MASSGRAV_LAMBDA"]["MASSGRAV_LAMBDA_4"];
+            massgrav::MASSGRAV_LAMBDA_F[0]=parFile["MASSGRAV_LAMBDA_F"]["MASSGRAV_LAMBDA_F0"];
+            massgrav::MASSGRAV_LAMBDA_F[1]=parFile["MASSGRAV_LAMBDA_F"]["MASSGRAV_LAMBDA_F1"];
 
-            quadgrav::QUADGRAV_XI[0] = (unsigned int ) parFile["QUADGRAV_XI"]["QUADGRAV_XI_0"];
-            quadgrav::QUADGRAV_XI[1] = (unsigned int ) parFile["QUADGRAV_XI"]["QUADGRAV_XI_1"];
-            quadgrav::QUADGRAV_XI[2] = (unsigned int ) parFile["QUADGRAV_XI"]["QUADGRAV_XI_2"];
+            massgrav::MASSGRAV_XI[0] = (unsigned int ) parFile["MASSGRAV_XI"]["MASSGRAV_XI_0"];
+            massgrav::MASSGRAV_XI[1] = (unsigned int ) parFile["MASSGRAV_XI"]["MASSGRAV_XI_1"];
+            massgrav::MASSGRAV_XI[2] = (unsigned int ) parFile["MASSGRAV_XI"]["MASSGRAV_XI_2"];
             
-            if(parFile.find("QUADGRAV_ELE_ORDER")!= parFile.end())
-                quadgrav::QUADGRAV_ELE_ORDER = parFile["QUADGRAV_ELE_ORDER"];
+            if(parFile.find("MASSGRAV_ELE_ORDER")!= parFile.end())
+                massgrav::MASSGRAV_ELE_ORDER = parFile["MASSGRAV_ELE_ORDER"];
             
-            quadgrav::CHI_FLOOR=parFile["CHI_FLOOR"];
-            quadgrav::QUADGRAV_TRK0=parFile["QUADGRAV_TRK0"];
+            massgrav::CHI_FLOOR=parFile["CHI_FLOOR"];
+            massgrav::MASSGRAV_TRK0=parFile["MASSGRAV_TRK0"];
             if (parFile.find("DISSIPATION_TYPE") != parFile.end()) {
-                quadgrav::DISSIPATION_TYPE=parFile["DISSIPATION_TYPE"];
+                massgrav::DISSIPATION_TYPE=parFile["DISSIPATION_TYPE"];
             }
-            quadgrav::KO_DISS_SIGMA=parFile["KO_DISS_SIGMA"];
+            massgrav::KO_DISS_SIGMA=parFile["KO_DISS_SIGMA"];
 
   	        //Parameters for eta_damping function
-	          quadgrav::QUADGRAV_ETA_R0=parFile["QUADGRAV_ETA_R0"];
-	          quadgrav::QUADGRAV_ETA_POWER[0]=parFile["QUADGRAV_ETA_POWER"]["QUADGRAV_ETA_POWER_1"];
-	          quadgrav::QUADGRAV_ETA_POWER[1]=parFile["QUADGRAV_ETA_POWER"]["QUADGRAV_ETA_POWER_2"];
+	          massgrav::MASSGRAV_ETA_R0=parFile["MASSGRAV_ETA_R0"];
+	          massgrav::MASSGRAV_ETA_POWER[0]=parFile["MASSGRAV_ETA_POWER"]["MASSGRAV_ETA_POWER_1"];
+	          massgrav::MASSGRAV_ETA_POWER[1]=parFile["MASSGRAV_ETA_POWER"]["MASSGRAV_ETA_POWER_2"];
 
-            quadgrav::QUADGRAV_USE_WAVELET_TOL_FUNCTION=parFile["QUADGRAV_USE_WAVELET_TOL_FUNCTION"];
-            quadgrav::QUADGRAV_WAVELET_TOL=parFile["QUADGRAV_WAVELET_TOL"];
-            quadgrav::QUADGRAV_WAVELET_TOL_MAX=parFile["QUADGRAV_WAVELET_TOL_MAX"];
-            quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R0=parFile["QUADGRAV_WAVELET_TOL_FUNCTION_R0"];
-            quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R1=parFile["QUADGRAV_WAVELET_TOL_FUNCTION_R1"];
+            massgrav::MASSGRAV_USE_WAVELET_TOL_FUNCTION=parFile["MASSGRAV_USE_WAVELET_TOL_FUNCTION"];
+            massgrav::MASSGRAV_WAVELET_TOL=parFile["MASSGRAV_WAVELET_TOL"];
+            massgrav::MASSGRAV_WAVELET_TOL_MAX=parFile["MASSGRAV_WAVELET_TOL_MAX"];
+            massgrav::MASSGRAV_WAVELET_TOL_FUNCTION_R0=parFile["MASSGRAV_WAVELET_TOL_FUNCTION_R0"];
+            massgrav::MASSGRAV_WAVELET_TOL_FUNCTION_R1=parFile["MASSGRAV_WAVELET_TOL_FUNCTION_R1"];
 
-            quadgrav::QUADGRAV_NUM_REFINE_VARS=parFile["QUADGRAV_NUM_REFINE_VARS"];
-            for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_REFINE_VARS;i++)
-                quadgrav::QUADGRAV_REFINE_VARIABLE_INDICES[i]=parFile["QUADGRAV_REFINE_VARIABLE_INDICES"][i];
+            massgrav::MASSGRAV_NUM_REFINE_VARS=parFile["MASSGRAV_NUM_REFINE_VARS"];
+            for(unsigned int i=0;i<massgrav::MASSGRAV_NUM_REFINE_VARS;i++)
+                massgrav::MASSGRAV_REFINE_VARIABLE_INDICES[i]=parFile["MASSGRAV_REFINE_VARIABLE_INDICES"][i];
 
-            quadgrav::QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT=parFile["QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT"];
-            quadgrav::QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT=parFile["QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT"];
+            massgrav::MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT=parFile["MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT"];
+            massgrav::MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT=parFile["MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT"];
 
-            for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT;i++)
-                quadgrav::QUADGRAV_VTU_OUTPUT_EVOL_INDICES[i]=parFile["QUADGRAV_VTU_OUTPUT_EVOL_INDICES"][i];
+            for(unsigned int i=0;i<massgrav::MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT;i++)
+                massgrav::MASSGRAV_VTU_OUTPUT_EVOL_INDICES[i]=parFile["MASSGRAV_VTU_OUTPUT_EVOL_INDICES"][i];
 
-            for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT;i++)
-                quadgrav::QUADGRAV_VTU_OUTPUT_CONST_INDICES[i]=parFile["QUADGRAV_VTU_OUTPUT_CONST_INDICES"][i];
+            for(unsigned int i=0;i<massgrav::MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT;i++)
+                massgrav::MASSGRAV_VTU_OUTPUT_CONST_INDICES[i]=parFile["MASSGRAV_VTU_OUTPUT_CONST_INDICES"][i];
 
-            if (parFile.find("QUADGRAV_CFL_FACTOR") != parFile.end()) {
-                quadgrav::QUADGRAV_CFL_FACTOR=parFile["QUADGRAV_CFL_FACTOR"];
+            if (parFile.find("MASSGRAV_CFL_FACTOR") != parFile.end()) {
+                massgrav::MASSGRAV_CFL_FACTOR=parFile["MASSGRAV_CFL_FACTOR"];
             }
 
-            if(parFile.find("QUADGRAV_VTU_Z_SLICE_ONLY") != parFile.end())
-                quadgrav::QUADGRAV_VTU_Z_SLICE_ONLY=parFile["QUADGRAV_VTU_Z_SLICE_ONLY"];
+            if(parFile.find("MASSGRAV_VTU_Z_SLICE_ONLY") != parFile.end())
+                massgrav::MASSGRAV_VTU_Z_SLICE_ONLY=parFile["MASSGRAV_VTU_Z_SLICE_ONLY"];
 
-            if (parFile.find("QUADGRAV_GW_EXTRACT_FREQ") != parFile.end()) {
-                quadgrav::QUADGRAV_GW_EXTRACT_FREQ=parFile["QUADGRAV_GW_EXTRACT_FREQ"];
+            if (parFile.find("MASSGRAV_GW_EXTRACT_FREQ") != parFile.end()) {
+                massgrav::MASSGRAV_GW_EXTRACT_FREQ=parFile["MASSGRAV_GW_EXTRACT_FREQ"];
             }else
             {
-                quadgrav::QUADGRAV_GW_EXTRACT_FREQ=std::max(1u,quadgrav::QUADGRAV_IO_OUTPUT_FREQ>>1u);
+                massgrav::MASSGRAV_GW_EXTRACT_FREQ=std::max(1u,massgrav::MASSGRAV_IO_OUTPUT_FREQ>>1u);
             }
 
            /* Parameters for TPID */
@@ -178,59 +178,59 @@ namespace quadgrav
             }
 
 
-            vtu_len=QUADGRAV_VTU_FILE_PREFIX.size();
-            chp_len=QUADGRAV_CHKPT_FILE_PREFIX.size();
-            prf_len=QUADGRAV_PROFILE_FILE_PREFIX.size();
+            vtu_len=MASSGRAV_VTU_FILE_PREFIX.size();
+            chp_len=MASSGRAV_CHKPT_FILE_PREFIX.size();
+            prf_len=MASSGRAV_PROFILE_FILE_PREFIX.size();
 
 
-            GW::QUADGRAV_GW_NUM_RADAII=parFile["QUADGRAV_GW_NUM_RADAII"];
-            GW::QUADGRAV_GW_NUM_LMODES=parFile["QUADGRAV_GW_NUM_LMODES"];
+            GW::MASSGRAV_GW_NUM_RADAII=parFile["MASSGRAV_GW_NUM_RADAII"];
+            GW::MASSGRAV_GW_NUM_LMODES=parFile["MASSGRAV_GW_NUM_LMODES"];
 
-            for(unsigned int i=0;i<GW::QUADGRAV_GW_NUM_RADAII;i++)
-                GW::QUADGRAV_GW_RADAII[i]=parFile["QUADGRAV_GW_RADAII"][i];
+            for(unsigned int i=0;i<GW::MASSGRAV_GW_NUM_RADAII;i++)
+                GW::MASSGRAV_GW_RADAII[i]=parFile["MASSGRAV_GW_RADAII"][i];
 
-            for(unsigned int i=0;i<GW::QUADGRAV_GW_NUM_LMODES;i++)
-                GW::QUADGRAV_GW_L_MODES[i]=parFile["QUADGRAV_GW_L_MODES"][i];
+            for(unsigned int i=0;i<GW::MASSGRAV_GW_NUM_LMODES;i++)
+                GW::MASSGRAV_GW_L_MODES[i]=parFile["MASSGRAV_GW_L_MODES"][i];
 
 
-            if(parFile.find("QUADGRAV_USE_FD_GRID_TRANSFER")!=parFile.end())
+            if(parFile.find("MASSGRAV_USE_FD_GRID_TRANSFER")!=parFile.end())
             {
-                quadgrav::QUADGRAV_USE_FD_GRID_TRANSFER=parFile["QUADGRAV_USE_FD_GRID_TRANSFER"];
+                massgrav::MASSGRAV_USE_FD_GRID_TRANSFER=parFile["MASSGRAV_USE_FD_GRID_TRANSFER"];
             }
 
-            if(parFile.find("QUADGRAV_EH_COARSEN_VAL")!= parFile.end())
+            if(parFile.find("MASSGRAV_EH_COARSEN_VAL")!= parFile.end())
             {
-                quadgrav::QUADGRAV_EH_COARSEN_VAL = parFile["QUADGRAV_EH_COARSEN_VAL"];
+                massgrav::MASSGRAV_EH_COARSEN_VAL = parFile["MASSGRAV_EH_COARSEN_VAL"];
             }
 
-            if(parFile.find("QUADGRAV_EH_REFINE_VAL")!=parFile.end())
+            if(parFile.find("MASSGRAV_EH_REFINE_VAL")!=parFile.end())
             {
-                quadgrav::QUADGRAV_EH_REFINE_VAL = parFile["QUADGRAV_EH_REFINE_VAL"];
+                massgrav::MASSGRAV_EH_REFINE_VAL = parFile["MASSGRAV_EH_REFINE_VAL"];
             }
 
-            if(parFile.find("QUADGRAV_REFINEMENT_MODE")!=parFile.end())
+            if(parFile.find("MASSGRAV_REFINEMENT_MODE")!=parFile.end())
             {
-                quadgrav::QUADGRAV_REFINEMENT_MODE = static_cast<quadgrav::RefinementMode>(parFile["QUADGRAV_REFINEMENT_MODE"]);
+                massgrav::MASSGRAV_REFINEMENT_MODE = static_cast<massgrav::RefinementMode>(parFile["MASSGRAV_REFINEMENT_MODE"]);
             }
 
 
         }
 
-        par::Mpi_Bcast(&QUADGRAV_ELE_ORDER,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_IO_OUTPUT_FREQ,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_REMESH_TEST_FREQ,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_CHECKPT_FREQ,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_IO_OUTPUT_GAP,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_ELE_ORDER,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_IO_OUTPUT_FREQ,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_REMESH_TEST_FREQ,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_CHECKPT_FREQ,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_IO_OUTPUT_GAP,1,0,comm);
 
         par::Mpi_Bcast(&vtu_len,1,0,comm);
         par::Mpi_Bcast(&chp_len,1,0,comm);
         par::Mpi_Bcast(&prf_len,1,0,comm);
 
-        par::Mpi_Bcast(&QUADGRAV_DENDRO_GRAIN_SZ,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_DENDRO_AMR_FAC,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_ASYNC_COMM_K,1,0,comm);
-        par::Mpi_Bcast((int*)&QUADGRAV_REFINEMENT_MODE,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_GW_EXTRACT_FREQ,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_DENDRO_GRAIN_SZ,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_DENDRO_AMR_FAC,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_ASYNC_COMM_K,1,0,comm);
+        par::Mpi_Bcast((int*)&MASSGRAV_REFINEMENT_MODE,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_GW_EXTRACT_FREQ,1,0,comm);
 
         char vtu_name[vtu_len+1];
         char chp_name[chp_len+1];
@@ -240,13 +240,13 @@ namespace quadgrav
         if(!rank)
         {
            for(unsigned int k=0;k<vtu_len;k++)
-               vtu_name[k]=QUADGRAV_VTU_FILE_PREFIX[k];
+               vtu_name[k]=MASSGRAV_VTU_FILE_PREFIX[k];
 
             for(unsigned int k=0;k<chp_len;k++)
-                chp_name[k]=QUADGRAV_CHKPT_FILE_PREFIX[k];
+                chp_name[k]=MASSGRAV_CHKPT_FILE_PREFIX[k];
 
             for(unsigned int k=0;k<prf_len;k++)
-                prf_name[k]=QUADGRAV_PROFILE_FILE_PREFIX[k];
+                prf_name[k]=MASSGRAV_PROFILE_FILE_PREFIX[k];
 
             vtu_name[vtu_len]='\0';
             chp_name[chp_len]='\0';
@@ -259,62 +259,62 @@ namespace quadgrav
         MPI_Bcast(chp_name,chp_len+1,MPI_CHAR,0,comm);
         MPI_Bcast(prf_name,prf_len+1,MPI_CHAR,0,comm);
 
-        QUADGRAV_VTU_FILE_PREFIX=std::string(vtu_name);
-        QUADGRAV_CHKPT_FILE_PREFIX=std::string(chp_name);
-        QUADGRAV_PROFILE_FILE_PREFIX=std::string(prf_name);
+        MASSGRAV_VTU_FILE_PREFIX=std::string(vtu_name);
+        MASSGRAV_CHKPT_FILE_PREFIX=std::string(chp_name);
+        MASSGRAV_PROFILE_FILE_PREFIX=std::string(prf_name);
 
 
-        par::Mpi_Bcast(&QUADGRAV_RESTORE_SOLVER,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_ENABLE_BLOCK_ADAPTIVITY,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_RESTORE_SOLVER,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_ENABLE_BLOCK_ADAPTIVITY,1,0,comm);
 
-        par::Mpi_Bcast(&QUADGRAV_USE_WAVELET_TOL_FUNCTION,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL_MAX,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL_FUNCTION_R0,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_WAVELET_TOL_FUNCTION_R1,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_USE_WAVELET_TOL_FUNCTION,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_WAVELET_TOL,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_WAVELET_TOL_MAX,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_WAVELET_TOL_FUNCTION_R0,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_WAVELET_TOL_FUNCTION_R1,1,0,comm);
 
 
-        par::Mpi_Bcast(&QUADGRAV_CFL_FACTOR,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_LOAD_IMB_TOL,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_RK_TIME_BEGIN,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_RK_TIME_END,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_RK_TYPE,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_RK45_TIME_STEP_SIZE,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_RK45_DESIRED_TOL,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_DIM,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_MAXDEPTH,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_CFL_FACTOR,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_LOAD_IMB_TOL,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_RK_TIME_BEGIN,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_RK_TIME_END,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_RK_TYPE,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_RK45_TIME_STEP_SIZE,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_RK45_DESIRED_TOL,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_DIM,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_MAXDEPTH,1,0,comm);
 
-        MPI_Bcast(&(quadgrav::BH1),sizeof(double)*10,MPI_BYTE,0,comm);
-        MPI_Bcast(&(quadgrav::BH2),sizeof(double)*10,MPI_BYTE,0,comm);
+        MPI_Bcast(&(massgrav::BH1),sizeof(double)*10,MPI_BYTE,0,comm);
+        MPI_Bcast(&(massgrav::BH2),sizeof(double)*10,MPI_BYTE,0,comm);
 
-        par::Mpi_Bcast(&QUADGRAV_ID_TYPE,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_ID_TYPE,1,0,comm);
 
-        par::Mpi_Bcast(&QUADGRAV_GRID_MIN_X,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_GRID_MAX_X,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_GRID_MIN_Y,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_GRID_MAX_Y,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_GRID_MIN_Z,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_GRID_MAX_Z,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_GRID_MIN_X,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_GRID_MAX_X,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_GRID_MIN_Y,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_GRID_MAX_Y,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_GRID_MIN_Z,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_GRID_MAX_Z,1,0,comm);
 
-        par::Mpi_Bcast(&QUADGRAV_BLK_MIN_X,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_BLK_MIN_Y,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_BLK_MIN_Z,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_BLK_MIN_X,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_BLK_MIN_Y,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_BLK_MIN_Z,1,0,comm);
 
-        par::Mpi_Bcast(&QUADGRAV_BLK_MAX_X,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_BLK_MAX_Y,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_BLK_MAX_Z,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_BLK_MAX_X,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_BLK_MAX_Y,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_BLK_MAX_Z,1,0,comm);
 
-        QUADGRAV_OCTREE_MAX[0]=(double )(1u<<quadgrav::QUADGRAV_MAXDEPTH);
-        QUADGRAV_OCTREE_MAX[1]=(double )(1u<<quadgrav::QUADGRAV_MAXDEPTH);
-        QUADGRAV_OCTREE_MAX[2]=(double )(1u<<quadgrav::QUADGRAV_MAXDEPTH);
+        MASSGRAV_OCTREE_MAX[0]=(double )(1u<<massgrav::MASSGRAV_MAXDEPTH);
+        MASSGRAV_OCTREE_MAX[1]=(double )(1u<<massgrav::MASSGRAV_MAXDEPTH);
+        MASSGRAV_OCTREE_MAX[2]=(double )(1u<<massgrav::MASSGRAV_MAXDEPTH);
 
-        QUADGRAV_COMPD_MIN[0]=QUADGRAV_GRID_MIN_X;
-        QUADGRAV_COMPD_MIN[1]=QUADGRAV_GRID_MIN_Y;
-        QUADGRAV_COMPD_MIN[2]=QUADGRAV_GRID_MIN_Z;
+        MASSGRAV_COMPD_MIN[0]=MASSGRAV_GRID_MIN_X;
+        MASSGRAV_COMPD_MIN[1]=MASSGRAV_GRID_MIN_Y;
+        MASSGRAV_COMPD_MIN[2]=MASSGRAV_GRID_MIN_Z;
 
-        QUADGRAV_COMPD_MAX[0]=QUADGRAV_GRID_MAX_X;
-        QUADGRAV_COMPD_MAX[1]=QUADGRAV_GRID_MAX_Y;
-        QUADGRAV_COMPD_MAX[2]=QUADGRAV_GRID_MAX_Z;
+        MASSGRAV_COMPD_MAX[0]=MASSGRAV_GRID_MAX_X;
+        MASSGRAV_COMPD_MAX[1]=MASSGRAV_GRID_MAX_Y;
+        MASSGRAV_COMPD_MAX[2]=MASSGRAV_GRID_MAX_Z;
 
 
         par::Mpi_Bcast(&ETA_CONST,1,0,comm);
@@ -323,29 +323,29 @@ namespace quadgrav
         par::Mpi_Bcast(&ETA_DAMPING_EXP,1,0,comm);
 
         par::Mpi_Bcast(&CHI_FLOOR,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_TRK0,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_TRK0,1,0,comm);
         par::Mpi_Bcast(&DISSIPATION_TYPE,1,0,comm);
         par::Mpi_Bcast(&KO_DISS_SIGMA,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_ETA_R0,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_ETA_R0,1,0,comm);
 
-        MPI_Bcast(&(quadgrav::QUADGRAV_LAMBDA),4,MPI_UNSIGNED,0,comm);
-        MPI_Bcast(&(quadgrav::QUADGRAV_LAMBDA_F),2,MPI_DOUBLE,0,comm);
-        MPI_Bcast(&(quadgrav::QUADGRAV_ETA_POWER),2,MPI_DOUBLE,0,comm);
-        MPI_Bcast((quadgrav::QUADGRAV_XI),3,MPI_INT,0,comm);
-
-
-        par::Mpi_Bcast(&QUADGRAV_NUM_REFINE_VARS,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT,1,0,comm);
-        par::Mpi_Bcast(&QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT,1,0,comm);
+        MPI_Bcast(&(massgrav::MASSGRAV_LAMBDA),4,MPI_UNSIGNED,0,comm);
+        MPI_Bcast(&(massgrav::MASSGRAV_LAMBDA_F),2,MPI_DOUBLE,0,comm);
+        MPI_Bcast(&(massgrav::MASSGRAV_ETA_POWER),2,MPI_DOUBLE,0,comm);
+        MPI_Bcast((massgrav::MASSGRAV_XI),3,MPI_INT,0,comm);
 
 
-        if(QUADGRAV_NUM_REFINE_VARS>QUADGRAV_NUM_VARS){std::cout<<"Error[parameter file]: Number of refine variables should be less than number of QUADGRAV_NUM_VARS"<<std::endl; exit(0);}
-        if(QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT>QUADGRAV_NUM_VARS){std::cout<<"Error[parameter file]: Number of evolution VTU variables should be less than number of QUADGRAV_NUM_VARS"<<std::endl; exit(0);}
-        if(QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT>QUADGRAV_CONSTRAINT_NUM_VARS){std::cout<<"Error[parameter file]: Number of constraint VTU variables should be less than number of QUADGRAV_CONSTRAINT_NUM_VARS"<<std::endl; exit(0);}
+        par::Mpi_Bcast(&MASSGRAV_NUM_REFINE_VARS,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT,1,0,comm);
+        par::Mpi_Bcast(&MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT,1,0,comm);
 
-        par::Mpi_Bcast(QUADGRAV_REFINE_VARIABLE_INDICES,QUADGRAV_NUM_VARS,0,comm);
-        par::Mpi_Bcast(QUADGRAV_VTU_OUTPUT_EVOL_INDICES,QUADGRAV_NUM_VARS,0,comm);
-        par::Mpi_Bcast(QUADGRAV_VTU_OUTPUT_CONST_INDICES,QUADGRAV_CONSTRAINT_NUM_VARS,0,comm);
+
+        if(MASSGRAV_NUM_REFINE_VARS>MASSGRAV_NUM_VARS){std::cout<<"Error[parameter file]: Number of refine variables should be less than number of MASSGRAV_NUM_VARS"<<std::endl; exit(0);}
+        if(MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT>MASSGRAV_NUM_VARS){std::cout<<"Error[parameter file]: Number of evolution VTU variables should be less than number of MASSGRAV_NUM_VARS"<<std::endl; exit(0);}
+        if(MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT>MASSGRAV_CONSTRAINT_NUM_VARS){std::cout<<"Error[parameter file]: Number of constraint VTU variables should be less than number of MASSGRAV_CONSTRAINT_NUM_VARS"<<std::endl; exit(0);}
+
+        par::Mpi_Bcast(MASSGRAV_REFINE_VARIABLE_INDICES,MASSGRAV_NUM_VARS,0,comm);
+        par::Mpi_Bcast(MASSGRAV_VTU_OUTPUT_EVOL_INDICES,MASSGRAV_NUM_VARS,0,comm);
+        par::Mpi_Bcast(MASSGRAV_VTU_OUTPUT_CONST_INDICES,MASSGRAV_CONSTRAINT_NUM_VARS,0,comm);
 
         par::Mpi_Bcast(&TPID::target_M_plus,1,0,comm);
         par::Mpi_Bcast(&TPID::target_M_minus,1,0,comm);
@@ -379,15 +379,15 @@ namespace quadgrav
 
 
         // gw extraction parameters.
-        par::Mpi_Bcast(&GW::QUADGRAV_GW_NUM_RADAII,1,0,comm);
-        par::Mpi_Bcast(&GW::QUADGRAV_GW_NUM_LMODES,1,0,comm);
+        par::Mpi_Bcast(&GW::MASSGRAV_GW_NUM_RADAII,1,0,comm);
+        par::Mpi_Bcast(&GW::MASSGRAV_GW_NUM_LMODES,1,0,comm);
 
-        par::Mpi_Bcast(GW::QUADGRAV_GW_L_MODES,GW::QUADGRAV_GW_MAX_LMODES,0,comm);
-        par::Mpi_Bcast(GW::QUADGRAV_GW_RADAII,GW::QUADGRAV_GW_MAX_RADAII,0,comm);
-        par::Mpi_Bcast(&quadgrav::QUADGRAV_USE_FD_GRID_TRANSFER,1,0,comm);
-        par::Mpi_Bcast(&quadgrav::QUADGRAV_VTU_Z_SLICE_ONLY,1,0,comm);
-        par::Mpi_Bcast(&quadgrav::QUADGRAV_EH_REFINE_VAL,1,0,comm);
-        par::Mpi_Bcast(&quadgrav::QUADGRAV_EH_COARSEN_VAL,1,0,comm);
+        par::Mpi_Bcast(GW::MASSGRAV_GW_L_MODES,GW::MASSGRAV_GW_MAX_LMODES,0,comm);
+        par::Mpi_Bcast(GW::MASSGRAV_GW_RADAII,GW::MASSGRAV_GW_MAX_RADAII,0,comm);
+        par::Mpi_Bcast(&massgrav::MASSGRAV_USE_FD_GRID_TRANSFER,1,0,comm);
+        par::Mpi_Bcast(&massgrav::MASSGRAV_VTU_Z_SLICE_ONLY,1,0,comm);
+        par::Mpi_Bcast(&massgrav::MASSGRAV_EH_REFINE_VAL,1,0,comm);
+        par::Mpi_Bcast(&massgrav::MASSGRAV_EH_COARSEN_VAL,1,0,comm);
 
 
 
@@ -1432,7 +1432,7 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         //std::cout<<"KS init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
 
         #if 0
-            //QUADGRAV vars for Kerr-Schild
+            //MASSGRAV vars for Kerr-Schild
             var[VAR::U_ALPHA] = sqrt(rv1/(2.0*M+rv1));
             var[VAR::U_CHI] = 1.0/pow(1.0+2.0*M/rv1, 1.0/3.0);
             var[VAR::U_K] = 2.0*M*sqrt(rv1/(2.0*M+rv1))*(rv1+3.0*M)/(rv1*rv1*(2.0*M+rv1));
@@ -1617,7 +1617,7 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         u[VAR::U_SYMAT5] = exp(-4.0*cos(x)*sin(y))*(cos(z)-0.3333333333*exp(4*cos(x)*sin(y))/(1+0.2*sin(x))/(1+0.2*cos(y))*(5.0*exp(-4.0*cos(x)*sin(y))/(5.0+sin(x))*cos(x)+5.0*exp(-4.0*cos(x)*sin(y))/(5.0+cos(y))*cos(y)+0.04*(25.0+5.0*cos(y)+5.0*sin(x)+sin(x)*cos(y))*exp(-4.0*cos(x)*sin(y))*cos(z)));
 
 
-        /* Enforce QUADGRAV constraints */
+        /* Enforce MASSGRAV constraints */
         double gtd[3][3], Atd[3][3];
 
         gtd[0][0] = u[VAR::U_SYMGT0];
@@ -1672,7 +1672,7 @@ double interpolation4( double xx[], double yy[], int np, double xb,
 
         if (fabs(detgt_m1) > 1.0e-6) {
             std::cout.precision(14);
-            std::cout<<"enforce_quadgrav_constraint: det(gtd) != 1. det="<<std::fixed<<det_gtd<<std::endl;
+            std::cout<<"enforce_massgrav_constraint: det(gtd) != 1. det="<<std::fixed<<det_gtd<<std::endl;
             std::cout<<"      gtd(1,1)="<<gtd[0][0]<<std::endl;
             std::cout<<"      gtd(1,2)="<<gtd[0][1]<<std::endl;
             std::cout<<"      gtd(1,3)="<<gtd[0][2]<<std::endl;
@@ -1718,7 +1718,7 @@ double interpolation4( double xx[], double yy[], int np, double xb,
                                      + Atd[1][2]*gtu[1][2]  );
 
         if (fabs(tr_A) > 1.0e-6) {
-            std::cout<<"enforce_quadgrav_constraint: tr_A != 0. tr_A="<<tr_A<<std::endl;
+            std::cout<<"enforce_massgrav_constraint: tr_A != 0. tr_A="<<tr_A<<std::endl;
             std::cout<<"      Atd(1,1)="<<Atd[0][0]<<std::endl;
             std::cout<<"      Atd(1,2)="<<Atd[0][1]<<std::endl;
             std::cout<<"      Atd(1,3)="<<Atd[0][2]<<std::endl;
@@ -1805,20 +1805,20 @@ double interpolation4( double xx[], double yy[], int np, double xb,
     double computeWTol(double x,double y,double z,double tolMin)
     {
        double origin[3];
-       origin[0]=(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH-1);
-       origin[1]=(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH-1);
-       origin[2]=(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH-1);
+       origin[0]=(double)(1u<<massgrav::MASSGRAV_MAXDEPTH-1);
+       origin[1]=(double)(1u<<massgrav::MASSGRAV_MAXDEPTH-1);
+       origin[2]=(double)(1u<<massgrav::MASSGRAV_MAXDEPTH-1);
 
        double r = sqrt(  GRIDX_TO_X(x)*GRIDX_TO_X(x)
                         + GRIDY_TO_Y(y)*GRIDY_TO_Y(y)
                         + GRIDZ_TO_Z(z)*GRIDZ_TO_Z(z)
                         );
 
-       const double tolMax = quadgrav::QUADGRAV_WAVELET_TOL_MAX;
-       const double R0 = quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R0;
-       const double R1 = quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R1;
+       const double tolMax = massgrav::MASSGRAV_WAVELET_TOL_MAX;
+       const double R0 = massgrav::MASSGRAV_WAVELET_TOL_FUNCTION_R0;
+       const double R1 = massgrav::MASSGRAV_WAVELET_TOL_FUNCTION_R1;
 
-       if (quadgrav::QUADGRAV_USE_WAVELET_TOL_FUNCTION == 1) {
+       if (massgrav::MASSGRAV_USE_WAVELET_TOL_FUNCTION == 1) {
          return std::min( tolMax, std::max( tolMin, (tolMax - tolMin)/(R1 - R0)*(r - R0) + tolMin));
        }
        else {
@@ -1851,8 +1851,8 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         double hy = (pmax[1] - pmin[1]) / (ny - 1);
         double hz = (pmax[2] - pmin[2]) / (nz - 1);
 
-        const double dx=(quadgrav::QUADGRAV_COMPD_MAX[0]-quadgrav::QUADGRAV_COMPD_MIN[0])*(1.0/(double)(1u<<quadgrav::QUADGRAV_MAXDEPTH));
-        unsigned int level= quadgrav::QUADGRAV_MAXDEPTH-((unsigned int)(hx/dx)-1);
+        const double dx=(massgrav::MASSGRAV_COMPD_MAX[0]-massgrav::MASSGRAV_COMPD_MIN[0])*(1.0/(double)(1u<<massgrav::MASSGRAV_MAXDEPTH));
+        unsigned int level= massgrav::MASSGRAV_MAXDEPTH-((unsigned int)(hx/dx)-1);
 
         MPI_Comm comm=MPI_COMM_WORLD;
 
@@ -1867,10 +1867,10 @@ double interpolation4( double xx[], double yy[], int np, double xb,
             return;
 
         double * blkInternal=new double[blkInlSz];
-        for(unsigned int var=0;var<quadgrav::QUADGRAV_NUM_VARS;var++)
+        for(unsigned int var=0;var<massgrav::MASSGRAV_NUM_VARS;var++)
         {
             char fName[256];
-            sprintf(fName,"%s_%s_n_%d_r_%d_p_%d.bin",fprefix,quadgrav::QUADGRAV_VAR_NAMES[var],nx,rank,npes);
+            sprintf(fName,"%s_%s_n_%d_r_%d_p_%d.bin",fprefix,massgrav::MASSGRAV_VAR_NAMES[var],nx,rank,npes);
             FILE* outfile = fopen(fName,"w");
             if(outfile==NULL) {std::cout<<fName<<" file open failed "<<std::endl;}
 
@@ -1895,13 +1895,13 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         return pNode->getLevel();
     }
 
-}// end of namespace quadgrav
+}// end of namespace massgrav
 
 
 
 
 
-namespace quadgrav
+namespace massgrav
 {
 
     namespace timer
@@ -2053,9 +2053,9 @@ namespace quadgrav
 
                 outfile<<"active npes : "<<activeNpes<<std::endl;
                 outfile<<"global npes : "<<globalNpes<<std::endl;
-                outfile<<"partition tol : "<<quadgrav::QUADGRAV_LOAD_IMB_TOL<<std::endl;
-                outfile<<"wavelet tol : "<<quadgrav::QUADGRAV_WAVELET_TOL<<std::endl;
-                outfile<<"maxdepth : "<<quadgrav::QUADGRAV_MAXDEPTH<<std::endl;
+                outfile<<"partition tol : "<<massgrav::MASSGRAV_LOAD_IMB_TOL<<std::endl;
+                outfile<<"wavelet tol : "<<massgrav::MASSGRAV_WAVELET_TOL<<std::endl;
+                outfile<<"maxdepth : "<<massgrav::MASSGRAV_MAXDEPTH<<std::endl;
 
             }
 
@@ -2280,7 +2280,7 @@ namespace quadgrav
             DendroIntL numCalls;
 
 
-#ifdef QUADGRAV_PROFILE_HUMAN_READABLE
+#ifdef MASSGRAV_PROFILE_HUMAN_READABLE
             if(!activeRank)
             {
                 sprintf(fName,"%s_im.prof",filePrefix);
@@ -2290,9 +2290,9 @@ namespace quadgrav
                 outfile<<"active npes : "<<activeNpes<<std::endl;
                 outfile<<"global npes : "<<globalNpes<<std::endl;
                 outfile<<"current step : "<<currentStep<<std::endl;
-                outfile<<"partition tol : "<<quadgrav::QUADGRAV_LOAD_IMB_TOL<<std::endl;
-                outfile<<"wavelet tol : "<<quadgrav::QUADGRAV_WAVELET_TOL<<std::endl;
-                outfile<<"maxdepth : "<<quadgrav::QUADGRAV_MAXDEPTH<<std::endl;
+                outfile<<"partition tol : "<<massgrav::MASSGRAV_LOAD_IMB_TOL<<std::endl;
+                outfile<<"wavelet tol : "<<massgrav::MASSGRAV_WAVELET_TOL<<std::endl;
+                outfile<<"maxdepth : "<<massgrav::MASSGRAV_MAXDEPTH<<std::endl;
 
             }
 
@@ -2760,9 +2760,9 @@ namespace quadgrav
             if(!rank) outfile<<currentStep<<"\t ";
             if(!rank) outfile<<activeNpes<<"\t ";
             if(!rank) outfile<<globalNpes<<"\t ";
-            if(!rank) outfile<<quadgrav::QUADGRAV_LOAD_IMB_TOL<<"\t ";
-            if(!rank) outfile<<quadgrav::QUADGRAV_WAVELET_TOL<<"\t ";
-            if(!rank) outfile<<quadgrav::QUADGRAV_MAXDEPTH<<"\t ";
+            if(!rank) outfile<<massgrav::MASSGRAV_LOAD_IMB_TOL<<"\t ";
+            if(!rank) outfile<<massgrav::MASSGRAV_WAVELET_TOL<<"\t ";
+            if(!rank) outfile<<massgrav::MASSGRAV_MAXDEPTH<<"\t ";
 
             localSz=pMesh->getNumLocalMeshElements();
             par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,comm);
@@ -2882,26 +2882,26 @@ namespace GW
 
         
         unsigned int totalModes=0;
-        for(unsigned int l=0;l<QUADGRAV_GW_NUM_LMODES;l++)
-            totalModes+=2*QUADGRAV_GW_L_MODES[l]+1;
+        for(unsigned int l=0;l<MASSGRAV_GW_NUM_LMODES;l++)
+            totalModes+=2*MASSGRAV_GW_L_MODES[l]+1;
 
         const unsigned int TOTAL_MODES=totalModes;
 
-        DendroComplex * swsh_coeff = new DendroComplex[QUADGRAV_GW_NUM_RADAII*TOTAL_MODES];
-        DendroComplex * swsh_coeff_g = new DendroComplex[QUADGRAV_GW_NUM_RADAII*TOTAL_MODES];
+        DendroComplex * swsh_coeff = new DendroComplex[MASSGRAV_GW_NUM_RADAII*TOTAL_MODES];
+        DendroComplex * swsh_coeff_g = new DendroComplex[MASSGRAV_GW_NUM_RADAII*TOTAL_MODES];
 
         std::vector<unsigned int> lmCounts;
         std::vector<unsigned int> lmOffset;
 
-        lmCounts.resize(QUADGRAV_GW_NUM_LMODES);
-        lmOffset.resize(QUADGRAV_GW_NUM_LMODES);
+        lmCounts.resize(MASSGRAV_GW_NUM_LMODES);
+        lmOffset.resize(MASSGRAV_GW_NUM_LMODES);
 
-        for(unsigned int l=0;l<QUADGRAV_GW_NUM_LMODES;l++)
-            lmCounts[l]=2*QUADGRAV_GW_L_MODES[l]+1;
+        for(unsigned int l=0;l<MASSGRAV_GW_NUM_LMODES;l++)
+            lmCounts[l]=2*MASSGRAV_GW_L_MODES[l]+1;
 
 
         lmOffset[0]=0;
-        omp_par::scan(&(*(lmCounts.begin())),&(*(lmOffset.begin())),QUADGRAV_GW_NUM_LMODES);
+        omp_par::scan(&(*(lmCounts.begin())),&(*(lmOffset.begin())),MASSGRAV_GW_NUM_LMODES);
 
         if(mesh->isActive())
         {
@@ -2921,23 +2921,23 @@ namespace GW
             Point grid_limits[2];
             Point domain_limits[2];
 
-            grid_limits[0] = Point(quadgrav::QUADGRAV_OCTREE_MIN[0], quadgrav::QUADGRAV_OCTREE_MIN[1], quadgrav::QUADGRAV_OCTREE_MIN[2]);
-            grid_limits[1] = Point(quadgrav::QUADGRAV_OCTREE_MAX[0], quadgrav::QUADGRAV_OCTREE_MAX[1], quadgrav::QUADGRAV_OCTREE_MAX[2]);
+            grid_limits[0] = Point(massgrav::MASSGRAV_OCTREE_MIN[0], massgrav::MASSGRAV_OCTREE_MIN[1], massgrav::MASSGRAV_OCTREE_MIN[2]);
+            grid_limits[1] = Point(massgrav::MASSGRAV_OCTREE_MAX[0], massgrav::MASSGRAV_OCTREE_MAX[1], massgrav::MASSGRAV_OCTREE_MAX[2]);
 
-            domain_limits[0] = Point(quadgrav::QUADGRAV_COMPD_MIN[0], quadgrav::QUADGRAV_COMPD_MIN[1], quadgrav::QUADGRAV_COMPD_MIN[2]);
-            domain_limits[1] = Point(quadgrav::QUADGRAV_COMPD_MAX[0], quadgrav::QUADGRAV_COMPD_MAX[1], quadgrav::QUADGRAV_COMPD_MAX[2]);
+            domain_limits[0] = Point(massgrav::MASSGRAV_COMPD_MIN[0], massgrav::MASSGRAV_COMPD_MIN[1], massgrav::MASSGRAV_COMPD_MIN[2]);
+            domain_limits[1] = Point(massgrav::MASSGRAV_COMPD_MAX[0], massgrav::MASSGRAV_COMPD_MAX[1], massgrav::MASSGRAV_COMPD_MAX[2]);
 
 
             std::vector<unsigned int > validIndex;
 
-            for(unsigned int k=0;k<QUADGRAV_GW_NUM_RADAII;k++)
+            for(unsigned int k=0;k<MASSGRAV_GW_NUM_RADAII;k++)
             {
                 for (unsigned int i=0; i< nTheta ; i++ )
                     for(unsigned int j=0; j< nPhi ; j++)
                     {
-                        double x = QUADGRAV_GW_RADAII[k]*sin(j*dtheta) * cos(i*dphi) ;
-                        double y = QUADGRAV_GW_RADAII[k]*sin(j*dtheta) * sin(i*dphi) ;
-                        double z = QUADGRAV_GW_RADAII[k]*cos(j*dtheta);
+                        double x = MASSGRAV_GW_RADAII[k]*sin(j*dtheta) * cos(i*dphi) ;
+                        double y = MASSGRAV_GW_RADAII[k]*sin(j*dtheta) * sin(i*dphi) ;
+                        double z = MASSGRAV_GW_RADAII[k]*cos(j*dtheta);
 
                         coords.push_back(x);
                         coords.push_back(y);
@@ -2947,10 +2947,10 @@ namespace GW
 
 
                 validIndex.clear();
-                ot::da::interpolateToCoords(mesh,cVar[quadgrav::VAR_CONSTRAINT::C_PSI4_REAL],&(*(coords.begin())),coords.size(), grid_limits, domain_limits , &(*(psi4_real.begin())),validIndex);
+                ot::da::interpolateToCoords(mesh,cVar[massgrav::VAR_CONSTRAINT::C_PSI4_REAL],&(*(coords.begin())),coords.size(), grid_limits, domain_limits , &(*(psi4_real.begin())),validIndex);
 
                 validIndex.clear();
-                ot::da::interpolateToCoords(mesh,cVar[quadgrav::VAR_CONSTRAINT::C_PSI4_IMG],&(*(coords.begin())),coords.size(),  grid_limits, domain_limits ,&(*(psi4_imag.begin())),validIndex);
+                ot::da::interpolateToCoords(mesh,cVar[massgrav::VAR_CONSTRAINT::C_PSI4_IMG],&(*(coords.begin())),coords.size(),  grid_limits, domain_limits ,&(*(psi4_imag.begin())),validIndex);
 
             }
 

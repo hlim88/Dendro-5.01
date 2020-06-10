@@ -3,14 +3,14 @@
 //
 
 /**
- * @brief contains RK time stepper for QUADGRAV equations.
+ * @brief contains RK time stepper for MASSGRAV equations.
  * @author Milinda Fernando
  * School of Computing, University of Utah
  *
  * */
 
-#ifndef DENDRO_5_0_RKQUADGRAV_H
-#define DENDRO_5_0_RKQUADGRAV_H
+#ifndef DENDRO_5_0_RKMASSGRAV_H
+#define DENDRO_5_0_RKMASSGRAV_H
 
 #include "rk.h"
 #include "fdCoefficient.h"
@@ -21,7 +21,7 @@
 #include <iostream>
 #include "grUtils.h"
 #include "parameters.h"
-#include "quadgrav_constraints.h"
+#include "massgrav_constraints.h"
 #include "gr.h"
 #include "rhs.h"
 #include "physcon.h"
@@ -30,7 +30,7 @@
 #include "TwoPunctures.h"
 #include "dataUtils.h"
 #include "rawIO.h"
-#ifdef QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES
+#ifdef MASSGRAV_EXTRACT_GRAVITATIONAL_WAVES
 #include "gwExtract.h"
 #endif
 
@@ -75,7 +75,7 @@ namespace ode
         //=============================================================
 
 
-        class RK_QUADGRAV : public RK{
+        class RK_MASSGRAV : public RK{
 
             /**@brief: defines the RK type*/
             RKType m_uiRKType;
@@ -139,12 +139,12 @@ namespace ode
              * @param[in] pTEnd: RK45 time end
              * @param[in] pTh: times step size.
              * * */
-            RK_QUADGRAV(ot::Mesh *pMesh, DendroScalar pTBegin, DendroScalar pTEnd,DendroScalar pTh,RKType rkType);
+            RK_MASSGRAV(ot::Mesh *pMesh, DendroScalar pTBegin, DendroScalar pTEnd,DendroScalar pTh,RKType rkType);
 
             /**@brief default destructor*/
-            ~RK_QUADGRAV();
+            ~RK_MASSGRAV();
 
-            /** @brief: read parameters related to QUADGRAV simulation and store them in static variables defined in parameters.h*/
+            /** @brief: read parameters related to MASSGRAV simulation and store them in static variables defined in parameters.h*/
             void readConfigFile(const char * fName);
 
             /**@brief: starts the rk-45 solver. */
@@ -207,4 +207,4 @@ namespace ode
 } // end of namespace ode
 
 
-#endif //DENDRO_5_0_RKQUADGRAV_H
+#endif //DENDRO_5_0_RKMASSGRAV_H

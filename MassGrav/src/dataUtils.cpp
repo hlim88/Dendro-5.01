@@ -4,7 +4,7 @@
 
 #include "dataUtils.h"
 
-namespace quadgrav
+namespace massgrav
 {
 
     void extractBHCoords(const ot::Mesh* pMesh, const DendroScalar* var,double tolerance, const Point* ptIn, unsigned int numPt,Point* ptOut)
@@ -134,7 +134,7 @@ namespace quadgrav
 
             std::ofstream fileGW;
             char fName[256];
-            sprintf(fName,"%s_BHLocations.dat",quadgrav::QUADGRAV_PROFILE_FILE_PREFIX.c_str());
+            sprintf(fName,"%s_BHLocations.dat",massgrav::MASSGRAV_PROFILE_FILE_PREFIX.c_str());
             fileGW.open (fName,std::ofstream::app);
 
             // writes the header
@@ -408,4 +408,4 @@ namespace quadgrav
 
 
 
-}// end of namespace quadgrav
+}// end of namespace massgrav

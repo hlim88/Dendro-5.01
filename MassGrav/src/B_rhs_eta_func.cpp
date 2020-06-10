@@ -1,4 +1,4 @@
-    quadgrav::timer::t_rhs.start();
+    massgrav::timer::t_rhs.start();
 for (unsigned int k = 3; k < nz-3; k++) { 
     z = pmin[2] + k*hz;
 for (unsigned int j = 3; j < ny-3; j++) { 
@@ -44,4 +44,4 @@ B_rhs2[pp] = -B2[pp]*DENDRO_9 + Gt_rhs2[pp] + lambda[2]*(beta0[pp]*agrad_0_B2[pp
   }
  }
 }
-     quadgrav::timer::t_rhs.stop();
+     massgrav::timer::t_rhs.stop();

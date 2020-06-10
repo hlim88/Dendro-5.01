@@ -1,9 +1,5 @@
-//
-// Created by milinda on 7/25/17.
 /**
-*@author Milinda Fernando
-*School of Computing, University of Utah
-*@brief Contains utility functions for QUADGRAV simulation.
+*@brief Contains utility functions for MASSGRAV simulation.
 */
 
 
@@ -24,7 +20,7 @@
 
 
 using json = nlohmann::json;
-namespace quadgrav
+namespace massgrav
 {
 
 
@@ -47,7 +43,7 @@ namespace quadgrav
   * @param xx1 : x coord
   * @param yy1 : y coord
   * @param zz1 : z coord
-  * @param var : initialized quadgrav variables for the grid points
+  * @param var : initialized massgrav variables for the grid points
   */
  void punctureData(const double xx1,const double yy1,const double zz1, double *var);
  
@@ -57,7 +53,7 @@ namespace quadgrav
   * @param xx1 : x coord
   * @param yy1 : y coord
   * @param zz1 : z coord
-  * @param var : initialized quadgrav variables for the grid points
+  * @param var : initialized massgrav variables for the grid points
   */
  void KerrSchildData(const double xx1,const double yy1,const double zz1, double *var);
  
@@ -66,7 +62,7 @@ namespace quadgrav
   * @param xx1 : x coord
   * @param yy1 : y coord
   * @param zz1 : z coord
-  * @param var : initialized quadgrav variables for the grid points
+  * @param var : initialized massgrav variables for the grid points
   */
  void noiseData(const double xx1,const double yy1,const double zz1, double *var);
 
@@ -75,7 +71,7 @@ namespace quadgrav
   * @param xx1 : x coord
   * @param yy1 : y coord
   * @param zz1 : z coord
-  * @param var : initialized quadgrav variables for the grid points
+  * @param var : initialized massgrav variables for the grid points
   */
  void fake_initial_data(double x, double y, double z, double *u);
 
@@ -168,11 +164,11 @@ double interpolation4 ( double xp[], double yp[], int np, double xb,
 
 
 
-}// end of namespace quadgrav
+}// end of namespace massgrav
 
 
 
-namespace quadgrav
+namespace massgrav
 {
 
     namespace timer

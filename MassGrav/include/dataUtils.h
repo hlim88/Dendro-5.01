@@ -19,7 +19,7 @@
 #include "grDef.h"
 
 
-namespace quadgrav
+namespace massgrav
 {
 
     /**
@@ -66,6 +66,6 @@ namespace quadgrav
 
 
 
-} // end of namespace quadgrav
+} // end of namespace massgrav
 
 #endif //DENDRO_5_0_DATAUTILS_H

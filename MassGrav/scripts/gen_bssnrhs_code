@@ -25,26 +25,17 @@
       B0, B1, B2,
       chi, Gt0, Gt1, Gt2, K,
       gt0, gt1, gt2, gt3, gt4, gt5,
-      At0, At1, At2, At3, At4, At5,
-      Rsc, Rsch, Rtt0, Rtt1, Rtt2, Rtt3,
-      Rtt4, Rtt5, Vat0, Vat1, Vat2, Vat3,
-      Vat4, Vat5 );
+      At0, At1, At2, At3, At4, At5 );
 
 # second derivs required for RHS
 @dd = (gt0, gt1, gt2, gt3, gt4, gt5, chi,
-       alpha, beta0, beta1, beta2, 
-       Rsc, Rsch, Rtt0, Rtt1, Rtt2, Rtt3,
-       Rtt4, Rtt5, Vat0, Vat1, Vat2, Vat3,
-       Vat4, Vat5 );
+       alpha, beta0, beta1, beta2 );
 
 # advective derivatives
 @ad = (gt0, gt1, gt2, gt3, gt4, gt5,
        At0, At1, At2, At3, At4, At5,
        alpha, beta0, beta1, beta2, chi, Gt0, Gt1, Gt2, K,
-       B0, B1, B2,
-       Rsc, Rsch, Rtt0, Rtt1, Rtt2, Rtt3,
-       Rtt4, Rtt5, Vat0, Vat1, Vat2, Vat3,
-       Vat4, Vat5 );
+       B0, B1, B2 );
 
 # first derivs required for constraints--no gauge variables
 @con_d = ( chi, Gt0, Gt1, Gt2, K,
@@ -138,7 +129,7 @@ foreach $f (@con_dd) {
 #  Allocate memory (1)
 #
 ###########################################################################
-$ofile = "quadgravrhs_memalloc.h";
+$ofile = "bssnrhs_memalloc.h";
 open(OFILE, ">$ofile");
 
   print OFILE "  const unsigned int bytes = n * sizeof(double);\n";
@@ -155,7 +146,7 @@ close(OFILE);
 #  Calls for derivatives (1)
 #
 ###########################################################################
-$ofile = "quadgravrhs_derivs.h";
+$ofile = "bssnrhs_derivs.h";
 open(OFILE, ">$ofile");
 
 foreach $e (@d) {
@@ -244,7 +235,7 @@ close(OFILE);
 # Deallocate memory
 #
 ###########################################################################
-$ofile = "quadgravrhs_dealloc.h";
+$ofile = "bssnrhs_dealloc.h";
 open(OFILE, ">$ofile");
 
 # geometric vars
@@ -265,7 +256,7 @@ close(OFILE);
 #  Allocate memory for advective derivs
 #
 ###########################################################################
-$ofile = "quadgravrhs_memalloc_adv.h";
+$ofile = "bssnrhs_memalloc_adv.h";
 open(OFILE, ">$ofile");
 
 foreach $f (@afuncs) {
@@ -279,7 +270,7 @@ close(OFILE);
 #  Calls for derivatives (1)
 #
 ###########################################################################
-$ofile = "quadgravrhs_derivs_adv.h";
+$ofile = "bssnrhs_derivs_adv.h";
 open(OFILE, ">$ofile");
 
 foreach $e (@ad) {
@@ -306,7 +297,7 @@ close(OFILE);
 #  Use the same storage as for the standard first derivatives.
 #
 ###########################################################################
-$ofile = "quadgravrhs_ko_derivs.h";
+$ofile = "bssnrhs_ko_derivs.h";
 open(OFILE, ">$ofile");
 
 foreach $e (@ad) {
@@ -333,7 +324,7 @@ close(OFILE);
 # Deallocate memory for advective derivs
 #
 ###########################################################################
-$ofile = "quadgravrhs_dealloc_adv.h";
+$ofile = "bssnrhs_dealloc_adv.h";
 open(OFILE, ">$ofile");
 
 foreach $f (@afuncs) {

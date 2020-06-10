@@ -3,14 +3,14 @@
 /**
 *@author Milinda Fernando
 *School of Computing, University of Utah
-*@brief Contains utility functions for QUADGRAV simulation.
+*@brief Contains utility functions for MASSGRAV simulation.
 */
 
 #include "mesh.h"
 #include <math.h>
 #include "daUtils.h"
 
-namespace quadgrav
+namespace massgrav
 {
 
     template <typename T>
@@ -107,10 +107,10 @@ namespace quadgrav
 
             for(unsigned int index=0;index<numConstraints;index++)
             {
-                constraintMaskedL2[index]=quadgrav::computeConstraintL2Norm(mesh,constraintVar[index],maskVec,maskthreshoold);
+                constraintMaskedL2[index]=massgrav::computeConstraintL2Norm(mesh,constraintVar[index],maskVec,maskthreshoold);
                 if(!rankActive)
                 {
-                    std::cout<<YLW<<"\tConstraint " <<quadgrav::QUADGRAV_CONSTRAINT_VAR_NAMES[index]<< " L2 : ("<<constraintMaskedL2[index]<<" )"<<NRM<<std::endl;
+                    std::cout<<YLW<<"\tConstraint " <<massgrav::MASSGRAV_CONSTRAINT_VAR_NAMES[index]<< " L2 : ("<<constraintMaskedL2[index]<<" )"<<NRM<<std::endl;
                 }
 
             }
@@ -120,7 +120,7 @@ namespace quadgrav
 
                 std::ofstream fileGW;
                 char fName[256];
-                sprintf(fName,"%s_Constraints.dat",quadgrav::QUADGRAV_PROFILE_FILE_PREFIX.c_str());
+                sprintf(fName,"%s_Constraints.dat",massgrav::MASSGRAV_PROFILE_FILE_PREFIX.c_str());
                 fileGW.open (fName,std::ofstream::app);
                 // writes the header
                 if(timestep==0)
@@ -144,17 +144,17 @@ namespace quadgrav
                 {
                     if(constraintMaskedL2[index]>0.01)
                     {
-                        if(quadgrav::KO_DISS_SIGMA>0.06)
-                            quadgrav::KO_DISS_SIGMA=0.05;
+                        if(massgrav::KO_DISS_SIGMA>0.06)
+                            massgrav::KO_DISS_SIGMA=0.05;
                         else
-                            quadgrav::KO_DISS_SIGMA=0.10;
+                            massgrav::KO_DISS_SIGMA=0.10;
 
                         break;
                     }
                 }
 
         }
-        par::Mpi_Bcast(&quadgrav::KO_DISS_SIGMA,1,0,commGlobal);
+        par::Mpi_Bcast(&massgrav::KO_DISS_SIGMA,1,0,commGlobal);
         #endif
 
 
@@ -236,5 +236,5 @@ namespace quadgrav
     }
 
 
-} // end of namespace quadgrav
+} // end of namespace massgrav
 

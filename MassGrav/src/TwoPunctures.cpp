@@ -10,7 +10,7 @@
 #include "grUtils.h"
 #include "TwoPunctures.h"
 
-using namespace quadgrav;
+using namespace massgrav;
 
 MPI_Comm MPI_TP_COMM = MPI_COMM_WORLD;
 

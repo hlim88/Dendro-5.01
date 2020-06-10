@@ -1,4 +1,4 @@
-    quadgrav::timer::t_rhs.start();
+    massgrav::timer::t_rhs.start();
 for (unsigned int k = 3; k < nz-3; k++) { 
     z = pmin[2] + k*hz;
 for (unsigned int j = 3; j < ny-3; j++) { 
@@ -71,4 +71,4 @@ CalGt2[pp] = DENDRO_5*(-DENDRO_11*(-DENDRO_23*DENDRO_35 - DENDRO_25*DENDRO_33 + 
   }
  }
 }
-     quadgrav::timer::t_rhs.stop();
+     massgrav::timer::t_rhs.stop();

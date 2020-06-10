@@ -3,55 +3,50 @@
 #include "hadrhs.h"
 
 using namespace std;
-using namespace quadgrav;
+using namespace massgrav;
 
 // Some macro for temporary usage of QA
 // TODO : Fix it for parameter and const expr
 
 // Macro for QG evol vars
-#define QUADGRAV_EVOL 
-
-//QG related constant
-//Alpah_c
-#define a_const 1.0
-//Beta_c
-#define b_const 1.0
-//Tuning param for QG : handling some problematic terms
-#define qg_ho_coup 1e-4
+//#define MASSGRAV_EVOL 
 
 
-void quadgravRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks)
+//Mass from massvie grav
+#define M_dRGT 1.0
+
+void massgravRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks)
 {
     unsigned int offset;
     double ptmin[3], ptmax[3];
     unsigned int sz[3];
     unsigned int bflag;
     double dx,dy,dz;
-    const Point pt_min(quadgrav::QUADGRAV_COMPD_MIN[0],quadgrav::QUADGRAV_COMPD_MIN[1],quadgrav::QUADGRAV_COMPD_MIN[2]);
-    const Point pt_max(quadgrav::QUADGRAV_COMPD_MAX[0],quadgrav::QUADGRAV_COMPD_MAX[1],quadgrav::QUADGRAV_COMPD_MAX[2]);
+    const Point pt_min(massgrav::MASSGRAV_COMPD_MIN[0],massgrav::MASSGRAV_COMPD_MIN[1],massgrav::MASSGRAV_COMPD_MIN[2]);
+    const Point pt_max(massgrav::MASSGRAV_COMPD_MAX[0],massgrav::MASSGRAV_COMPD_MAX[1],massgrav::MASSGRAV_COMPD_MAX[2]);
 
 
-#ifdef QUADGRAV_ENABLE_CUDA
-    cuda::QUADGRAVComputeParams quadgravParams;
-    quadgravParams.QUADGRAV_LAMBDA[0]=quadgrav::QUADGRAV_LAMBDA[0];
-    quadgravParams.QUADGRAV_LAMBDA[1]=quadgrav::QUADGRAV_LAMBDA[1];
-    quadgravParams.QUADGRAV_LAMBDA[2]=quadgrav::QUADGRAV_LAMBDA[2];
-    quadgravParams.QUADGRAV_LAMBDA[3]=quadgrav::QUADGRAV_LAMBDA[3];
+#ifdef MASSGRAV_ENABLE_CUDA
+    cuda::MASSGRAVComputeParams massgravParams;
+    massgravParams.MASSGRAV_LAMBDA[0]=massgrav::MASSGRAV_LAMBDA[0];
+    massgravParams.MASSGRAV_LAMBDA[1]=massgrav::MASSGRAV_LAMBDA[1];
+    massgravParams.MASSGRAV_LAMBDA[2]=massgrav::MASSGRAV_LAMBDA[2];
+    massgravParams.MASSGRAV_LAMBDA[3]=massgrav::MASSGRAV_LAMBDA[3];
 
-    quadgravParams.QUADGRAV_LAMBDA_F[0]=quadgrav::QUADGRAV_LAMBDA_F[0];
-    quadgravParams.QUADGRAV_LAMBDA_F[1]=quadgrav::QUADGRAV_LAMBDA_F[1];
+    massgravParams.MASSGRAV_LAMBDA_F[0]=massgrav::MASSGRAV_LAMBDA_F[0];
+    massgravParams.MASSGRAV_LAMBDA_F[1]=massgrav::MASSGRAV_LAMBDA_F[1];
 
-    quadgravParams.QUADGRAV_ETA_POWER[0]=quadgrav::QUADGRAV_ETA_POWER[0];
-    quadgravParams.QUADGRAV_ETA_POWER[1]=quadgrav::QUADGRAV_ETA_POWER[1];
+    massgravParams.MASSGRAV_ETA_POWER[0]=massgrav::MASSGRAV_ETA_POWER[0];
+    massgravParams.MASSGRAV_ETA_POWER[1]=massgrav::MASSGRAV_ETA_POWER[1];
 
-    quadgravParams.ETA_R0=quadgrav::ETA_R0;
-    quadgravParams.ETA_CONST=quadgrav::ETA_CONST;
-    quadgravParams.ETA_DAMPING=quadgrav::ETA_DAMPING;
-    quadgravParams.ETA_DAMPING_EXP=quadgrav::ETA_DAMPING_EXP;
-    quadgravParams.KO_DISS_SIGMA=quadgrav::KO_DISS_SIGMA;
+    massgravParams.ETA_R0=massgrav::ETA_R0;
+    massgravParams.ETA_CONST=massgrav::ETA_CONST;
+    massgravParams.ETA_DAMPING=massgrav::ETA_DAMPING;
+    massgravParams.ETA_DAMPING_EXP=massgrav::ETA_DAMPING_EXP;
+    massgravParams.KO_DISS_SIGMA=massgrav::KO_DISS_SIGMA;
 
     dim3 threadBlock(16,16,1);
-    cuda::computeRHS(uzipVarsRHS,(const double **)uZipVars,blkList,numBlocks,(const cuda::QUADGRAVComputeParams*) &quadgravParams,threadBlock,pt_min,pt_max,1);
+    cuda::computeRHS(uzipVarsRHS,(const double **)uZipVars,blkList,numBlocks,(const cuda::MASSGRAVComputeParams*) &massgravParams,threadBlock,pt_min,pt_max,1);
 #else
 
     for(unsigned int blk=0; blk<numBlocks; blk++)
@@ -75,10 +70,10 @@ void quadgravRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block*
         ptmax[1]=GRIDY_TO_Y(blkList[blk].getBlockNode().maxY())+3*dy;
         ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
-#ifdef QUADGRAV_RHS_STAGED_COMP
-        quadgravrhs_sep(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
+#ifdef MASSGRAV_RHS_STAGED_COMP
+        massgravrhs_sep(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
 #else
-        quadgravrhs(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
+        massgravrhs(uzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
 #endif
 
 
@@ -97,7 +92,7 @@ void quadgravRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block*
  * vector form of RHS
  *
  *----------------------------------------------------------------------*/
-void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
+void massgravrhs(double **unzipVarsRHS, const double **uZipVars,
              const unsigned int& offset,
              const double *pmin, const double *pmax, const unsigned int *sz,
              const unsigned int& bflag)
@@ -130,26 +125,6 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
     const double *B1 = &uZipVars[VAR::U_B1][offset];
     const double *B2 = &uZipVars[VAR::U_B2][offset];
 
-    //Additional variable from quadratic terms
-    #if 1
-    #ifdef QUADGRAV_EVOL
-    const double *Rsc = &uZipVars[VAR::U_RSC][offset];
-    const double *Rsch = &uZipVars[VAR::U_RSCH][offset];
-    const double *Rtt0 = &uZipVars[VAR::U_SYMRTT0][offset];
-    const double *Rtt1 = &uZipVars[VAR::U_SYMRTT1][offset];
-    const double *Rtt2 = &uZipVars[VAR::U_SYMRTT2][offset];
-    const double *Rtt3 = &uZipVars[VAR::U_SYMRTT3][offset];
-    const double *Rtt4 = &uZipVars[VAR::U_SYMRTT4][offset];
-    const double *Rtt5 = &uZipVars[VAR::U_SYMRTT5][offset];
-    const double *Vat0 = &uZipVars[VAR::U_SYMVAT0][offset];
-    const double *Vat1 = &uZipVars[VAR::U_SYMVAT1][offset];
-    const double *Vat2 = &uZipVars[VAR::U_SYMVAT2][offset];
-    const double *Vat3 = &uZipVars[VAR::U_SYMVAT3][offset];
-    const double *Vat4 = &uZipVars[VAR::U_SYMVAT4][offset];
-    const double *Vat5 = &uZipVars[VAR::U_SYMVAT5][offset];
-    #endif
-    #endif
-
     double *a_rhs = &unzipVarsRHS[VAR::U_ALPHA][offset];
     double *chi_rhs = &unzipVarsRHS[VAR::U_CHI][offset];
     double *K_rhs = &unzipVarsRHS[VAR::U_K][offset];
@@ -175,25 +150,6 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
     double *B_rhs1 = &unzipVarsRHS[VAR::U_B1][offset];
     double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
 
-    #if 1
-    #ifdef QUADGRAV_EVOL
-    double *Rsc_rhs = &unzipVarsRHS[VAR::U_RSC][offset];
-    double *Rsch_rhs = &unzipVarsRHS[VAR::U_RSCH][offset];
-    double *Rtt_rhs00 = &unzipVarsRHS[VAR::U_SYMRTT0][offset];
-    double *Rtt_rhs01 = &unzipVarsRHS[VAR::U_SYMRTT1][offset];
-    double *Rtt_rhs02 = &unzipVarsRHS[VAR::U_SYMRTT2][offset];
-    double *Rtt_rhs11 = &unzipVarsRHS[VAR::U_SYMRTT3][offset];
-    double *Rtt_rhs12 = &unzipVarsRHS[VAR::U_SYMRTT4][offset];
-    double *Rtt_rhs22 = &unzipVarsRHS[VAR::U_SYMRTT5][offset];
-    double *Vat_rhs00 = &unzipVarsRHS[VAR::U_SYMVAT0][offset];
-    double *Vat_rhs01 = &unzipVarsRHS[VAR::U_SYMVAT1][offset];
-    double *Vat_rhs02 = &unzipVarsRHS[VAR::U_SYMVAT2][offset];
-    double *Vat_rhs11 = &unzipVarsRHS[VAR::U_SYMVAT3][offset];
-    double *Vat_rhs12 = &unzipVarsRHS[VAR::U_SYMVAT4][offset];
-    double *Vat_rhs22 = &unzipVarsRHS[VAR::U_SYMVAT5][offset];
-    #endif
-    #endif
-
     const unsigned int nx = sz[0];
     const unsigned int ny = sz[1];
     const unsigned int nz = sz[2];
@@ -202,10 +158,10 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
     double hy = (pmax[1] - pmin[1]) / (ny - 1);
     double hz = (pmax[2] - pmin[2]) / (nz - 1);
 
-    const unsigned int lambda[4] = {QUADGRAV_LAMBDA[0], QUADGRAV_LAMBDA[1],
-                                    QUADGRAV_LAMBDA[2], QUADGRAV_LAMBDA[3]
+    const unsigned int lambda[4] = {MASSGRAV_LAMBDA[0], MASSGRAV_LAMBDA[1],
+                                    MASSGRAV_LAMBDA[2], MASSGRAV_LAMBDA[3]
                                    };
-    const double lambda_f[2] = {QUADGRAV_LAMBDA_F[0], QUADGRAV_LAMBDA_F[1]};
+    const double lambda_f[2] = {MASSGRAV_LAMBDA_F[0], MASSGRAV_LAMBDA_F[1]};
 
 
 
@@ -242,19 +198,12 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
     }
 #endif
 
-    quadgrav::timer::t_deriv.start();
-#ifdef QUADGRAV_EVOL
- #include "quadgravrhs_memalloc.h"
- #include "quadgravrhs_memalloc_adv.h"
- #include "quadgravrhs_derivs.h"
- #include "quadgravrhs_derivs_adv.h"
-#else
+    massgrav::timer::t_deriv.start();
  #include "bssnrhs_memalloc.h"
  #include "bssnrhs_memalloc_adv.h"
  #include "bssnrhs_derivs.h"
  #include "bssnrhs_derivs_adv.h"
-#endif
-    quadgrav::timer::t_deriv.stop();
+    massgrav::timer::t_deriv.stop();
 
     register double x;
     register double y;
@@ -281,37 +230,37 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
                 }
 
 
-                quadgrav::timer::t_rhs.start();
+                massgrav::timer::t_rhs.start();
                 #if 0
                 #ifdef USE_ROCHESTER_GAUGE
-                    #pragma message("QUADGRAV: using rochester gauge")
+                    #pragma message("MASSGRAV: using rochester gauge")
                     #ifdef USE_ETA_FUNC
-                        #pragma message("QUADGRAV: using function eta damping")
+                        #pragma message("MASSGRAV: using function eta damping")
                         #include "bssneqs_eta_func_rochester_gauge.cpp"
                     #else
-                        #pragma message("QUADGRAV: using const eta damping")
+                        #pragma message("MASSGRAV: using const eta damping")
                         #include "bssneqs_eta_const_rochester_gauge.cpp"
                     #endif
                 #else
-                    #pragma message("QUADGRAV: using standard gauge")
+                    #pragma message("MASSGRAV: using standard gauge")
                     #ifdef USE_ETA_FUNC
-                        #pragma message("QUADGRAV: using function eta damping")
+                        #pragma message("MASSGRAV: using function eta damping")
                         #include "bssneqs_eta_func_standard_gauge.cpp"
                     #else
-                        #pragma message("QUADGRAV: using const eta damping")
+                        #pragma message("MASSGRAV: using const eta damping")
                         #include "bssneqs_eta_const_standard_gauge.cpp"
                     #endif
 
                 #endif
                 #endif
   
-                #ifdef QUADGRAV_EVOL
-                  #include "quadgraveqs.cpp"
+                #ifdef MASSGRAV_EVOL
+                  #include "massgraveqs.cpp"
                 #else
                   #include "bssneqs_eta_const_standard_gauge.cpp"
                 #endif
 
-                quadgrav::timer::t_rhs.stop();
+                massgrav::timer::t_rhs.stop();
 
                 /* debugging */
                 unsigned int qi = 46 - 1;
@@ -329,110 +278,71 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
 
     if (bflag != 0) {
 
-        quadgrav::timer::t_bdyc.start();
+        massgrav::timer::t_bdyc.start();
 
-        quadgrav_bcs(a_rhs, alpha, grad_0_alpha, grad_1_alpha, grad_2_alpha, pmin, pmax,
+        massgrav_bcs(a_rhs, alpha, grad_0_alpha, grad_1_alpha, grad_2_alpha, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(chi_rhs, chi, grad_0_chi, grad_1_chi, grad_2_chi, pmin, pmax,
+        massgrav_bcs(chi_rhs, chi, grad_0_chi, grad_1_chi, grad_2_chi, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(K_rhs, K, grad_0_K, grad_1_K, grad_2_K, pmin, pmax,
-                 1.0, 0.0, sz, bflag);
-
-        quadgrav_bcs(b_rhs0, beta0, grad_0_beta0, grad_1_beta0, grad_2_beta0, pmin, pmax,
-                 1.0, 0.0, sz, bflag);
-        quadgrav_bcs(b_rhs1, beta1, grad_0_beta1, grad_1_beta1, grad_2_beta1, pmin, pmax,
-                 1.0, 0.0, sz, bflag);
-        quadgrav_bcs(b_rhs2, beta2, grad_0_beta2, grad_1_beta2, grad_2_beta2, pmin, pmax,
+        massgrav_bcs(K_rhs, K, grad_0_K, grad_1_K, grad_2_K, pmin, pmax,
                  1.0, 0.0, sz, bflag);
 
-        quadgrav_bcs(Gt_rhs0, Gt0, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(Gt_rhs1, Gt1, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(Gt_rhs2, Gt2, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-
-        quadgrav_bcs(B_rhs0, B0, grad_0_B0, grad_1_B0, grad_2_B0, pmin, pmax,
+        massgrav_bcs(b_rhs0, beta0, grad_0_beta0, grad_1_beta0, grad_2_beta0, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(B_rhs1, B1, grad_0_B1, grad_1_B1, grad_2_B1, pmin, pmax,
+        massgrav_bcs(b_rhs1, beta1, grad_0_beta1, grad_1_beta1, grad_2_beta1, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(B_rhs2, B2, grad_0_B2, grad_1_B2, grad_2_B2, pmin, pmax,
+        massgrav_bcs(b_rhs2, beta2, grad_0_beta2, grad_1_beta2, grad_2_beta2, pmin, pmax,
                  1.0, 0.0, sz, bflag);
 
-        quadgrav_bcs(At_rhs00, At0, grad_0_At0, grad_1_At0, grad_2_At0, pmin, pmax,
+        massgrav_bcs(Gt_rhs0, Gt0, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0, pmin, pmax,
                  2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs01, At1, grad_0_At1, grad_1_At1, grad_2_At1, pmin, pmax,
+        massgrav_bcs(Gt_rhs1, Gt1, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1, pmin, pmax,
                  2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs02, At2, grad_0_At2, grad_1_At2, grad_2_At2, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs11, At3, grad_0_At3, grad_1_At3, grad_2_At3, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs12, At4, grad_0_At4, grad_1_At4, grad_2_At4, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs22, At5, grad_0_At5, grad_1_At5, grad_2_At5, pmin, pmax,
+        massgrav_bcs(Gt_rhs2, Gt2, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2, pmin, pmax,
                  2.0, 0.0, sz, bflag);
 
-        quadgrav_bcs(gt_rhs00, gt0, grad_0_gt0, grad_1_gt0, grad_2_gt0, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(gt_rhs01, gt1, grad_0_gt1, grad_1_gt1, grad_2_gt1, pmin, pmax,
+        massgrav_bcs(B_rhs0, B0, grad_0_B0, grad_1_B0, grad_2_B0, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(gt_rhs02, gt2, grad_0_gt2, grad_1_gt2, grad_2_gt2, pmin, pmax,
+        massgrav_bcs(B_rhs1, B1, grad_0_B1, grad_1_B1, grad_2_B1, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(gt_rhs11, gt3, grad_0_gt3, grad_1_gt3, grad_2_gt3, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(gt_rhs12, gt4, grad_0_gt4, grad_1_gt4, grad_2_gt4, pmin, pmax,
+        massgrav_bcs(B_rhs2, B2, grad_0_B2, grad_1_B2, grad_2_B2, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
 
-        // Boundary condition. Treat same as usual GR varialbes
-        // TODO : Find better values if we need
-        #if 1
-        #ifdef QUADGRAV_EVOL
-        quadgrav_bcs(Rsc_rhs, Rsc, grad_0_Rsc, grad_1_Rsc, grad_2_Rsc, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rsch_rhs, Rsch, grad_0_Rsch, grad_1_Rsch, grad_2_Rsch, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs00, Rtt0, grad_0_Rtt0, grad_1_Rtt0, grad_2_Rtt0, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs01, Rtt1, grad_0_Rtt1, grad_1_Rtt1, grad_2_Rtt1, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs02, Rtt2, grad_0_Rtt2, grad_1_Rtt2, grad_2_Rtt2, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs11, Rtt3, grad_0_Rtt3, grad_1_Rtt3, grad_2_Rtt3, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs12, Rtt4, grad_0_Rtt4, grad_1_Rtt4, grad_2_Rtt4, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs22, Rtt5, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs00, Vat0, grad_0_Vat0, grad_1_Vat0, grad_2_Vat0, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs01, Vat1, grad_0_Vat1, grad_1_Vat1, grad_2_Vat1, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs02, Vat2, grad_0_Vat2, grad_1_Vat2, grad_2_Vat2, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs11, Vat3, grad_0_Vat3, grad_1_Vat3, grad_2_Vat3, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs12, Vat4, grad_0_Vat4, grad_1_Vat4, grad_2_Vat4, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs22, Vat5, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        #endif
-        #endif
+        massgrav_bcs(At_rhs00, At0, grad_0_At0, grad_1_At0, grad_2_At0, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs01, At1, grad_0_At1, grad_1_At1, grad_2_At1, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs02, At2, grad_0_At2, grad_1_At2, grad_2_At2, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs11, At3, grad_0_At3, grad_1_At3, grad_2_At3, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs12, At4, grad_0_At4, grad_1_At4, grad_2_At4, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs22, At5, grad_0_At5, grad_1_At5, grad_2_At5, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
 
-        quadgrav::timer::t_bdyc.stop();
+        massgrav_bcs(gt_rhs00, gt0, grad_0_gt0, grad_1_gt0, grad_2_gt0, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        massgrav_bcs(gt_rhs01, gt1, grad_0_gt1, grad_1_gt1, grad_2_gt1, pmin, pmax,
+                 1.0, 0.0, sz, bflag);
+        massgrav_bcs(gt_rhs02, gt2, grad_0_gt2, grad_1_gt2, grad_2_gt2, pmin, pmax,
+                 1.0, 0.0, sz, bflag);
+        massgrav_bcs(gt_rhs11, gt3, grad_0_gt3, grad_1_gt3, grad_2_gt3, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        massgrav_bcs(gt_rhs12, gt4, grad_0_gt4, grad_1_gt4, grad_2_gt4, pmin, pmax,
+                 1.0, 0.0, sz, bflag);
+        massgrav_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        
+        massgrav::timer::t_bdyc.stop();
     }
 
 
-    quadgrav::timer::t_deriv.start();
-#ifdef QUADGRAV_EVOL
-  #include "quadgravrhs_ko_derivs.h"
-#else
+    massgrav::timer::t_deriv.start();
   #include "bssnrhs_ko_derivs.h"
-#endif
-    quadgrav::timer::t_deriv.stop();
+    massgrav::timer::t_deriv.stop();
 
-    quadgrav::timer::t_rhs.start();
+    massgrav::timer::t_rhs.start();
 
     const  double sigma = KO_DISS_SIGMA;
 
@@ -476,19 +386,14 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
         }
     }
 
-    quadgrav::timer::t_rhs.stop();
+    massgrav::timer::t_rhs.stop();
 
 
 
-    quadgrav::timer::t_deriv.start();
-#ifdef QUADGRAV_EVOL
-  #include "quadgravrhs_dealloc.h"
-  #include "quadgravrhs_dealloc_adv.h"
-#else
+    massgrav::timer::t_deriv.start();
   #include "bssnrhs_dealloc.h"
   #include "bssnrhs_dealloc_adv.h"
-#endif
-    quadgrav::timer::t_deriv.stop();
+    massgrav::timer::t_deriv.stop();
 
 #if 0
     for (unsigned int m = 0; m < 24; m++) {
@@ -502,7 +407,7 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
 
 
 
-void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
+void massgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                  const unsigned int& offset,
                  const double *pmin, const double *pmax, const unsigned int *sz,
                  const unsigned int& bflag)
@@ -535,26 +440,6 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     const double *B1 = &uZipVars[VAR::U_B1][offset];
     const double *B2 = &uZipVars[VAR::U_B2][offset];
 
-    //Additional variable from quadratic terms
-    #if 1
-    #ifdef QUADGRAV_EVOL
-    const double *Rsc = &uZipVars[VAR::U_RSC][offset];
-    const double *Rsch = &uZipVars[VAR::U_RSCH][offset];
-    const double *Rtt0 = &uZipVars[VAR::U_SYMRTT0][offset];
-    const double *Rtt1 = &uZipVars[VAR::U_SYMRTT1][offset];
-    const double *Rtt2 = &uZipVars[VAR::U_SYMRTT2][offset];
-    const double *Rtt3 = &uZipVars[VAR::U_SYMRTT3][offset];
-    const double *Rtt4 = &uZipVars[VAR::U_SYMRTT4][offset];
-    const double *Rtt5 = &uZipVars[VAR::U_SYMRTT5][offset];
-    const double *Vat0 = &uZipVars[VAR::U_SYMVAT0][offset];
-    const double *Vat1 = &uZipVars[VAR::U_SYMVAT1][offset];
-    const double *Vat2 = &uZipVars[VAR::U_SYMVAT2][offset];
-    const double *Vat3 = &uZipVars[VAR::U_SYMVAT3][offset];
-    const double *Vat4 = &uZipVars[VAR::U_SYMVAT4][offset];
-    const double *Vat5 = &uZipVars[VAR::U_SYMVAT5][offset];
-    #endif
-    #endif
-
     double *a_rhs = &unzipVarsRHS[VAR::U_ALPHA][offset];
     double *chi_rhs = &unzipVarsRHS[VAR::U_CHI][offset];
     double *K_rhs = &unzipVarsRHS[VAR::U_K][offset];
@@ -580,25 +465,6 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     double *B_rhs1 = &unzipVarsRHS[VAR::U_B1][offset];
     double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
 
-    #if 1
-    #ifdef QUADGRAV_EVOL
-    double *Rsc_rhs = &unzipVarsRHS[VAR::U_RSC][offset];
-    double *Rsch_rhs = &unzipVarsRHS[VAR::U_RSCH][offset];
-    double *Rtt_rhs00 = &unzipVarsRHS[VAR::U_SYMRTT0][offset];
-    double *Rtt_rhs01 = &unzipVarsRHS[VAR::U_SYMRTT1][offset];
-    double *Rtt_rhs02 = &unzipVarsRHS[VAR::U_SYMRTT2][offset];
-    double *Rtt_rhs11 = &unzipVarsRHS[VAR::U_SYMRTT3][offset];
-    double *Rtt_rhs12 = &unzipVarsRHS[VAR::U_SYMRTT4][offset];
-    double *Rtt_rhs22 = &unzipVarsRHS[VAR::U_SYMRTT5][offset];
-    double *Vat_rhs00 = &unzipVarsRHS[VAR::U_SYMVAT0][offset];
-    double *Vat_rhs01 = &unzipVarsRHS[VAR::U_SYMVAT1][offset];
-    double *Vat_rhs02 = &unzipVarsRHS[VAR::U_SYMVAT2][offset];
-    double *Vat_rhs11 = &unzipVarsRHS[VAR::U_SYMVAT3][offset];
-    double *Vat_rhs12 = &unzipVarsRHS[VAR::U_SYMVAT4][offset];
-    double *Vat_rhs22 = &unzipVarsRHS[VAR::U_SYMVAT5][offset];
-    #endif
-    #endif
-
     const unsigned int nx = sz[0];
     const unsigned int ny = sz[1];
     const unsigned int nz = sz[2];
@@ -607,11 +473,11 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     double hy = (pmax[1] - pmin[1]) / (ny - 1);
     double hz = (pmax[2] - pmin[2]) / (nz - 1);
 
-    const unsigned int lambda[4] = {QUADGRAV_LAMBDA[0], QUADGRAV_LAMBDA[1],
-                                    QUADGRAV_LAMBDA[2], QUADGRAV_LAMBDA[3]
+    const unsigned int lambda[4] = {MASSGRAV_LAMBDA[0], MASSGRAV_LAMBDA[1],
+                                    MASSGRAV_LAMBDA[2], MASSGRAV_LAMBDA[3]
                                    };
-    const double lambda_f[2] = {QUADGRAV_LAMBDA_F[0], QUADGRAV_LAMBDA_F[1]};
-    const double eta_power[2] = {QUADGRAV_ETA_POWER[0], QUADGRAV_ETA_POWER[1]};
+    const double lambda_f[2] = {MASSGRAV_LAMBDA_F[0], MASSGRAV_LAMBDA_F[1]};
+    const double eta_power[2] = {MASSGRAV_ETA_POWER[0], MASSGRAV_ETA_POWER[1]};
 
 
 
@@ -682,19 +548,12 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
 
 
 
-    quadgrav::timer::t_deriv.start();
-#ifdef QUADGRAV_EVOL
-  #include "quadgravrhs_memalloc.h"
-  #include "quadgravrhs_memalloc_adv.h"
-  #include "quadgravrhs_derivs.h"
-  #include "quadgravrhs_derivs_adv.h"
-#else
+    massgrav::timer::t_deriv.start();
   #include "bssnrhs_memalloc.h"
   #include "bssnrhs_memalloc_adv.h"
   #include "bssnrhs_derivs.h"
   #include "bssnrhs_derivs_adv.h"
-#endif
-    quadgrav::timer::t_deriv.stop();
+    massgrav::timer::t_deriv.stop();
 
     register double x;
     register double y;
@@ -705,33 +564,33 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     double eta;
 
     //cout << "begin loop" << endl;
-    quadgrav::timer::t_rhs.start();
+    massgrav::timer::t_rhs.start();
 
-    quadgrav::timer::t_rhs_a.start();
+    massgrav::timer::t_rhs_a.start();
 #include "a_rhs.cpp"
-    quadgrav::timer::t_rhs_a.stop();
+    massgrav::timer::t_rhs_a.stop();
 
-    quadgrav::timer::t_rhs_b.start();
+    massgrav::timer::t_rhs_b.start();
 #include "b_rhs.cpp"
-    quadgrav::timer::t_rhs_b.stop();
+    massgrav::timer::t_rhs_b.stop();
 
-    quadgrav::timer::t_rhs_gt.start();
+    massgrav::timer::t_rhs_gt.start();
 #include "gt_rhs.cpp"
-    quadgrav::timer::t_rhs_gt.stop();
+    massgrav::timer::t_rhs_gt.stop();
 
-    quadgrav::timer::t_rhs_chi.start();
+    massgrav::timer::t_rhs_chi.start();
 #include "chi_rhs.cpp"
-    quadgrav::timer::t_rhs_chi.stop();
+    massgrav::timer::t_rhs_chi.stop();
 
-    quadgrav::timer::t_rhs_At.start();
+    massgrav::timer::t_rhs_At.start();
 #include "At_rhs.cpp"
-    quadgrav::timer::t_rhs_At.stop();
+    massgrav::timer::t_rhs_At.stop();
 
-    quadgrav::timer::t_rhs_K.start();
+    massgrav::timer::t_rhs_K.start();
 #include "K_rhs.cpp"
-    quadgrav::timer::t_rhs_K.stop();
+    massgrav::timer::t_rhs_K.stop();
 
-    quadgrav::timer::t_rhs_Gt.start();
+    massgrav::timer::t_rhs_Gt.start();
 
 #include "CalGt.cpp"
 
@@ -744,18 +603,18 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
 #include "Gt_rhs_s7_.cpp"
 
 #include "Gt_rhs.cpp"
-    quadgrav::timer::t_rhs_Gt.stop();
+    massgrav::timer::t_rhs_Gt.stop();
 
-    quadgrav::timer::t_rhs_B.start();
+    massgrav::timer::t_rhs_B.start();
 #ifdef USE_ETA_FUNC
 #include "B_rhs_eta_func.cpp"
 #else
 #include "B_rhs_eta_const.cpp"
 #endif
 
-    quadgrav::timer::t_rhs_B.stop();
+    massgrav::timer::t_rhs_B.stop();
 
-    quadgrav::timer::t_rhs.stop();
+    massgrav::timer::t_rhs.stop();
 
 
     delete [] CalGt0;
@@ -794,9 +653,9 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
 
     if (bflag != 0) {
 
-        quadgrav::timer::t_bdyc.start();
+        massgrav::timer::t_bdyc.start();
 
-#ifdef QUADGRAV_KERR_SCHILD_TEST
+#ifdef MASSGRAV_KERR_SCHILD_TEST
 
         freeze_bcs(a_rhs, sz, bflag);
         freeze_bcs(chi_rhs, sz, bflag);
@@ -824,109 +683,71 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
         freeze_bcs(gt_rhs22, sz, bflag);
 
 #else
-        quadgrav_bcs(a_rhs, alpha, grad_0_alpha, grad_1_alpha, grad_2_alpha, pmin, pmax,
+        massgrav_bcs(a_rhs, alpha, grad_0_alpha, grad_1_alpha, grad_2_alpha, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(chi_rhs, chi, grad_0_chi, grad_1_chi, grad_2_chi, pmin, pmax,
+        massgrav_bcs(chi_rhs, chi, grad_0_chi, grad_1_chi, grad_2_chi, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(K_rhs, K, grad_0_K, grad_1_K, grad_2_K, pmin, pmax,
+        massgrav_bcs(K_rhs, K, grad_0_K, grad_1_K, grad_2_K, pmin, pmax,
                  1.0, 0.0, sz, bflag);
 
-        quadgrav_bcs(b_rhs0, beta0, grad_0_beta0, grad_1_beta0, grad_2_beta0, pmin, pmax,
+        massgrav_bcs(b_rhs0, beta0, grad_0_beta0, grad_1_beta0, grad_2_beta0, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(b_rhs1, beta1, grad_0_beta1, grad_1_beta1, grad_2_beta1, pmin, pmax,
+        massgrav_bcs(b_rhs1, beta1, grad_0_beta1, grad_1_beta1, grad_2_beta1, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(b_rhs2, beta2, grad_0_beta2, grad_1_beta2, grad_2_beta2, pmin, pmax,
-                 1.0, 0.0, sz, bflag);
-
-        quadgrav_bcs(Gt_rhs0, Gt0, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(Gt_rhs1, Gt1, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(Gt_rhs2, Gt2, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-
-        quadgrav_bcs(B_rhs0, B0, grad_0_B0, grad_1_B0, grad_2_B0, pmin, pmax,
-                 1.0, 0.0, sz, bflag);
-        quadgrav_bcs(B_rhs1, B1, grad_0_B1, grad_1_B1, grad_2_B1, pmin, pmax,
-                 1.0, 0.0, sz, bflag);
-        quadgrav_bcs(B_rhs2, B2, grad_0_B2, grad_1_B2, grad_2_B2, pmin, pmax,
+        massgrav_bcs(b_rhs2, beta2, grad_0_beta2, grad_1_beta2, grad_2_beta2, pmin, pmax,
                  1.0, 0.0, sz, bflag);
 
-        quadgrav_bcs(At_rhs00, At0, grad_0_At0, grad_1_At0, grad_2_At0, pmin, pmax,
+        massgrav_bcs(Gt_rhs0, Gt0, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0, pmin, pmax,
                  2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs01, At1, grad_0_At1, grad_1_At1, grad_2_At1, pmin, pmax,
+        massgrav_bcs(Gt_rhs1, Gt1, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1, pmin, pmax,
                  2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs02, At2, grad_0_At2, grad_1_At2, grad_2_At2, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs11, At3, grad_0_At3, grad_1_At3, grad_2_At3, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs12, At4, grad_0_At4, grad_1_At4, grad_2_At4, pmin, pmax,
-                 2.0, 0.0, sz, bflag);
-        quadgrav_bcs(At_rhs22, At5, grad_0_At5, grad_1_At5, grad_2_At5, pmin, pmax,
+        massgrav_bcs(Gt_rhs2, Gt2, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2, pmin, pmax,
                  2.0, 0.0, sz, bflag);
 
-        quadgrav_bcs(gt_rhs00, gt0, grad_0_gt0, grad_1_gt0, grad_2_gt0, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(gt_rhs01, gt1, grad_0_gt1, grad_1_gt1, grad_2_gt1, pmin, pmax,
+        massgrav_bcs(B_rhs0, B0, grad_0_B0, grad_1_B0, grad_2_B0, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(gt_rhs02, gt2, grad_0_gt2, grad_1_gt2, grad_2_gt2, pmin, pmax,
+        massgrav_bcs(B_rhs1, B1, grad_0_B1, grad_1_B1, grad_2_B1, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(gt_rhs11, gt3, grad_0_gt3, grad_1_gt3, grad_2_gt3, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(gt_rhs12, gt4, grad_0_gt4, grad_1_gt4, grad_2_gt4, pmin, pmax,
+        massgrav_bcs(B_rhs2, B2, grad_0_B2, grad_1_B2, grad_2_B2, pmin, pmax,
                  1.0, 0.0, sz, bflag);
-        quadgrav_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
 
-        #if 1
-        #ifdef QUADGRAV_EVOL
-        quadgrav_bcs(Rsc_rhs, Rsc, grad_0_Rsc, grad_1_Rsc, grad_2_Rsc, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rsch_rhs, Rsch, grad_0_Rsch, grad_1_Rsch, grad_2_Rsch, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs00, Rtt0, grad_0_Rtt0, grad_1_Rtt0, grad_2_Rtt0, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs01, Rtt1, grad_0_Rtt1, grad_1_Rtt1, grad_2_Rtt1, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs02, Rtt2, grad_0_Rtt2, grad_1_Rtt2, grad_2_Rtt2, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs11, Rtt3, grad_0_Rtt3, grad_1_Rtt3, grad_2_Rtt3, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs12, Rtt4, grad_0_Rtt4, grad_1_Rtt4, grad_2_Rtt4, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs22, Rtt5, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs00, Vat0, grad_0_Vat0, grad_1_Vat0, grad_2_Vat0, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs01, Vat1, grad_0_Vat1, grad_1_Vat1, grad_2_Vat1, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs02, Vat2, grad_0_Vat2, grad_1_Vat2, grad_2_Vat2, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs11, Vat3, grad_0_Vat3, grad_1_Vat3, grad_2_Vat3, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs12, Vat4, grad_0_Vat4, grad_1_Vat4, grad_2_Vat4, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs22, Vat5, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
-                 1.0, 1.0, sz, bflag);
-        #endif
-        #endif
+        massgrav_bcs(At_rhs00, At0, grad_0_At0, grad_1_At0, grad_2_At0, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs01, At1, grad_0_At1, grad_1_At1, grad_2_At1, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs02, At2, grad_0_At2, grad_1_At2, grad_2_At2, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs11, At3, grad_0_At3, grad_1_At3, grad_2_At3, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs12, At4, grad_0_At4, grad_1_At4, grad_2_At4, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
+        massgrav_bcs(At_rhs22, At5, grad_0_At5, grad_1_At5, grad_2_At5, pmin, pmax,
+                 2.0, 0.0, sz, bflag);
 
+        massgrav_bcs(gt_rhs00, gt0, grad_0_gt0, grad_1_gt0, grad_2_gt0, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        massgrav_bcs(gt_rhs01, gt1, grad_0_gt1, grad_1_gt1, grad_2_gt1, pmin, pmax,
+                 1.0, 0.0, sz, bflag);
+        massgrav_bcs(gt_rhs02, gt2, grad_0_gt2, grad_1_gt2, grad_2_gt2, pmin, pmax,
+                 1.0, 0.0, sz, bflag);
+        massgrav_bcs(gt_rhs11, gt3, grad_0_gt3, grad_1_gt3, grad_2_gt3, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        massgrav_bcs(gt_rhs12, gt4, grad_0_gt4, grad_1_gt4, grad_2_gt4, pmin, pmax,
+                 1.0, 0.0, sz, bflag);
+        massgrav_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
 #endif
-        quadgrav::timer::t_bdyc.stop();
+        massgrav::timer::t_bdyc.stop();
     }
 
-    if (quadgrav::DISSIPATION_TYPE == 0) {
-        quadgrav::timer::t_deriv.start();
-#ifdef QUADGRAV_EVOL
-  #include "quadgravrhs_ko_derivs.h"
-#else
+    if (massgrav::DISSIPATION_TYPE == 0) {
+        massgrav::timer::t_deriv.start();
   #include "bssnrhs_ko_derivs.h"
-#endif
-        quadgrav::timer::t_deriv.stop();
+        massgrav::timer::t_deriv.stop();
     }
     //HL : not need for us
 #if 0
-    else if (quadgrav::DISSIPATION_TYPE == 1 || quadgrav::DISSIPATION_TYPE == 2) {
+    else if (massgrav::DISSIPATION_TYPE == 1 || massgrav::DISSIPATION_TYPE == 2) {
         std::cout<<"...calling TVB dissipation"<<std::endl;
         double * lam1=new double[n];
         double * lam2=new double[n];
@@ -935,14 +756,14 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                            alpha, beta0, beta1, beta2,
                            gt0, gt1, gt2, gt3, gt4, gt5,
                            chi, sz);
-        quadgrav::timer::t_deriv.start();
-        if (quadgrav::DISSIPATION_TYPE == 1) {
-#include "quadgravrhs_tvb3_derivs.h"
+        massgrav::timer::t_deriv.start();
+        if (massgrav::DISSIPATION_TYPE == 1) {
+#include "massgravrhs_tvb3_derivs.h"
         }
         else {
-#include "quadgravrhs_tvb5_derivs.h"
+#include "massgravrhs_tvb5_derivs.h"
         }
-        quadgrav::timer::t_deriv.stop();
+        massgrav::timer::t_deriv.stop();
         delete [] lam1;
         delete [] lam2;
         delete [] lam3;
@@ -953,11 +774,11 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     }
 
 // remove the block write once the ko is fully debuged,
-    /*    double bxMin[3]={quadgrav::QUADGRAV_BLK_MIN_X,quadgrav::QUADGRAV_BLK_MIN_Y,quadgrav::QUADGRAV_BLK_MIN_Z};
-        double bxMax[3]={quadgrav::QUADGRAV_BLK_MAX_X,quadgrav::QUADGRAV_BLK_MAX_Y,quadgrav::QUADGRAV_BLK_MAX_Z};
-        quadgrav::writeBLockToBinary((const double**)unzipVarsRHS,offset,pmin,pmax,bxMin,bxMax,sz,15,1.0,"bf_ko");*/
+    /*    double bxMin[3]={massgrav::MASSGRAV_BLK_MIN_X,massgrav::MASSGRAV_BLK_MIN_Y,massgrav::MASSGRAV_BLK_MIN_Z};
+        double bxMax[3]={massgrav::MASSGRAV_BLK_MAX_X,massgrav::MASSGRAV_BLK_MAX_Y,massgrav::MASSGRAV_BLK_MAX_Z};
+        massgrav::writeBLockToBinary((const double**)unzipVarsRHS,offset,pmin,pmax,bxMin,bxMax,sz,15,1.0,"bf_ko");*/
 
-    quadgrav::timer::t_rhs.start();
+    massgrav::timer::t_rhs.start();
 
     const  double sigma = KO_DISS_SIGMA;
 
@@ -1001,19 +822,14 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
         }
     }
 
-    quadgrav::timer::t_rhs.stop();
+    massgrav::timer::t_rhs.stop();
 
-    //quadgrav::writeBLockToBinary((const double**)unzipVarsRHS,offset,pmin,pmax,bxMin,bxMax,sz,15,1.0,"af_ko");
+    //massgrav::writeBLockToBinary((const double**)unzipVarsRHS,offset,pmin,pmax,bxMin,bxMax,sz,15,1.0,"af_ko");
 
-    quadgrav::timer::t_deriv.start();
-#ifdef QUADGRAV_EVOL
-  #include "quadgravrhs_dealloc.h"
-  #include "quadgravrhs_dealloc_adv.h"
-#else
+    massgrav::timer::t_deriv.start();
   #include "bssnrhs_dealloc.h"
   #include "bssnrhs_dealloc_adv.h"
-#endif
-    quadgrav::timer::t_deriv.stop();
+    massgrav::timer::t_deriv.stop();
 
 #if 0
     for (unsigned int m = 0; m < 24; m++) {
@@ -1031,7 +847,7 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
  *
  *
  *----------------------------------------------------------------------*/
-void quadgrav_bcs(double *f_rhs, const double *f,
+void massgrav_bcs(double *f_rhs, const double *f,
               const double *dxf, const double *dyf, const double *dzf,
               const double *pmin, const double *pmax,
               const double f_falloff, const double f_asymptotic,
@@ -1057,9 +873,9 @@ void quadgrav_bcs(double *f_rhs, const double *f,
     unsigned int pp;
     double inv_r;
 
-    //std::cout<<"boundary quadgravrhs: size [ "<<nx<<", "<<ny<<", "<<nz<<" ]"<<std::endl;
-    //std::cout<<"boundary quadgravrhs: pmin [ "<<pmin[0]<<", "<<pmin[1]<<", "<<pmin[2]<<" ]"<<std::endl;
-    //std::cout<<"boundary quadgravrhs: pmax [ "<<pmax[0]<<", "<<pmax[1]<<", "<<pmax[2]<<" ]"<<std::endl;
+    //std::cout<<"boundary massgravrhs: size [ "<<nx<<", "<<ny<<", "<<nz<<" ]"<<std::endl;
+    //std::cout<<"boundary massgravrhs: pmin [ "<<pmin[0]<<", "<<pmin[1]<<", "<<pmin[2]<<" ]"<<std::endl;
+    //std::cout<<"boundary massgravrhs: pmax [ "<<pmax[0]<<", "<<pmax[1]<<", "<<pmax[2]<<" ]"<<std::endl;
 
     if (bflag & (1u<<OCT_DIR_LEFT)) {
         double x = pmin[0] + ib*hx;
@@ -1314,7 +1130,7 @@ void freeze_bcs(double *f_rhs, const unsigned int *sz, const unsigned int &bflag
  *----------------------------------------------------------------------*/
 void call_HAD_rhs()
 {
-    had_quadgrav_rhs_();
+    had_massgrav_rhs_();
 }
 #endif
 

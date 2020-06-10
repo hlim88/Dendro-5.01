@@ -14,7 +14,7 @@
 #include "mesh.h"
 #include <vector>
 #include <iostream>
-#include "rkQUADGRAV.h"
+#include "rkMASSGRAV.h"
 #include "octUtils.h"
 #include "meshUtils.h"
 
@@ -32,62 +32,62 @@ int main (int argc, char** argv)
     MPI_Comm_rank(comm,&rank);
     MPI_Comm_size(comm,&npes);
 
-    quadgrav::timer::initFlops();
+    massgrav::timer::initFlops();
 
-    quadgrav::timer::total_runtime.start();
+    massgrav::timer::total_runtime.start();
 
     // Print out CMAKE options
     if (!rank) {
-        #ifdef QUADGRAV_COMPUTE_CONSTRAINTS
-          std::cout<<GRN<<"  Compiled with QUADGRAV_COMPUTE_CONSTRAINTS"<<NRM<<std::endl;
+        #ifdef MASSGRAV_COMPUTE_CONSTRAINTS
+          std::cout<<GRN<<"  Compiled with MASSGRAV_COMPUTE_CONSTRAINTS"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without QUADGRAV_COMPUTE_CONSTRAINTS"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without MASSGRAV_COMPUTE_CONSTRAINTS"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT
-          std::cout<<GRN<<"  Compiled with QUADGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT"<<NRM<<std::endl;
+        #ifdef MASSGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT
+          std::cout<<GRN<<"  Compiled with MASSGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without QUADGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without MASSGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_ENABLE_VTU_OUTPUT
-          std::cout<<GRN<<"  Compiled with QUADGRAV_ENABLE_VTU_OUTPUT"<<NRM<<std::endl;
+        #ifdef MASSGRAV_ENABLE_VTU_OUTPUT
+          std::cout<<GRN<<"  Compiled with MASSGRAV_ENABLE_VTU_OUTPUT"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without QUADGRAV_ENABLE_VTU_OUTPUT"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without MASSGRAV_ENABLE_VTU_OUTPUT"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_ETA_FUNCTION 
-          std::cout<<GRN<<"  Compiled with  QUADGRAV_ETA_FUNCTION"<<NRM<<std::endl;
+        #ifdef MASSGRAV_ETA_FUNCTION 
+          std::cout<<GRN<<"  Compiled with  MASSGRAV_ETA_FUNCTION"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without  QUADGRAV_ETA_FUNCTION"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without  MASSGRAV_ETA_FUNCTION"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_EXTRACT_BH_LOCATIONS 
-          std::cout<<GRN<<"  Compiled with  QUADGRAV_EXTRACT_BH_LOCATIONS"<<NRM<<std::endl;
+        #ifdef MASSGRAV_EXTRACT_BH_LOCATIONS 
+          std::cout<<GRN<<"  Compiled with  MASSGRAV_EXTRACT_BH_LOCATIONS"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without  QUADGRAV_EXTRACT_BH_LOCATIONS"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without  MASSGRAV_EXTRACT_BH_LOCATIONS"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES 
-          std::cout<<GRN<<"  Compiled with  QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
+        #ifdef MASSGRAV_EXTRACT_GRAVITATIONAL_WAVES 
+          std::cout<<GRN<<"  Compiled with  MASSGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without  QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without  MASSGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES 
-          std::cout<<GRN<<"  Compiled with  QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
+        #ifdef MASSGRAV_EXTRACT_GRAVITATIONAL_WAVES 
+          std::cout<<GRN<<"  Compiled with  MASSGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without  QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without  MASSGRAV_EXTRACT_GRAVITATIONAL_WAVES"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_GAUGE_ROCHESTER 
-          std::cout<<GRN<<"  Compiled with  QUADGRAV_GAUGE_ROCHESTER"<<NRM<<std::endl;
+        #ifdef MASSGRAV_GAUGE_ROCHESTER 
+          std::cout<<GRN<<"  Compiled with  MASSGRAV_GAUGE_ROCHESTER"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without  QUADGRAV_GAUGE_ROCHESTER"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without  MASSGRAV_GAUGE_ROCHESTER"<<NRM<<std::endl;
         #endif
-        #ifdef QUADGRAV_KERR_SCHILD_TEST 
-          std::cout<<GRN<<"  Compiled with  QUADGRAV_KERR_SCHILD_TEST"<<NRM<<std::endl;
+        #ifdef MASSGRAV_KERR_SCHILD_TEST 
+          std::cout<<GRN<<"  Compiled with  MASSGRAV_KERR_SCHILD_TEST"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without  QUADGRAV_KERR_SCHILD_TEST"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without  MASSGRAV_KERR_SCHILD_TEST"<<NRM<<std::endl;
         #endif
 
-        #ifdef QUADGRAV_REFINE_BASE_EH 
-          std::cout<<GRN<<"  Compiled with  QUADGRAV_REFINE_BASE_EH"<<NRM<<std::endl;
+        #ifdef MASSGRAV_REFINE_BASE_EH 
+          std::cout<<GRN<<"  Compiled with  MASSGRAV_REFINE_BASE_EH"<<NRM<<std::endl;
         #else
-          std::cout<<RED<<"  Compiled without  QUADGRAV_REFINE_BASE_EH"<<NRM<<std::endl;
+          std::cout<<RED<<"  Compiled without  MASSGRAV_REFINE_BASE_EH"<<NRM<<std::endl;
         #endif
 
         #ifdef USE_FD_INTERP_FOR_UNZIP 
@@ -101,99 +101,99 @@ int main (int argc, char** argv)
 
     //1 . read the parameter file.
     if(!rank) std::cout<<" reading parameter file :"<<argv[1]<<std::endl;
-    quadgrav::readParamFile(argv[1],comm);
+    massgrav::readParamFile(argv[1],comm);
 
     if(rank==1|| npes==1)
     {
         std::cout<<"parameters read: "<<std::endl;
 
         std::cout<<YLW<<"\tnpes :"<<npes<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_DIM :"<<quadgrav::QUADGRAV_DIM<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_ELE_ORDER :"<<quadgrav::QUADGRAV_ELE_ORDER<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_CFL_FACTOR :"<<quadgrav::QUADGRAV_CFL_FACTOR<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_IO_OUTPUT_FREQ :"<<quadgrav::QUADGRAV_IO_OUTPUT_FREQ<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_GW_EXTRACT_FREQ :"<<quadgrav::QUADGRAV_GW_EXTRACT_FREQ<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_REMESH_TEST_FREQ :"<<quadgrav::QUADGRAV_REMESH_TEST_FREQ<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_CHECKPT_FREQ :"<<quadgrav::QUADGRAV_CHECKPT_FREQ<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_RESTORE_SOLVER :"<<quadgrav::QUADGRAV_RESTORE_SOLVER<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_ENABLE_BLOCK_ADAPTIVITY :"<<quadgrav::QUADGRAV_ENABLE_BLOCK_ADAPTIVITY<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_VTU_FILE_PREFIX :"<<quadgrav::QUADGRAV_VTU_FILE_PREFIX<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_CHKPT_FILE_PREFIX :"<<quadgrav::QUADGRAV_CHKPT_FILE_PREFIX<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_PROFILE_FILE_PREFIX :"<<quadgrav::QUADGRAV_PROFILE_FILE_PREFIX<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_VTU_Z_SLICE_ONLY :"<<quadgrav::QUADGRAV_VTU_Z_SLICE_ONLY<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_IO_OUTPUT_GAP :"<<quadgrav::QUADGRAV_IO_OUTPUT_GAP<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_DENDRO_GRAIN_SZ :"<<quadgrav::QUADGRAV_DENDRO_GRAIN_SZ<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_ASYNC_COMM_K :"<<quadgrav::QUADGRAV_ASYNC_COMM_K<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_DENDRO_AMR_FAC :"<<quadgrav::QUADGRAV_DENDRO_AMR_FAC<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_USE_WAVELET_TOL_FUNCTION :"<<quadgrav::QUADGRAV_USE_WAVELET_TOL_FUNCTION<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_USE_FD_GRID_TRANSFER :"<<quadgrav::QUADGRAV_USE_FD_GRID_TRANSFER<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_WAVELET_TOL :"<<quadgrav::QUADGRAV_WAVELET_TOL<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_WAVELET_TOL_MAX:"<<quadgrav::QUADGRAV_WAVELET_TOL_MAX<<NRM<<std::endl;
-        std::cout<<YLW<<"\t:QUADGRAV_WAVELET_TOL_FUNCTION_R0: "<<quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R0<<NRM<<std::endl;
-        std::cout<<YLW<<"\t:QUADGRAV_WAVELET_TOL_FUNCTION_R1: "<<quadgrav::QUADGRAV_WAVELET_TOL_FUNCTION_R1<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_LOAD_IMB_TOL :"<<quadgrav::QUADGRAV_LOAD_IMB_TOL<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_RK_TIME_BEGIN :"<<quadgrav::QUADGRAV_RK_TIME_BEGIN<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_RK_TIME_END :"<<quadgrav::QUADGRAV_RK_TIME_END<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_RK_TYPE :"<<quadgrav::QUADGRAV_RK_TYPE<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_RK45_TIME_STEP_SIZE :"<<quadgrav::QUADGRAV_RK45_TIME_STEP_SIZE<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_RK45_DESIRED_TOL :"<<quadgrav::QUADGRAV_RK45_DESIRED_TOL<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_COMPD_MIN : ( :"<<quadgrav::QUADGRAV_COMPD_MIN[0]<<" ,"<<quadgrav::QUADGRAV_COMPD_MIN[1]<<","<<quadgrav::QUADGRAV_COMPD_MIN[2]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_COMPD_MAX : ( :"<<quadgrav::QUADGRAV_COMPD_MAX[0]<<" ,"<<quadgrav::QUADGRAV_COMPD_MAX[1]<<","<<quadgrav::QUADGRAV_COMPD_MAX[2]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_BLK_MIN : ( :"<<quadgrav::QUADGRAV_BLK_MIN_X<<" ,"<<quadgrav::QUADGRAV_BLK_MIN_Y<<","<<quadgrav::QUADGRAV_BLK_MIN_Z<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_BLK_MAX : ( :"<<quadgrav::QUADGRAV_BLK_MAX_X<<" ,"<<quadgrav::QUADGRAV_BLK_MAX_Y<<","<<quadgrav::QUADGRAV_BLK_MAX_Z<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_OCTREE_MIN : ( :"<<quadgrav::QUADGRAV_OCTREE_MIN[0]<<" ,"<<quadgrav::QUADGRAV_OCTREE_MIN[1]<<","<<quadgrav::QUADGRAV_OCTREE_MIN[2]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_OCTREE_MAX : ( :"<<quadgrav::QUADGRAV_OCTREE_MAX[0]<<" ,"<<quadgrav::QUADGRAV_OCTREE_MAX[1]<<","<<quadgrav::QUADGRAV_OCTREE_MAX[2]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tETA_CONST :"<<quadgrav::ETA_CONST<<NRM<<std::endl;
-        std::cout<<YLW<<"\tETA_R0 :"<<quadgrav::ETA_R0<<NRM<<std::endl;
-        std::cout<<YLW<<"\tETA_DAMPING :"<<quadgrav::ETA_DAMPING<<NRM<<std::endl;
-        std::cout<<YLW<<"\tETA_DAMPING_EXP :"<<quadgrav::ETA_DAMPING_EXP<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_ETA_R0 :"<<quadgrav::QUADGRAV_ETA_R0<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_ETA_POWER : ("<<quadgrav::QUADGRAV_ETA_POWER[0]<<" ,"<<quadgrav::QUADGRAV_ETA_POWER[1]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_LAMBDA : ("<<quadgrav::QUADGRAV_LAMBDA[0]<<" ,"<<quadgrav::QUADGRAV_LAMBDA[1]<<","<<quadgrav::QUADGRAV_LAMBDA[2]<<quadgrav::QUADGRAV_LAMBDA[3]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_LAMBDA_F : ("<<quadgrav::QUADGRAV_LAMBDA_F[0]<<" ,"<<quadgrav::QUADGRAV_LAMBDA_F[1]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_XI : ("<<quadgrav::QUADGRAV_XI[0]<<" ,"<<quadgrav::QUADGRAV_XI[1]<<" ,"<<quadgrav::QUADGRAV_XI[2]<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tCHI_FLOOR :"<<quadgrav::CHI_FLOOR<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_TRK0 :"<<quadgrav::QUADGRAV_TRK0<<NRM<<std::endl;
-        std::cout<<YLW<<"\tDISSIPATION_TYPE :"<<quadgrav::DISSIPATION_TYPE<<NRM<<std::endl;
-        std::cout<<YLW<<"\tKO_DISS_SIGMA :"<<quadgrav::KO_DISS_SIGMA<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_DIM :"<<massgrav::MASSGRAV_DIM<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_ELE_ORDER :"<<massgrav::MASSGRAV_ELE_ORDER<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_CFL_FACTOR :"<<massgrav::MASSGRAV_CFL_FACTOR<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_IO_OUTPUT_FREQ :"<<massgrav::MASSGRAV_IO_OUTPUT_FREQ<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_GW_EXTRACT_FREQ :"<<massgrav::MASSGRAV_GW_EXTRACT_FREQ<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_REMESH_TEST_FREQ :"<<massgrav::MASSGRAV_REMESH_TEST_FREQ<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_CHECKPT_FREQ :"<<massgrav::MASSGRAV_CHECKPT_FREQ<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_RESTORE_SOLVER :"<<massgrav::MASSGRAV_RESTORE_SOLVER<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_ENABLE_BLOCK_ADAPTIVITY :"<<massgrav::MASSGRAV_ENABLE_BLOCK_ADAPTIVITY<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_VTU_FILE_PREFIX :"<<massgrav::MASSGRAV_VTU_FILE_PREFIX<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_CHKPT_FILE_PREFIX :"<<massgrav::MASSGRAV_CHKPT_FILE_PREFIX<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_PROFILE_FILE_PREFIX :"<<massgrav::MASSGRAV_PROFILE_FILE_PREFIX<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_VTU_Z_SLICE_ONLY :"<<massgrav::MASSGRAV_VTU_Z_SLICE_ONLY<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_IO_OUTPUT_GAP :"<<massgrav::MASSGRAV_IO_OUTPUT_GAP<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_DENDRO_GRAIN_SZ :"<<massgrav::MASSGRAV_DENDRO_GRAIN_SZ<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_ASYNC_COMM_K :"<<massgrav::MASSGRAV_ASYNC_COMM_K<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_DENDRO_AMR_FAC :"<<massgrav::MASSGRAV_DENDRO_AMR_FAC<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_USE_WAVELET_TOL_FUNCTION :"<<massgrav::MASSGRAV_USE_WAVELET_TOL_FUNCTION<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_USE_FD_GRID_TRANSFER :"<<massgrav::MASSGRAV_USE_FD_GRID_TRANSFER<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_WAVELET_TOL :"<<massgrav::MASSGRAV_WAVELET_TOL<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_WAVELET_TOL_MAX:"<<massgrav::MASSGRAV_WAVELET_TOL_MAX<<NRM<<std::endl;
+        std::cout<<YLW<<"\t:MASSGRAV_WAVELET_TOL_FUNCTION_R0: "<<massgrav::MASSGRAV_WAVELET_TOL_FUNCTION_R0<<NRM<<std::endl;
+        std::cout<<YLW<<"\t:MASSGRAV_WAVELET_TOL_FUNCTION_R1: "<<massgrav::MASSGRAV_WAVELET_TOL_FUNCTION_R1<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_LOAD_IMB_TOL :"<<massgrav::MASSGRAV_LOAD_IMB_TOL<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_RK_TIME_BEGIN :"<<massgrav::MASSGRAV_RK_TIME_BEGIN<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_RK_TIME_END :"<<massgrav::MASSGRAV_RK_TIME_END<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_RK_TYPE :"<<massgrav::MASSGRAV_RK_TYPE<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_RK45_TIME_STEP_SIZE :"<<massgrav::MASSGRAV_RK45_TIME_STEP_SIZE<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_RK45_DESIRED_TOL :"<<massgrav::MASSGRAV_RK45_DESIRED_TOL<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_COMPD_MIN : ( :"<<massgrav::MASSGRAV_COMPD_MIN[0]<<" ,"<<massgrav::MASSGRAV_COMPD_MIN[1]<<","<<massgrav::MASSGRAV_COMPD_MIN[2]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_COMPD_MAX : ( :"<<massgrav::MASSGRAV_COMPD_MAX[0]<<" ,"<<massgrav::MASSGRAV_COMPD_MAX[1]<<","<<massgrav::MASSGRAV_COMPD_MAX[2]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_BLK_MIN : ( :"<<massgrav::MASSGRAV_BLK_MIN_X<<" ,"<<massgrav::MASSGRAV_BLK_MIN_Y<<","<<massgrav::MASSGRAV_BLK_MIN_Z<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_BLK_MAX : ( :"<<massgrav::MASSGRAV_BLK_MAX_X<<" ,"<<massgrav::MASSGRAV_BLK_MAX_Y<<","<<massgrav::MASSGRAV_BLK_MAX_Z<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_OCTREE_MIN : ( :"<<massgrav::MASSGRAV_OCTREE_MIN[0]<<" ,"<<massgrav::MASSGRAV_OCTREE_MIN[1]<<","<<massgrav::MASSGRAV_OCTREE_MIN[2]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_OCTREE_MAX : ( :"<<massgrav::MASSGRAV_OCTREE_MAX[0]<<" ,"<<massgrav::MASSGRAV_OCTREE_MAX[1]<<","<<massgrav::MASSGRAV_OCTREE_MAX[2]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tETA_CONST :"<<massgrav::ETA_CONST<<NRM<<std::endl;
+        std::cout<<YLW<<"\tETA_R0 :"<<massgrav::ETA_R0<<NRM<<std::endl;
+        std::cout<<YLW<<"\tETA_DAMPING :"<<massgrav::ETA_DAMPING<<NRM<<std::endl;
+        std::cout<<YLW<<"\tETA_DAMPING_EXP :"<<massgrav::ETA_DAMPING_EXP<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_ETA_R0 :"<<massgrav::MASSGRAV_ETA_R0<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_ETA_POWER : ("<<massgrav::MASSGRAV_ETA_POWER[0]<<" ,"<<massgrav::MASSGRAV_ETA_POWER[1]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_LAMBDA : ("<<massgrav::MASSGRAV_LAMBDA[0]<<" ,"<<massgrav::MASSGRAV_LAMBDA[1]<<","<<massgrav::MASSGRAV_LAMBDA[2]<<massgrav::MASSGRAV_LAMBDA[3]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_LAMBDA_F : ("<<massgrav::MASSGRAV_LAMBDA_F[0]<<" ,"<<massgrav::MASSGRAV_LAMBDA_F[1]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_XI : ("<<massgrav::MASSGRAV_XI[0]<<" ,"<<massgrav::MASSGRAV_XI[1]<<" ,"<<massgrav::MASSGRAV_XI[2]<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tCHI_FLOOR :"<<massgrav::CHI_FLOOR<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_TRK0 :"<<massgrav::MASSGRAV_TRK0<<NRM<<std::endl;
+        std::cout<<YLW<<"\tDISSIPATION_TYPE :"<<massgrav::DISSIPATION_TYPE<<NRM<<std::endl;
+        std::cout<<YLW<<"\tKO_DISS_SIGMA :"<<massgrav::KO_DISS_SIGMA<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tBH1 MASS :"<<quadgrav::BH1.getBHMass()<<NRM<<std::endl;
-        std::cout<<YLW<<"\tBH1 POSITION (x,y,z) : ("<<quadgrav::BH1.getBHCoordX()<<", "<<quadgrav::BH1.getBHCoordY()<<", "<<quadgrav::BH1.getBHCoordZ()<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tBH1 VELOCITY (x,y,z) : ("<<quadgrav::BH1.getVx()<<", "<<quadgrav::BH1.getVy()<<", "<<quadgrav::BH1.getVz()<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tBH1 SPIN (||,theta,phi): ( "<<quadgrav::BH1.getBHSpin()<<", "<<quadgrav::BH1.getBHSpinTheta()<<", "<<quadgrav::BH1.getBHSpinPhi()<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH1 MASS :"<<massgrav::BH1.getBHMass()<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH1 POSITION (x,y,z) : ("<<massgrav::BH1.getBHCoordX()<<", "<<massgrav::BH1.getBHCoordY()<<", "<<massgrav::BH1.getBHCoordZ()<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH1 VELOCITY (x,y,z) : ("<<massgrav::BH1.getVx()<<", "<<massgrav::BH1.getVy()<<", "<<massgrav::BH1.getVz()<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH1 SPIN (||,theta,phi): ( "<<massgrav::BH1.getBHSpin()<<", "<<massgrav::BH1.getBHSpinTheta()<<", "<<massgrav::BH1.getBHSpinPhi()<<" )"<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tBH2 MASS :"<<quadgrav::BH2.getBHMass()<<NRM<<std::endl;
-        std::cout<<YLW<<"\tBH2 POSITION (x,y,z) : ("<<quadgrav::BH2.getBHCoordX()<<", "<<quadgrav::BH2.getBHCoordY()<<", "<<quadgrav::BH2.getBHCoordZ()<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tBH2 VELOCITY (x,y,z) : ("<<quadgrav::BH2.getVx()<<", "<<quadgrav::BH2.getVy()<<", "<<quadgrav::BH2.getVz()<<" )"<<NRM<<std::endl;
-        std::cout<<YLW<<"\tBH2 SPIN (||,theta,phi): ( "<<quadgrav::BH2.getBHSpin()<<", "<<quadgrav::BH2.getBHSpinTheta()<<", "<<quadgrav::BH2.getBHSpinPhi()<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH2 MASS :"<<massgrav::BH2.getBHMass()<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH2 POSITION (x,y,z) : ("<<massgrav::BH2.getBHCoordX()<<", "<<massgrav::BH2.getBHCoordY()<<", "<<massgrav::BH2.getBHCoordZ()<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH2 VELOCITY (x,y,z) : ("<<massgrav::BH2.getVx()<<", "<<massgrav::BH2.getVy()<<", "<<massgrav::BH2.getVz()<<" )"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tBH2 SPIN (||,theta,phi): ( "<<massgrav::BH2.getBHSpin()<<", "<<massgrav::BH2.getBHSpinTheta()<<", "<<massgrav::BH2.getBHSpinPhi()<<" )"<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tQUADGRAV_DIM :"<<quadgrav::QUADGRAV_DIM<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_MAXDEPTH :"<<quadgrav::QUADGRAV_MAXDEPTH<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_DIM :"<<massgrav::MASSGRAV_DIM<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_MAXDEPTH :"<<massgrav::MASSGRAV_MAXDEPTH<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tQUADGRAV_NUM_REFINE_VARS :"<<quadgrav::QUADGRAV_NUM_REFINE_VARS<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_REFINE_VARIABLE_INDICES :[";
-        for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_REFINE_VARS-1;i++)
-            std::cout<<quadgrav::QUADGRAV_REFINE_VARIABLE_INDICES[i]<<", ";
-        std::cout<<quadgrav::QUADGRAV_REFINE_VARIABLE_INDICES[quadgrav::QUADGRAV_NUM_REFINE_VARS-1]<<"]"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_NUM_REFINE_VARS :"<<massgrav::MASSGRAV_NUM_REFINE_VARS<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_REFINE_VARIABLE_INDICES :[";
+        for(unsigned int i=0;i<massgrav::MASSGRAV_NUM_REFINE_VARS-1;i++)
+            std::cout<<massgrav::MASSGRAV_REFINE_VARIABLE_INDICES[i]<<", ";
+        std::cout<<massgrav::MASSGRAV_REFINE_VARIABLE_INDICES[massgrav::MASSGRAV_NUM_REFINE_VARS-1]<<"]"<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tQUADGRAV_REFINEMENT_MODE :"<<quadgrav::QUADGRAV_REFINEMENT_MODE<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_REFINEMENT_MODE :"<<massgrav::MASSGRAV_REFINEMENT_MODE<<NRM<<std::endl;
 
-        #ifdef QUADGRAV_REFINE_BASE_EH
-                std::cout<<YLW<<"\tQUADGRAV_EH_REFINE_VAL  : "<<quadgrav::QUADGRAV_EH_REFINE_VAL<<NRM<<std::endl;
-                std::cout<<YLW<<"\tQUADGRAV_EH_COARSEN_VAL : "<<quadgrav::QUADGRAV_EH_COARSEN_VAL<<NRM<<std::endl;
+        #ifdef MASSGRAV_REFINE_BASE_EH
+                std::cout<<YLW<<"\tMASSGRAV_EH_REFINE_VAL  : "<<massgrav::MASSGRAV_EH_REFINE_VAL<<NRM<<std::endl;
+                std::cout<<YLW<<"\tMASSGRAV_EH_COARSEN_VAL : "<<massgrav::MASSGRAV_EH_COARSEN_VAL<<NRM<<std::endl;
         #endif 
 
-        std::cout<<YLW<<"\tQUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT :"<<quadgrav::QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_VTU_OUTPUT_EVOL_INDICES :[";
-        for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT-1;i++)
-            std::cout<<quadgrav::QUADGRAV_VTU_OUTPUT_EVOL_INDICES[i]<<", ";
-        std::cout<<quadgrav::QUADGRAV_VTU_OUTPUT_EVOL_INDICES[quadgrav::QUADGRAV_NUM_EVOL_VARS_VTU_OUTPUT-1]<<"]"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT :"<<massgrav::MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_VTU_OUTPUT_EVOL_INDICES :[";
+        for(unsigned int i=0;i<massgrav::MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT-1;i++)
+            std::cout<<massgrav::MASSGRAV_VTU_OUTPUT_EVOL_INDICES[i]<<", ";
+        std::cout<<massgrav::MASSGRAV_VTU_OUTPUT_EVOL_INDICES[massgrav::MASSGRAV_NUM_EVOL_VARS_VTU_OUTPUT-1]<<"]"<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tQUADGRAV_NUM_CONST_VARS_VTU_OUTPUT :"<<quadgrav::QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_VTU_OUTPUT_CONST_INDICES :[";
-        for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT-1;i++)
-            std::cout<<quadgrav::QUADGRAV_VTU_OUTPUT_CONST_INDICES[i]<<", ";
-        std::cout<<quadgrav::QUADGRAV_VTU_OUTPUT_CONST_INDICES[quadgrav::QUADGRAV_NUM_CONST_VARS_VTU_OUTPUT-1]<<"]"<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_NUM_CONST_VARS_VTU_OUTPUT :"<<massgrav::MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_VTU_OUTPUT_CONST_INDICES :[";
+        for(unsigned int i=0;i<massgrav::MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT-1;i++)
+            std::cout<<massgrav::MASSGRAV_VTU_OUTPUT_CONST_INDICES[i]<<", ";
+        std::cout<<massgrav::MASSGRAV_VTU_OUTPUT_CONST_INDICES[massgrav::MASSGRAV_NUM_CONST_VARS_VTU_OUTPUT-1]<<"]"<<NRM<<std::endl;
 
 
         std::cout<<YLW<<"\tTPID_TARGET_M_PLUS :"<<TPID::target_M_plus<<NRM<<std::endl;
@@ -222,90 +222,90 @@ int main (int argc, char** argv)
         std::cout<<YLW<<"\tEXTRACTION_TOL :"<<BHLOC::EXTRACTION_TOL<<NRM<<std::endl;
 
 
-        std::cout<<YLW<<"\tQUADGRAV_GW_NUM_RADAII: "<<GW::QUADGRAV_GW_NUM_RADAII<<NRM<<std::endl;
-        std::cout<<YLW<<"\tQUADGRAV_GW_NUM_LMODES: "<<GW::QUADGRAV_GW_NUM_LMODES<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_GW_NUM_RADAII: "<<GW::MASSGRAV_GW_NUM_RADAII<<NRM<<std::endl;
+        std::cout<<YLW<<"\tMASSGRAV_GW_NUM_LMODES: "<<GW::MASSGRAV_GW_NUM_LMODES<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tQUADGRAV_GW_RADAII: {";
-        for(unsigned int i=0;i<GW::QUADGRAV_GW_NUM_RADAII;i++)
-            std::cout<<" ,"<<GW::QUADGRAV_GW_RADAII[i];
+        std::cout<<YLW<<"\tMASSGRAV_GW_RADAII: {";
+        for(unsigned int i=0;i<GW::MASSGRAV_GW_NUM_RADAII;i++)
+            std::cout<<" ,"<<GW::MASSGRAV_GW_RADAII[i];
         std::cout<<"}"<<NRM<<std::endl;
 
-        std::cout<<YLW<<"\tQUADGRAV_GW_L_MODES: {";
-        for(unsigned int i=0;i<GW::QUADGRAV_GW_NUM_LMODES;i++)
-            std::cout<<" ,"<<GW::QUADGRAV_GW_L_MODES[i];
+        std::cout<<YLW<<"\tMASSGRAV_GW_L_MODES: {";
+        for(unsigned int i=0;i<GW::MASSGRAV_GW_NUM_LMODES;i++)
+            std::cout<<" ,"<<GW::MASSGRAV_GW_L_MODES[i];
         std::cout<<"}"<<NRM<<std::endl;
 
         
 
     }
 
-    _InitializeHcurve(quadgrav::QUADGRAV_DIM);
-    m_uiMaxDepth=quadgrav::QUADGRAV_MAXDEPTH;
+    _InitializeHcurve(massgrav::MASSGRAV_DIM);
+    m_uiMaxDepth=massgrav::MASSGRAV_MAXDEPTH;
     
-    if(quadgrav::QUADGRAV_NUM_VARS%quadgrav::QUADGRAV_ASYNC_COMM_K!=0)
+    if(massgrav::MASSGRAV_NUM_VARS%massgrav::MASSGRAV_ASYNC_COMM_K!=0)
     {
-        if(!rank) std::cout<<"[overlap communication error]: total QUADGRAV_NUM_VARS: "<<quadgrav::QUADGRAV_NUM_VARS<<" is not divisable by QUADGRAV_ASYNC_COMM_K: "<<quadgrav::QUADGRAV_ASYNC_COMM_K<<std::endl;
+        if(!rank) std::cout<<"[overlap communication error]: total MASSGRAV_NUM_VARS: "<<massgrav::MASSGRAV_NUM_VARS<<" is not divisable by MASSGRAV_ASYNC_COMM_K: "<<massgrav::MASSGRAV_ASYNC_COMM_K<<std::endl;
         MPI_Abort(comm,0);
     }
 
-    if(quadgrav::QUADGRAV_GW_EXTRACT_FREQ> quadgrav::QUADGRAV_IO_OUTPUT_FREQ)
+    if(massgrav::MASSGRAV_GW_EXTRACT_FREQ> massgrav::MASSGRAV_IO_OUTPUT_FREQ)
     {
-      if(!rank) std::cout<<" QUADGRAV_GW_EXTRACT_FREQ  should be less QUADGRAV_IO_OUTPUT_FREQ "<<std::endl;
+      if(!rank) std::cout<<" MASSGRAV_GW_EXTRACT_FREQ  should be less MASSGRAV_IO_OUTPUT_FREQ "<<std::endl;
       MPI_Abort(comm,0);
     }
 
 
     //2. generate the initial grid.
     std::vector<ot::TreeNode> tmpNodes;
-    std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){quadgrav::punctureData(x,y,z,var);};
-    std::function<double(double,double,double)> f_init_alpha=[](double x,double y,double z){ double var[24]; quadgrav::punctureData(x,y,z,var); return var[0];};
-    //std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){quadgrav::KerrSchildData(x,y,z,var);};
+    std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){massgrav::punctureData(x,y,z,var);};
+    std::function<double(double,double,double)> f_init_alpha=[](double x,double y,double z){ double var[24]; massgrav::punctureData(x,y,z,var); return var[0];};
+    //std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){massgrav::KerrSchildData(x,y,z,var);};
 
-    const unsigned int interpVars=quadgrav::QUADGRAV_NUM_VARS;
+    const unsigned int interpVars=massgrav::MASSGRAV_NUM_VARS;
     unsigned int varIndex[interpVars];
-    for(unsigned int i=0;i<quadgrav::QUADGRAV_NUM_VARS;i++)
+    for(unsigned int i=0;i<massgrav::MASSGRAV_NUM_VARS;i++)
         varIndex[i]=i;
 
-    /*varIndex[0]=quadgrav::VAR::U_ALPHA;
-    varIndex[1]=quadgrav::VAR::U_CHI;*/
+    /*varIndex[0]=massgrav::VAR::U_ALPHA;
+    varIndex[1]=massgrav::VAR::U_CHI;*/
     DendroIntL localSz,globalSz;
     double t_stat;
     double t_stat_g[3];
 
-    quadgrav::timer::t_f2o.start();
+    massgrav::timer::t_f2o.start();
 
-    if(quadgrav::QUADGRAV_ENABLE_BLOCK_ADAPTIVITY)
+    if(massgrav::MASSGRAV_ENABLE_BLOCK_ADAPTIVITY)
     {
         if(!rank) std::cout<<YLW<<"Using block adaptive mesh. AMR disabled "<<NRM<<std::endl;
-        const Point pt_min(quadgrav::QUADGRAV_BLK_MIN_X,quadgrav::QUADGRAV_BLK_MIN_Y,quadgrav::QUADGRAV_BLK_MIN_Z);
-        const Point pt_max(quadgrav::QUADGRAV_BLK_MAX_X,quadgrav::QUADGRAV_BLK_MAX_Y,quadgrav::QUADGRAV_BLK_MAX_Z);
+        const Point pt_min(massgrav::MASSGRAV_BLK_MIN_X,massgrav::MASSGRAV_BLK_MIN_Y,massgrav::MASSGRAV_BLK_MIN_Z);
+        const Point pt_max(massgrav::MASSGRAV_BLK_MAX_X,massgrav::MASSGRAV_BLK_MAX_Y,massgrav::MASSGRAV_BLK_MAX_Z);
 
-        quadgrav::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);
+        massgrav::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);
     }else
     {
 
         if(!rank) std::cout<<YLW<<"Using function2Octree. AMR enabled "<<NRM<<std::endl;
-        function2Octree(f_init,quadgrav::QUADGRAV_NUM_VARS,varIndex,interpVars,tmpNodes,m_uiMaxDepth,quadgrav::QUADGRAV_WAVELET_TOL,quadgrav::QUADGRAV_ELE_ORDER,comm);
+        function2Octree(f_init,massgrav::MASSGRAV_NUM_VARS,varIndex,interpVars,tmpNodes,m_uiMaxDepth,massgrav::MASSGRAV_WAVELET_TOL,massgrav::MASSGRAV_ELE_ORDER,comm);
     }
 
-    ot::Mesh * mesh= ot::createMesh(tmpNodes.data(),tmpNodes.size(),quadgrav::QUADGRAV_ELE_ORDER,comm,1,ot::SM_TYPE::FDM,quadgrav::QUADGRAV_DENDRO_GRAIN_SZ,quadgrav::QUADGRAV_LOAD_IMB_TOL,quadgrav::QUADGRAV_SPLIT_FIX, quadgrav::getOctantWeight);
+    ot::Mesh * mesh= ot::createMesh(tmpNodes.data(),tmpNodes.size(),massgrav::MASSGRAV_ELE_ORDER,comm,1,ot::SM_TYPE::FDM,massgrav::MASSGRAV_DENDRO_GRAIN_SZ,massgrav::MASSGRAV_LOAD_IMB_TOL,massgrav::MASSGRAV_SPLIT_FIX, massgrav::getOctantWeight);
     unsigned int lmin, lmax;
     mesh->computeMinMaxLevel(lmin,lmax);    
-    quadgrav::QUADGRAV_RK45_TIME_STEP_SIZE=quadgrav::QUADGRAV_CFL_FACTOR*((quadgrav::QUADGRAV_COMPD_MAX[0]-quadgrav::QUADGRAV_COMPD_MIN[0])*((1u<<(m_uiMaxDepth-lmax))/((double) quadgrav::QUADGRAV_ELE_ORDER))/((double)(1u<<(m_uiMaxDepth))));
-    par::Mpi_Bcast(&quadgrav::QUADGRAV_RK45_TIME_STEP_SIZE,1,0,comm);
+    massgrav::MASSGRAV_RK45_TIME_STEP_SIZE=massgrav::MASSGRAV_CFL_FACTOR*((massgrav::MASSGRAV_COMPD_MAX[0]-massgrav::MASSGRAV_COMPD_MIN[0])*((1u<<(m_uiMaxDepth-lmax))/((double) massgrav::MASSGRAV_ELE_ORDER))/((double)(1u<<(m_uiMaxDepth))));
+    par::Mpi_Bcast(&massgrav::MASSGRAV_RK45_TIME_STEP_SIZE,1,0,comm);
 
 
-    ode::solver::RK_QUADGRAV rk_quadgrav(mesh,quadgrav::QUADGRAV_RK_TIME_BEGIN,quadgrav::QUADGRAV_RK_TIME_END,quadgrav::QUADGRAV_RK45_TIME_STEP_SIZE,(RKType)quadgrav::QUADGRAV_RK_TYPE);
+    ode::solver::RK_MASSGRAV rk_massgrav(mesh,massgrav::MASSGRAV_RK_TIME_BEGIN,massgrav::MASSGRAV_RK_TIME_END,massgrav::MASSGRAV_RK45_TIME_STEP_SIZE,(RKType)massgrav::MASSGRAV_RK_TYPE);
     
-    if(quadgrav::QUADGRAV_RESTORE_SOLVER==1)
-        rk_quadgrav.restoreCheckPoint(quadgrav::QUADGRAV_CHKPT_FILE_PREFIX.c_str(),comm);
+    if(massgrav::MASSGRAV_RESTORE_SOLVER==1)
+        rk_massgrav.restoreCheckPoint(massgrav::MASSGRAV_CHKPT_FILE_PREFIX.c_str(),comm);
 
-    quadgrav::timer::t_rkSolve.start();
-    rk_quadgrav.rkSolve();
-    quadgrav::timer::t_rkSolve.stop();
+    massgrav::timer::t_rkSolve.start();
+    rk_massgrav.rkSolve();
+    massgrav::timer::t_rkSolve.stop();
 
-    quadgrav::timer::total_runtime.stop();
-    rk_quadgrav.freeMesh();
+    massgrav::timer::total_runtime.stop();
+    rk_massgrav.freeMesh();
 
     
     MPI_Finalize();

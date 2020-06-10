@@ -1,15 +1,11 @@
-//
-// Created by milinda on 10/21/17.
-/**
-*@author Milinda Fernando
-*School of Computing, University of Utah
+/*
 *@brief
 */
 //
 
 #include "profile_params.h"
 
-namespace quadgrav
+namespace massgrav
 {
     namespace timer
     {

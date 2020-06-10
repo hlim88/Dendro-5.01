@@ -1,5 +1,5 @@
 /**
- * @file quadgravCtx.cpp
+ * @file massgravCtx.cpp
  * @author Milinda Fernando (milinda@cs.utah.edu)
  * @brief BSSN contex file. 
  * @version 0.1
@@ -10,9 +10,9 @@
  * 
  */
 
-#include "quadgravCtx.h"
+#include "massgravCtx.h"
 
-namespace quadgrav
+namespace massgrav
 {
     BSSNCtx::BSSNCtx(ot::Mesh* pMesh) : Ctx()
     {   
@@ -32,14 +32,14 @@ namespace quadgrav
 
         m_uiTinfo._m_uiStep=0;
         m_uiTinfo._m_uiT = 0;
-        m_uiTinfo._m_uiTb = quadgrav::BSSN_RK_TIME_BEGIN;
-        m_uiTinfo._m_uiTe = quadgrav::BSSN_RK_TIME_END;
-        m_uiTinfo._m_uiTh = quadgrav::BSSN_RK45_TIME_STEP_SIZE;     
+        m_uiTinfo._m_uiTb = massgrav::BSSN_RK_TIME_BEGIN;
+        m_uiTinfo._m_uiTe = massgrav::BSSN_RK_TIME_END;
+        m_uiTinfo._m_uiTh = massgrav::BSSN_RK45_TIME_STEP_SIZE;     
 
-        m_uiElementOrder = quadgrav::BSSN_ELE_ORDER;
+        m_uiElementOrder = massgrav::BSSN_ELE_ORDER;
 
-        m_uiMinPt = Point(quadgrav::BSSN_GRID_MIN_X,quadgrav::BSSN_GRID_MIN_Y,quadgrav::BSSN_GRID_MIN_Z);
-        m_uiMaxPt = Point(quadgrav::BSSN_GRID_MAX_X,quadgrav::BSSN_GRID_MAX_Y,quadgrav::BSSN_GRID_MAX_Z);
+        m_uiMinPt = Point(massgrav::BSSN_GRID_MIN_X,massgrav::BSSN_GRID_MIN_Y,massgrav::BSSN_GRID_MIN_Z);
+        m_uiMaxPt = Point(massgrav::BSSN_GRID_MAX_X,massgrav::BSSN_GRID_MAX_Y,massgrav::BSSN_GRID_MAX_Z);
         
         return;
 
@@ -58,7 +58,7 @@ namespace quadgrav
 
     int BSSNCtx::initialize()
     {
-        if(quadgrav::BSSN_RESTORE_SOLVER)
+        if(massgrav::BSSN_RESTORE_SOLVER)
         {
             this->restore_checkpt();
             return 0;
@@ -77,8 +77,8 @@ namespace quadgrav
         const unsigned int nodeLocalEnd=m_uiMesh->getNodeLocalEnd();
 
 
-        DendroScalar* var=new double[quadgrav::BSSN_NUM_VARS];
-        DendroScalar** zipIn = new DendroScalar*[quadgrav::BSSN_NUM_VARS];
+        DendroScalar* var=new double[massgrav::BSSN_NUM_VARS];
+        DendroScalar** zipIn = new DendroScalar*[massgrav::BSSN_NUM_VARS];
         m_uiEVar.Get2DArray(zipIn,true);
 
         DendroScalar mp, mm, mp_adm, mm_adm, E, J1, J2, J3;
@@ -101,26 +101,26 @@ namespace quadgrav
                             y=pNodes[ownerID].getY()+ jj_y*(len/(eleOrder));
                             z=pNodes[ownerID].getZ()+ kk_z*(len/(eleOrder));
                             
-                            if (quadgrav::BSSN_ID_TYPE == 0) {
+                            if (massgrav::BSSN_ID_TYPE == 0) {
                                 TwoPunctures((double)x,(double)y,(double)z,var,
                                             &mp, &mm, &mp_adm, &mm_adm, &E, &J1, &J2, &J3);
                             }
-                            else if (quadgrav::BSSN_ID_TYPE == 1) {
-                                quadgrav::punctureData((double)x,(double)y,(double)z,var);
+                            else if (massgrav::BSSN_ID_TYPE == 1) {
+                                massgrav::punctureData((double)x,(double)y,(double)z,var);
                             }
-                            else if (quadgrav::BSSN_ID_TYPE == 2) {
-                                quadgrav::KerrSchildData((double)x,(double)y,(double)z,var);
+                            else if (massgrav::BSSN_ID_TYPE == 2) {
+                                massgrav::KerrSchildData((double)x,(double)y,(double)z,var);
                             }
-                            else if (quadgrav::BSSN_ID_TYPE == 3) {
-                                quadgrav::noiseData((double)x,(double)y,(double)z,var);
+                            else if (massgrav::BSSN_ID_TYPE == 3) {
+                                massgrav::noiseData((double)x,(double)y,(double)z,var);
                             }
-                            else if (quadgrav::BSSN_ID_TYPE == 4) {
-                                quadgrav::fake_initial_data((double)x,(double)y,(double)z,var);
+                            else if (massgrav::BSSN_ID_TYPE == 4) {
+                                massgrav::fake_initial_data((double)x,(double)y,(double)z,var);
                             }
                             else {
                                 std::cout<<"Unknown ID type"<<std::endl;
                             }
-                            for(unsigned int v=0; v<quadgrav::BSSN_NUM_VARS; v++)
+                            for(unsigned int v=0; v<massgrav::BSSN_NUM_VARS; v++)
                                 zipIn[v][nodeLookUp_CG]=var[v];
                         }
 
@@ -128,15 +128,15 @@ namespace quadgrav
         }
         
         for(unsigned int node=m_uiMesh->getNodeLocalBegin(); node<m_uiMesh->getNodeLocalEnd(); node++)
-            enforce_quadgrav_constraints(zipIn,node);
+            enforce_massgrav_constraints(zipIn,node);
 
 
         delete [] var;
         delete [] zipIn;
 
         #ifdef BSSN_EXTRACT_BH_LOCATIONS
-            m_uiBHLoc[0]=Point(quadgrav::BH1.getBHCoordX(),quadgrav::BH1.getBHCoordY(),quadgrav::BH1.getBHCoordZ());
-            m_uiBHLoc[1]=Point(quadgrav::BH2.getBHCoordX(),quadgrav::BH2.getBHCoordY(),quadgrav::BH2.getBHCoordZ());
+            m_uiBHLoc[0]=Point(massgrav::BH1.getBHCoordX(),massgrav::BH1.getBHCoordY(),massgrav::BH1.getBHCoordZ());
+            m_uiBHLoc[1]=Point(massgrav::BH2.getBHCoordX(),massgrav::BH2.getBHCoordY(),massgrav::BH2.getBHCoordZ());
         #endif
 
         return 0;    
@@ -157,9 +157,9 @@ namespace quadgrav
         in[0].Get2DArray(sVar,false);
 
         for(unsigned int node=m_uiMesh->getNodeLocalBegin(); node< m_uiMesh->getNodeLocalEnd(); node++)
-            enforce_quadgrav_constraints(sVar, node);
+            enforce_massgrav_constraints(sVar, node);
         
-        this->unzip(in[0],m_uiEUnzip[0] , quadgrav::BSSN_ASYNC_COMM_K);
+        this->unzip(in[0],m_uiEUnzip[0] , massgrav::BSSN_ASYNC_COMM_K);
         
         DendroScalar ** unzipIn;
         DendroScalar **  unzipOut; 
@@ -170,9 +170,9 @@ namespace quadgrav
         const ot::Block* blkList = m_uiMesh->getLocalBlockList().data();
         const unsigned int numBlocks = m_uiMesh->getLocalBlockList().size();
         
-        quadgravRHS(unzipOut,(const DendroScalar**)unzipIn,blkList,numBlocks);
+        massgravRHS(unzipOut,(const DendroScalar**)unzipIn,blkList,numBlocks);
 
-        this->zip(m_uiEUnzip[1], out[0], quadgrav::BSSN_ASYNC_COMM_K);
+        this->zip(m_uiEUnzip[1], out[0], massgrav::BSSN_ASYNC_COMM_K);
 
         delete [] unzipIn;
         delete [] unzipOut;
@@ -203,8 +203,8 @@ namespace quadgrav
         unsigned int sz[3];
         unsigned int bflag;
         double dx,dy,dz;
-        const Point pt_min(quadgrav::BSSN_COMPD_MIN[0],quadgrav::BSSN_COMPD_MIN[1],quadgrav::BSSN_COMPD_MIN[2]);
-        const Point pt_max(quadgrav::BSSN_COMPD_MAX[0],quadgrav::BSSN_COMPD_MAX[1],quadgrav::BSSN_COMPD_MAX[2]);
+        const Point pt_min(massgrav::BSSN_COMPD_MIN[0],massgrav::BSSN_COMPD_MIN[1],massgrav::BSSN_COMPD_MIN[2]);
+        const Point pt_max(massgrav::BSSN_COMPD_MAX[0],massgrav::BSSN_COMPD_MAX[1],massgrav::BSSN_COMPD_MAX[2]);
 
         for(unsigned int i=0; i < numIds; i++)
         {
@@ -231,9 +231,9 @@ namespace quadgrav
             ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
             #ifdef BSSN_RHS_STAGED_COMP
-                quadgravrhs_sep(unzipOut, (const double **)unzipIn, offset, ptmin, ptmax, sz, bflag);
+                massgravrhs_sep(unzipOut, (const double **)unzipIn, offset, ptmin, ptmax, sz, bflag);
             #else
-                quadgravrhs(unzipOut, (const double **)unzipIn, offset, ptmin, ptmax, sz, bflag);
+                massgravrhs(unzipOut, (const double **)unzipIn, offset, ptmin, ptmax, sz, bflag);
             #endif
 
         }
@@ -247,7 +247,7 @@ namespace quadgrav
     int BSSNCtx::rhs_blk(const DendroScalar* in, DendroScalar* out, unsigned int dof, unsigned int local_blk_id, DendroScalar  blk_time) const 
     {
         //return 0;
-        //std::cout<<"quadgrav_rhs"<<std::endl;
+        //std::cout<<"massgrav_rhs"<<std::endl;
         DendroScalar **  unzipIn   = new DendroScalar*[dof];
         DendroScalar **  unzipOut  = new DendroScalar*[dof]; 
 
@@ -259,8 +259,8 @@ namespace quadgrav
         unsigned int sz[3];
         unsigned int bflag;
         double dx,dy,dz;
-        const Point pt_min(quadgrav::BSSN_COMPD_MIN[0],quadgrav::BSSN_COMPD_MIN[1],quadgrav::BSSN_COMPD_MIN[2]);
-        const Point pt_max(quadgrav::BSSN_COMPD_MAX[0],quadgrav::BSSN_COMPD_MAX[1],quadgrav::BSSN_COMPD_MAX[2]);
+        const Point pt_min(massgrav::BSSN_COMPD_MIN[0],massgrav::BSSN_COMPD_MIN[1],massgrav::BSSN_COMPD_MIN[2]);
+        const Point pt_max(massgrav::BSSN_COMPD_MAX[0],massgrav::BSSN_COMPD_MAX[1],massgrav::BSSN_COMPD_MAX[2]);
 
         sz[0]=blkList[blk].getAllocationSzX();
         sz[1]=blkList[blk].getAllocationSzY();
@@ -290,9 +290,9 @@ namespace quadgrav
         ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
         #ifdef BSSN_RHS_STAGED_COMP
-            quadgravrhs_sep(unzipOut, (const DendroScalar **)unzipIn, 0, ptmin, ptmax, sz, bflag);
+            massgravrhs_sep(unzipOut, (const DendroScalar **)unzipIn, 0, ptmin, ptmax, sz, bflag);
         #else
-            quadgravrhs(unzipOut, (const DendroScalar **)unzipIn, 0, ptmin, ptmax, sz, bflag);
+            massgravrhs(unzipOut, (const DendroScalar **)unzipIn, 0, ptmin, ptmax, sz, bflag);
         #endif
 
         delete [] unzipIn;
@@ -327,8 +327,8 @@ namespace quadgrav
             unsigned int sz[3];
             unsigned int bflag;
             double dx,dy,dz;
-            const Point pt_min(quadgrav::BSSN_COMPD_MIN[0],quadgrav::BSSN_COMPD_MIN[1],quadgrav::BSSN_COMPD_MIN[2]);
-            const Point pt_max(quadgrav::BSSN_COMPD_MAX[0],quadgrav::BSSN_COMPD_MAX[1],quadgrav::BSSN_COMPD_MAX[2]);
+            const Point pt_min(massgrav::BSSN_COMPD_MIN[0],massgrav::BSSN_COMPD_MIN[1],massgrav::BSSN_COMPD_MIN[2]);
+            const Point pt_max(massgrav::BSSN_COMPD_MAX[0],massgrav::BSSN_COMPD_MAX[1],massgrav::BSSN_COMPD_MAX[2]);
 
             for(unsigned int blk=0; blk<blkList.size(); blk++)
             {
@@ -354,15 +354,15 @@ namespace quadgrav
                 physical_constraints(consUnzipVar, (const DendroScalar **) evolUnzipVar, offset, ptmin, ptmax, sz, bflag);
             }
 
-            /*double consVecMin[quadgrav::BSSN_CONSTRAINT_NUM_VARS];
-            double consVecMax[quadgrav::BSSN_CONSTRAINT_NUM_VARS];*/
-            double constraintMaskedL2[quadgrav::BSSN_CONSTRAINT_NUM_VARS];
+            /*double consVecMin[massgrav::BSSN_CONSTRAINT_NUM_VARS];
+            double consVecMax[massgrav::BSSN_CONSTRAINT_NUM_VARS];*/
+            double constraintMaskedL2[massgrav::BSSN_CONSTRAINT_NUM_VARS];
             
-            this->zip(m_uiCUnzip[0],m_uiCVar,quadgrav::BSSN_ASYNC_COMM_K);
+            this->zip(m_uiCUnzip[0],m_uiCVar,massgrav::BSSN_ASYNC_COMM_K);
             
 
 
-            quadgrav::extractConstraints(m_uiMesh,(const DendroScalar **)consVar,evolVar[BHLOC::EXTRACTION_VAR_ID],BHLOC::EXTRACTION_TOL,m_uiTinfo._m_uiStep);
+            massgrav::extractConstraints(m_uiMesh,(const DendroScalar **)consVar,evolVar[BHLOC::EXTRACTION_VAR_ID],BHLOC::EXTRACTION_TOL,m_uiTinfo._m_uiStep);
             #ifndef BSSN_KERR_SCHILD_TEST
                 #ifdef BSSN_EXTRACT_GRAVITATIONAL_WAVES
                 GW::extractFarFieldPsi4(m_uiMesh,(const DendroScalar **)consVar,m_uiTinfo._m_uiStep,m_uiTinfo._m_uiT);
@@ -373,21 +373,21 @@ namespace quadgrav
 
         #ifdef BSSN_ENABLE_VTU_OUTPUT
             std::vector<std::string> pDataNames;
-            const unsigned int numConstVars = quadgrav::BSSN_NUM_CONST_VARS_VTU_OUTPUT;
-            const unsigned int numEvolVars  = quadgrav::BSSN_NUM_EVOL_VARS_VTU_OUTPUT;
+            const unsigned int numConstVars = massgrav::BSSN_NUM_CONST_VARS_VTU_OUTPUT;
+            const unsigned int numEvolVars  = massgrav::BSSN_NUM_EVOL_VARS_VTU_OUTPUT;
 
             double *pData[(numConstVars+numEvolVars)];
 
             for(unsigned int i=0; i<numEvolVars; i++)
             {
-                pDataNames.push_back(std::string(quadgrav::BSSN_VAR_NAMES[BSSN_VTU_OUTPUT_EVOL_INDICES[i]]));
+                pDataNames.push_back(std::string(massgrav::BSSN_VAR_NAMES[BSSN_VTU_OUTPUT_EVOL_INDICES[i]]));
                 pData[i]=evolVar[BSSN_VTU_OUTPUT_EVOL_INDICES[i]];
             }
 
 
             for(unsigned int i=0; i<numConstVars; i++)
             {
-                pDataNames.push_back(std::string(quadgrav::BSSN_CONSTRAINT_VAR_NAMES[BSSN_VTU_OUTPUT_CONST_INDICES[i]]));
+                pDataNames.push_back(std::string(massgrav::BSSN_CONSTRAINT_VAR_NAMES[BSSN_VTU_OUTPUT_CONST_INDICES[i]]));
                 pData[numEvolVars+i]=consVar[BSSN_VTU_OUTPUT_CONST_INDICES[i]];
             }
 
@@ -401,14 +401,14 @@ namespace quadgrav
             const double fData[]= {m_uiTinfo._m_uiT,(double)m_uiTinfo._m_uiStep};
 
             char fPrefix[256];
-            sprintf(fPrefix,"%s_%d",quadgrav::BSSN_VTU_FILE_PREFIX.c_str(),m_uiTinfo._m_uiStep);
+            sprintf(fPrefix,"%s_%d",massgrav::BSSN_VTU_FILE_PREFIX.c_str(),m_uiTinfo._m_uiStep);
 
             io::vtk::mesh2vtuFine(m_uiMesh,fPrefix,2,fDataNames,fData,(numEvolVars+numConstVars),(const char **)&pDataNames_char[0],(const double **)pData);
         #endif
 
 
         #ifdef BSSN_EXTRACT_BH_LOCATIONS
-            quadgrav::writeBHCoordinates((const ot::Mesh *)m_uiMesh,(const Point *) m_uiBHLoc,2,m_uiTinfo._m_uiStep);
+            massgrav::writeBHCoordinates((const ot::Mesh *)m_uiMesh,(const Point *) m_uiBHLoc,2,m_uiTinfo._m_uiStep);
         #endif
 
         delete [] evolUnzipVar;
@@ -424,7 +424,7 @@ namespace quadgrav
         if(m_uiMesh->isActive())
         {
             unsigned int cpIndex;
-            (m_uiTinfo._m_uiStep %(2*quadgrav::BSSN_CHECKPT_FREQ)==0) ? cpIndex=0 : cpIndex=1; // to support alternate file writing.
+            (m_uiTinfo._m_uiStep %(2*massgrav::BSSN_CHECKPT_FREQ)==0) ? cpIndex=0 : cpIndex=1; // to support alternate file writing.
             unsigned int rank=m_uiMesh->getMPIRank();
             unsigned int npes=m_uiMesh->getMPICommSize();
 
@@ -434,11 +434,11 @@ namespace quadgrav
 
             char fName[256];
             const ot::TreeNode * pNodes=&(*(m_uiMesh->getAllElements().begin()+m_uiMesh->getElementLocalBegin()));
-            sprintf(fName,"%s_octree_%d_%d.oct",quadgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),cpIndex,rank);
+            sprintf(fName,"%s_octree_%d_%d.oct",massgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),cpIndex,rank);
             io::checkpoint::writeOctToFile(fName,pNodes,m_uiMesh->getNumLocalMeshElements());
 
-            unsigned int numVars=quadgrav::BSSN_NUM_VARS;
-            const char ** varNames=quadgrav::BSSN_VAR_NAMES;
+            unsigned int numVars=massgrav::BSSN_NUM_VARS;
+            const char ** varNames=massgrav::BSSN_VAR_NAMES;
 
             /*for(unsigned int i=0;i<numVars;i++)
             {
@@ -446,12 +446,12 @@ namespace quadgrav
                 io::checkpoint::writeVecToFile(fName,m_uiMesh,m_uiPrevVar[i]);
             }*/
 
-            sprintf(fName,"%s_%d_%d.var",quadgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),cpIndex,rank);
-            io::checkpoint::writeVecToFile(fName,m_uiMesh,(const double **)eVar,quadgrav::BSSN_NUM_VARS);
+            sprintf(fName,"%s_%d_%d.var",massgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),cpIndex,rank);
+            io::checkpoint::writeVecToFile(fName,m_uiMesh,(const double **)eVar,massgrav::BSSN_NUM_VARS);
 
             if(!rank)
             {
-                sprintf(fName,"%s_step_%d.cp",quadgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),cpIndex);
+                sprintf(fName,"%s_step_%d.cp",massgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),cpIndex);
                 std::cout<<"[BSSNCtx] \t writing checkpoint file : "<<fName<<std::endl;
                 std::ofstream outfile(fName);
                 if(!outfile) {
@@ -469,8 +469,8 @@ namespace quadgrav
                 checkPoint["DENDRO_TS_TIME_STEP_SIZE"]  = m_uiTinfo._m_uiTh;
                 checkPoint["DENDRO_TS_LAST_IO_TIME"]    = m_uiTinfo._m_uiT;
 
-                checkPoint["DENDRO_TS_WAVELET_TOLERANCE"]=quadgrav::BSSN_WAVELET_TOL;
-                checkPoint["DENDRO_TS_LOAD_IMB_TOLERANCE"]=quadgrav::BSSN_LOAD_IMB_TOL;
+                checkPoint["DENDRO_TS_WAVELET_TOLERANCE"]=massgrav::BSSN_WAVELET_TOL;
+                checkPoint["DENDRO_TS_LOAD_IMB_TOLERANCE"]=massgrav::BSSN_LOAD_IMB_TOL;
                 checkPoint["DENDRO_TS_NUM_VARS"]=numVars; // number of variables to restore.
                 checkPoint["DENDRO_TS_ACTIVE_COMM_SZ"]=m_uiMesh->getMPICommSize(); // (note that rank 0 is always active).
                 
@@ -525,7 +525,7 @@ namespace quadgrav
 
             if(!rank)
             {
-                sprintf(fName,"%s_step_%d.cp", quadgrav::BSSN_CHKPT_FILE_PREFIX.c_str() , cpIndex);
+                sprintf(fName,"%s_step_%d.cp", massgrav::BSSN_CHKPT_FILE_PREFIX.c_str() , cpIndex);
                 std::ifstream infile(fName);
                 if(!infile) {
                     std::cout<<fName<<" file open failed "<<std::endl;
@@ -543,8 +543,8 @@ namespace quadgrav
                     m_uiTinfo._m_uiTh    = checkPoint["DENDRO_TS_TIME_STEP_SIZE"];
                     m_uiElementOrder     = checkPoint["DENDRO_TS_ELEMENT_ORDER"];
                     
-                    quadgrav::BSSN_WAVELET_TOL=checkPoint["DENDRO_TS_WAVELET_TOLERANCE"];
-                    quadgrav::BSSN_LOAD_IMB_TOL=checkPoint["DENDRO_TS_LOAD_IMB_TOLERANCE"];
+                    massgrav::BSSN_WAVELET_TOL=checkPoint["DENDRO_TS_WAVELET_TOLERANCE"];
+                    massgrav::BSSN_LOAD_IMB_TOL=checkPoint["DENDRO_TS_LOAD_IMB_TOLERANCE"];
                     
                     numVars=checkPoint["DENDRO_TS_NUM_VARS"];
                     activeCommSz=checkPoint["DENDRO_TS_ACTIVE_COMM_SZ"];
@@ -574,7 +574,7 @@ namespace quadgrav
         
             if(!rank)
             {
-                sprintf(fName,"%s_step_%d.cp", quadgrav::BSSN_CHKPT_FILE_PREFIX.c_str(), restoreFileIndex);
+                sprintf(fName,"%s_step_%d.cp", massgrav::BSSN_CHKPT_FILE_PREFIX.c_str(), restoreFileIndex);
                 std::ifstream infile(fName);
                 if(!infile) {
                     std::cout<<fName<<" file open failed "<<std::endl;
@@ -592,8 +592,8 @@ namespace quadgrav
                     m_uiTinfo._m_uiTh    = checkPoint["DENDRO_TS_TIME_STEP_SIZE"];
                     m_uiElementOrder     = checkPoint["DENDRO_TS_ELEMENT_ORDER"];
                     
-                    quadgrav::BSSN_WAVELET_TOL=checkPoint["DENDRO_TS_WAVELET_TOLERANCE"];
-                    quadgrav::BSSN_LOAD_IMB_TOL=checkPoint["DENDRO_TS_LOAD_IMB_TOLERANCE"];
+                    massgrav::BSSN_WAVELET_TOL=checkPoint["DENDRO_TS_WAVELET_TOLERANCE"];
+                    massgrav::BSSN_LOAD_IMB_TOL=checkPoint["DENDRO_TS_LOAD_IMB_TOLERANCE"];
                     
                     numVars=checkPoint["DENDRO_TS_NUM_VARS"];
                     activeCommSz=checkPoint["DENDRO_TS_ACTIVE_COMM_SZ"];
@@ -616,8 +616,8 @@ namespace quadgrav
 
 
             MPI_Bcast(&m_uiTinfo,sizeof(ts::TSInfo),MPI_BYTE,0,comm);
-            par::Mpi_Bcast(&quadgrav::BSSN_WAVELET_TOL,1,0,comm);
-            par::Mpi_Bcast(&quadgrav::BSSN_LOAD_IMB_TOL,1,0,comm);
+            par::Mpi_Bcast(&massgrav::BSSN_WAVELET_TOL,1,0,comm);
+            par::Mpi_Bcast(&massgrav::BSSN_LOAD_IMB_TOL,1,0,comm);
 
             par::Mpi_Bcast(&numVars,1,0,comm);
             par::Mpi_Bcast(&m_uiElementOrder,1,0,comm);
@@ -649,7 +649,7 @@ namespace quadgrav
                 MPI_Comm_size(newComm, &activeNpes);
                 assert(activeNpes == activeCommSz);
 
-                sprintf(fName, "%s_octree_%d_%d.oct", quadgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),restoreFileIndex,activeRank);
+                sprintf(fName, "%s_octree_%d_%d.oct", massgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),restoreFileIndex,activeRank);
                 restoreStatus=io::checkpoint::readOctFromFile(fName, octree);
                 assert(par::test::isUniqueAndSorted(octree, newComm));
 
@@ -679,8 +679,8 @@ namespace quadgrav
                 MPI_Comm_size(newComm, &activeNpes);
                 assert(activeNpes == activeCommSz);
 
-                sprintf(fName,"%s_%d_%d.var",quadgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),restoreFileIndex,activeRank);
-                restoreStatus=io::checkpoint::readVecFromFile(fName,newMesh,inVec,quadgrav::BSSN_NUM_VARS);
+                sprintf(fName,"%s_%d_%d.var",massgrav::BSSN_CHKPT_FILE_PREFIX.c_str(),restoreFileIndex,activeRank);
+                restoreStatus=io::checkpoint::readVecFromFile(fName,newMesh,inVec,massgrav::BSSN_NUM_VARS);
 
                 delete [] inVec;
             }
@@ -711,10 +711,10 @@ namespace quadgrav
     {
 
         #ifdef BSSN_EXTRACT_BH_LOCATIONS
-            DendroScalar ** evar = new DendroScalar*[quadgrav::BSSN_NUM_VARS];
+            DendroScalar ** evar = new DendroScalar*[massgrav::BSSN_NUM_VARS];
             Point bhLoc[2];
             sIn.Get2DArray(evar,true);
-            quadgrav::extractBHCoords((const ot::Mesh *)m_uiMesh,(const DendroScalar*)evar[BHLOC::EXTRACTION_VAR_ID],BHLOC::EXTRACTION_TOL,(const Point *) m_uiBHLoc,2,(Point*)bhLoc);
+            massgrav::extractBHCoords((const ot::Mesh *)m_uiMesh,(const DendroScalar*)evar[BHLOC::EXTRACTION_VAR_ID],BHLOC::EXTRACTION_TOL,(const Point *) m_uiBHLoc,2,(Point*)bhLoc);
             
             m_uiBHLoc[0] = bhLoc[0];
             m_uiBHLoc[1] = bhLoc[1];
@@ -744,38 +744,38 @@ namespace quadgrav
     bool BSSNCtx::is_remesh()
     {
         bool isRefine = false;
-        if(quadgrav::BSSN_ENABLE_BLOCK_ADAPTIVITY)
+        if(massgrav::BSSN_ENABLE_BLOCK_ADAPTIVITY)
             return false;
 
         
         MPI_Comm comm = m_uiMesh->getMPIGlobalCommunicator();
         
-        this->unzip(m_uiEVar,m_uiEUnzip[0],quadgrav::BSSN_ASYNC_COMM_K);
+        this->unzip(m_uiEVar,m_uiEUnzip[0],massgrav::BSSN_ASYNC_COMM_K);
 
         DendroScalar** unzipVar;
         m_uiEUnzip[0].Get2DArray(unzipVar, false);
 
-        unsigned int refineVarIds[quadgrav::BSSN_NUM_REFINE_VARS];
-        for(unsigned int vIndex=0; vIndex<quadgrav::BSSN_NUM_REFINE_VARS; vIndex++)
-            refineVarIds[vIndex]=quadgrav::BSSN_REFINE_VARIABLE_INDICES[vIndex];
+        unsigned int refineVarIds[massgrav::BSSN_NUM_REFINE_VARS];
+        for(unsigned int vIndex=0; vIndex<massgrav::BSSN_NUM_REFINE_VARS; vIndex++)
+            refineVarIds[vIndex]=massgrav::BSSN_REFINE_VARIABLE_INDICES[vIndex];
 
-        double wTol=quadgrav::BSSN_WAVELET_TOL;
+        double wTol=massgrav::BSSN_WAVELET_TOL;
             std::function<double(double,double,double)> waveletTolFunc =[wTol](double x,double y, double z) {
-            return quadgrav::computeWTol(x,y,z,wTol);
+            return massgrav::computeWTol(x,y,z,wTol);
         };
         
 
-        if(quadgrav::BSSN_REFINEMENT_MODE == quadgrav::RefinementMode::WAMR) {
-            isRefine=m_uiMesh->isReMeshUnzip((const double **)unzipVar,refineVarIds,quadgrav::BSSN_NUM_REFINE_VARS,waveletTolFunc,quadgrav::BSSN_DENDRO_AMR_FAC); 
+        if(massgrav::BSSN_REFINEMENT_MODE == massgrav::RefinementMode::WAMR) {
+            isRefine=m_uiMesh->isReMeshUnzip((const double **)unzipVar,refineVarIds,massgrav::BSSN_NUM_REFINE_VARS,waveletTolFunc,massgrav::BSSN_DENDRO_AMR_FAC); 
 
-        }else if(quadgrav::BSSN_REFINEMENT_MODE == quadgrav::RefinementMode::EH)
+        }else if(massgrav::BSSN_REFINEMENT_MODE == massgrav::RefinementMode::EH)
         {
-            isRefine = quadgrav::isRemeshEH(m_uiMesh,(const double **)unzipVar,quadgrav::VAR::U_ALPHA,quadgrav::BSSN_EH_REFINE_VAL,quadgrav::BSSN_EH_COARSEN_VAL,true);
+            isRefine = massgrav::isRemeshEH(m_uiMesh,(const double **)unzipVar,massgrav::VAR::U_ALPHA,massgrav::BSSN_EH_REFINE_VAL,massgrav::BSSN_EH_COARSEN_VAL,true);
 
-        }else if(quadgrav::BSSN_REFINEMENT_MODE == quadgrav::RefinementMode::EH_WAMR)
+        }else if(massgrav::BSSN_REFINEMENT_MODE == massgrav::RefinementMode::EH_WAMR)
         {
-            const bool isR1 = m_uiMesh->isReMeshUnzip((const double **)unzipVar,refineVarIds,quadgrav::BSSN_NUM_REFINE_VARS,waveletTolFunc,quadgrav::BSSN_DENDRO_AMR_FAC); 
-            const bool isR2 = quadgrav::isRemeshEH(m_uiMesh,(const double **)unzipVar,quadgrav::VAR::U_ALPHA,quadgrav::BSSN_EH_REFINE_VAL,quadgrav::BSSN_EH_COARSEN_VAL,false);
+            const bool isR1 = m_uiMesh->isReMeshUnzip((const double **)unzipVar,refineVarIds,massgrav::BSSN_NUM_REFINE_VARS,waveletTolFunc,massgrav::BSSN_DENDRO_AMR_FAC); 
+            const bool isR2 = massgrav::isRemeshEH(m_uiMesh,(const double **)unzipVar,massgrav::VAR::U_ALPHA,massgrav::BSSN_EH_REFINE_VAL,massgrav::BSSN_EH_COARSEN_VAL,false);
 
             isRefine = (isR1 || isR2);
         }
@@ -816,16 +816,16 @@ namespace quadgrav
     int BSSNCtx::terminal_output()
     {
         DendroScalar min=0, max=0;
-        m_uiEVar.VecMinMax(m_uiMesh,min,max,quadgrav::VAR::U_ALPHA);
+        m_uiEVar.VecMinMax(m_uiMesh,min,max,massgrav::VAR::U_ALPHA);
 
         if(m_uiMesh->isActive())
         {
             if(!(m_uiMesh->getMPIRank()))
-                std::cout<<"[BSSNCtx]:  "<<quadgrav::BSSN_VAR_NAMES[quadgrav::VAR::U_ALPHA]<<" (min,max) : \t ( "<<min<<", "<<max<<" ) "<<std::endl;
+                std::cout<<"[BSSNCtx]:  "<<massgrav::BSSN_VAR_NAMES[massgrav::VAR::U_ALPHA]<<" (min,max) : \t ( "<<min<<", "<<max<<" ) "<<std::endl;
         }
 
         return 0; 
     }
 
 
-}// end of namespace quadgrav. 
+}// end of namespace massgrav. 
