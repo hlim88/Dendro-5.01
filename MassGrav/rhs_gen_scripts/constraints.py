@@ -1,9 +1,10 @@
 ####################################################################
 #
 # Date : Dec.12.2017
-# Updated : May.18.2018 
+# Updated : Jun.10.2020
 # Python script that generates Psi4 for gravitational waves and
-# the momentum and Hamiltonian constraint equations. 
+# the momentum and Hamiltonian constraint equations for massive
+# gravity. 
 # 
 ####################################################################
 
@@ -24,6 +25,14 @@ K   = dendro.scalar("K","[pp]")
 Gt  = dendro.vec3("Gt","[pp]")
 gt  = dendro.sym_3x3("gt","[pp]")
 At  = dendro.sym_3x3("At","[pp]")
+b = dendro.vec3("beta","[pp]")
+a = dendro.scalar("alpha","[pp]")
+
+# declare reference metric related vars
+# TODO : this is not really evolution variables... but somewhat need to be defined
+a_ref   = dendro.scalar("alpha_ref", "[pp]")
+b_ref   = dendro.vec3("beta_ref", "[pp]")
+f_ref  = dendro.sym_3x3("f_ref", "[pp]")
 
 # Specify the operators needed for computing first and second derivatives
 d = dendro.set_first_derivative('grad')    # first argument is direction
@@ -34,6 +43,15 @@ ad = dendro.set_advective_derivative('agrad')  # first argument is direction
 dendro.set_metric(gt)
 igt = dendro.get_inverse_metric()
 
+dendro.set_ref_metric(f_ref)
+if_ref = dendro.get_inverse_ref_metric()
+
+# Some constants
+PI = 3.14159265358979323846
+
+# Mass from dRGT
+M_dRGT = symbols('M_dRGT')
+
 # Christoffels, Ricci, et al  
 C1 = dendro.get_first_christoffel()
 C2 = dendro.get_second_christoffel()
@@ -41,6 +59,30 @@ C2 = dendro.get_second_christoffel()
 C2_spatial = dendro.get_complete_christoffel(chi)
 R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 
+# Compute some energy momentum tensor related values
+# Precomputation for sqrt(g^-1 f) matrix
+# TODO : Find correct expression for that matrix
+
+M_dRGT_sq = M_dRGT*M_dRGT
+
+ginv_f_refMat_00 = a_ref*a_ref + sum([b[i]*b_ref[i] for i in dendro.e_i])
+ginv_f_refMat_01 = Matrix([-b_ref[j] + sum([b[i]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i])
+ginv_f_refMat_10 = Matrix([a*a*sum([igt[i,j]*b_ref[i] for i in dendro.e_i]) - b[j]*(a_ref*a_ref+  sum([b[i]*b_ref[i] for i in dendro.e_i])) for j in dendro.e_i])
+ginv_f_refMat_11 = Matrix([a*a*sum([igt[i,l]*f_ref[l,j] for l in dendro.e_i]) - b[i] * (sum([b[l]*f_ref[l,j] for l in dendro.e_i]) - b_ref[j]) for i,j in dendro.e_ij])
+ginv_f_refMat_11 = ginv_f_refMat_11.reshape(3,3)
+
+x_var = a_ref*a_ref + sum([sum([(b_ref[i]*b_ref[j]-b[i]*b[j])*if_ref[i,j] for i in dendro.e_i])   for j in dendro.e_i])
+
+# General potential computations
+Tr_ginv_f_ref = ginv_f_refMat_00+ginv_f_refMat_11[0,0]+sqrtginv_f_refMat_11[1,1]+ginv_f_refMat_11[2,2]
+V_alpha = 2*M_dRGT_sq*(sum([sum([b[i]*b[j]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.      e_i]) - \
+          a_ref*a_ref - 2*sum([b[i]*b_ref[i] for i in dendro.e_i]))/(a*a) + \
+          2*M_dRGT_sq*(Tr_ginv_f_ref-3)
+V_beta_i = Matrix([2*M_dRGT_sq*sum([b[j]*f_ref[j,i] for j in dendro.e_i])/sqrt(x_var) for i in    dendro.e_i])
+
+#define energy momentum quantities
+rhot = -V_alpha/2
+Sit = -V_beta_i
 
 ###################################################################
 # Calculate the tetrad used in the Psi4 calculation
@@ -159,7 +201,7 @@ psi4_img  = - ( psi4_1_img  + psi4_2_img  - psi4_3_img  - psi4_4_img  )
 ###################################################################
 
 # The Hamiltonian constraint
-ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2
+ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2 - 2*rhot
 
 # The momentum  constraints 
 mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
@@ -169,7 +211,8 @@ mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(3,2)*Matrix([ \
             sum([igt[j,k]*At[k,i]*d(j,chi)/chi for j,k in dendro.e_ij])  \
             for i in dendro.e_i]) -\
-      Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i])
+      Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) - \
+    Matrix([Sit[i] for i in dendro.e_i])
 mom = [item for sublist in mom.tolist() for item in sublist]
 
 # Output for this should be included psi4_real and psi4_img as double precision  

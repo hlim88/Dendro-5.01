@@ -1,7 +1,6 @@
 ####################################################################
-# May.8.2018
-# Adding gamma driver into shift equation to optimize BBH behavior
-# with large mass ratio
+# Jun.10.2020
+# Evolution equation generator for massive gravity
 #####################################################################
 
 
@@ -75,7 +74,8 @@ C2_spatial = dendro.get_complete_christoffel(chi)
 R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 
 # Compute some energy momentum tensor related values
-# Some precomutation
+# Precomputation for sqrt(g^-1 f) matrix
+# TODO : Find correct expression for that matrix
 
 M_dRGT_sq = M_dRGT*M_dRGT
 
@@ -89,7 +89,7 @@ x_var = a_ref*a_ref + sum([sum([(b_ref[i]*b_ref[j]-b[i]*b[j])*if_ref[i,j] for i 
 
 
 # General potential computations
-Tr_ginv_f_ref = sqrt(ginv_f_refMat_00) + sqrt(ginv_f_refMat_11[0,0])+sqrt(ginv_f_refMat_11[1,1])+sqrt(ginv_f_refMat_11[2,2])
+Tr_ginv_f_ref = ginv_f_refMat_00+ginv_f_refMat_11[0,0]+ginv_f_refMat_11[1,1]+ginv_f_refMat_11[2,2]
 V_alpha = 2*M_dRGT_sq*(sum([sum([b[i]*b[j]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i]) - \
           a_ref*a_ref - 2*sum([b[i]*b_ref[i] for i in dendro.e_i]))/(a*a) + \
           2*M_dRGT_sq*(Tr_ginv_f_ref-3)
@@ -98,8 +98,8 @@ calgt = sum([sum([gt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 gtjk = Matrix([sum([igt[j,l]*gt[l,k] for l in dendro.e_i]) for j,k in dendro.e_ij])
 gtjk = gtjk.reshape(3,3)
 V_pi_ij = Matrix([ Tr_ginv_f_ref*igt[i,j] for i,j in dendro.e_ij]) + \
-          Matrix([ sqrt(ginv_f_refMat_01[i])*b_ref[j] for i,j in dendro.e_ij]) + \
-          Matrix([ sum([2*sqrt(ginv_f_refMat_11[i,k])*gtjk[j,k] for k in dendro.e_i]) for i,j in dendro.e_ij])
+          Matrix([ ginv_f_refMat_01[i]*b_ref[j] for i,j in dendro.e_ij]) + \
+          Matrix([ sum([2*ginv_f_refMat_11[i,k]*gtjk[j,k] for k in dendro.e_i]) for i,j in dendro.e_ij])
 
 V_pi_ij = 2*M_dRGT_sq*a*sqrt(calgt)/2 * V_pi_ij
 
