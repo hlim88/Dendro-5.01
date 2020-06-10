@@ -3,7 +3,6 @@
 # Evolution equation generator for massive gravity
 #####################################################################
 
-
 import dendro
 import math
 from sympy import *
@@ -75,31 +74,73 @@ R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 
 # Compute some energy momentum tensor related values
 # Precomputation for sqrt(g^-1 f) matrix
-# TODO : Find correct expression for that matrix
+# We use power serise to compute sqrt of matrix. 
+# Let A = g^-1 f then we have:
+#  sqrt(A) = I - |Binomial(1/2,1)| (I-A) - |Binomial(1/2,2)| (I-A)^2 - ...
+#     where I is identity matrix
 
+# Define mass square
 M_dRGT_sq = M_dRGT*M_dRGT
 
-ginv_f_refMat_00 = a_ref*a_ref + sum([b[i]*b_ref[i] for i in dendro.e_i])
-ginv_f_refMat_01 = Matrix([-b_ref[j] + sum([b[i]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i])
-ginv_f_refMat_10 = Matrix([a*a*sum([igt[i,j]*b_ref[i] for i in dendro.e_i]) - b[j]*(a_ref*a_ref+sum([b[i]*b_ref[i] for i in dendro.e_i])) for j in dendro.e_i])
-ginv_f_refMat_11 = Matrix([a*a*sum([igt[i,l]*f_ref[l,j] for l in dendro.e_i]) - b[i] * (sum([b[l]*f_ref[l,j] for l in dendro.e_i]) - b_ref[j]) for i,j in dendro.e_ij])
-ginv_f_refMat_11 = ginv_f_refMat_11.reshape(3,3)
+# Define A = g^-1 f
+AMat_00 = a_ref*a_ref + sum([b[l]*b_ref[l] for l in dendro.e_i])
+AMat_01 = Matrix([-b_ref[j] + sum([b[l]*f_ref[l,j] for l in dendro.e_i]) for j in dendro.e_i])
+AMat_10 = Matrix([a*a*sum([igt[i,l]*b_ref[l] for l in dendro.e_i]) - b[i]*(a_ref*a_ref+sum([b[l]*b_ref[l] for l in dendro.e_i])) for i in dendro.e_i])
+AMat_11 = Matrix([a*a*sum([igt[i,l]*f_ref[l,j] for l in dendro.e_i]) - b[i] * (sum([b[l]*f_ref[l,j] for l in dendro.e_i]) - b_ref[j]) for i,j in dendro.e_ij])
+AMat_11 = AMat_11.reshape(3,3)
 
+# Define A^2
+AMatsq_00 = (a_ref*a_ref + sum([b[l]*b_ref[l] for l in dendro.e_i])) * \
+            (a_ref*a_ref + sum([b[l]*b_ref[l] for l in dendro.e_i])) + \
+            sum([(-b_ref[k] + sum([b[l]*f_ref[l,k] for l in dendro.e_i])) * \
+                (a*a*sum([igt[k,l]*b_ref[l] for l in dendro.e_i]) - \
+                b[k]*(a_ref*a_ref+sum([b[l]*b_ref[l] for l in dendro.e_i]))) for k in dendro.e_i])
+AMatsq_01 = (a_ref*a_ref + sum([b[l]*b_ref[l] for l in dendro.e_i])) * \
+            Matrix([-b_ref[j] + sum([b[l]*f_ref[l,j] for l in dendro.e_i]) for j in dendro.e_i]) +\
+            Matrix([sum([(-b_ref[k] + sum([b[l]*f_ref[l,k] for l in dendro.e_i])) * \
+            (a*a*sum([igt[k,l]*f_ref[l,j] for l in dendro.e_i]) - \
+            b[k] * (sum([b[l]*f_ref[l, j] for l in dendro.e_i]) - b_ref[k])) \
+            for k in dendro.e_i]) for j in dendro.e_i])
+AMatsq_10 = (a_ref*a_ref + sum([b[l]*b_ref[l] for l in dendro.e_i])) * \
+            Matrix([-b_ref[i] + sum([b[l]*f_ref[l,i] for l in dendro.e_i]) for i in dendro.e_i]) +\
+            Matrix([sum([(a*a*sum([igt[i,l]*f_ref[l,k] for l in dendro.e_i]) - \
+                         b[i] * (sum([b[l]*f_ref[l, k] for l in dendro.e_i]) - b_ref[k]))* \
+                         (a*a*sum([igt[k,l]*b_ref[l] for l in dendro.e_i]) - \
+                         b[k]*(a_ref*a_ref+sum([b[l]* b_ref[l] for l in dendro.e_i]))) for k in dendro.e_i]) for i in dendro.e_i])
+AMatsq_11 = Matrix([(a*a*sum([igt[i,l]*b_ref[l] for l in dendro.e_i]) - \
+                    b[i]*(a_ref*a_ref+sum([b[l]* b_ref[l] for l in dendro.e_i]))) * \
+                    (-b_ref[j] + sum([b[l]*f_ref[l,j] for l in dendro.e_i])) \
+                    for i,j in dendro.e_ij]) + \
+            Matrix([sum([(a*a*sum([igt[i,l]*f_ref[l,k] for l in dendro.e_i]) - \
+                    b[i] * (sum([b[l]*f_ref[l, k] for l in dendro.e_i]) - b_ref[k])) * (a*a*sum([igt[k,l]*f_ref[l,j] for l in dendro.e_i]) - \
+                    b[k] * (sum([b[l]*f_ref[l, j] for l in dendro.e_i]) - b_ref[j])) \
+                    for k in dendro.e_i]) \
+                    for i,j in dendro.e_ij])
+AMatsq_11 = AMatsq_11.reshape(3,3)
+# Define sqrt(A) from power series (upto 2nd order)
+sqrtA_00 = Rational(3,4)*AMat_00 - Rational(1,8)*AMatsq_00 + Rational(3,8)
+sqrtA_01 = Rational(3,4)*AMat_01 - Rational(1,8)*AMatsq_01
+sqrtA_10 = Rational(3,4)*AMat_10 - Rational(1,8)*AMatsq_10
+sqrtA_11 = Rational(3,4)*AMat_11 - Rational(1,8)*AMatsq_11 + Rational(3,8)*eye(3)
+
+# Trace of sqrt(A)
+Tr_sqrtA = sqrtA_00+sqrtA_11[0,0]+sqrtA_11[1,1]+sqrtA_11[2,2]
+
+#Define other var
 x_var = a_ref*a_ref + sum([sum([(b_ref[i]*b_ref[j]-b[i]*b[j])*if_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 
 # General potential computations
-Tr_ginv_f_ref = ginv_f_refMat_00+ginv_f_refMat_11[0,0]+ginv_f_refMat_11[1,1]+ginv_f_refMat_11[2,2]
 V_alpha = 2*M_dRGT_sq*(sum([sum([b[i]*b[j]*f_ref[i,j] for i in dendro.e_i]) for j in dendro.e_i]) - \
           a_ref*a_ref - 2*sum([b[i]*b_ref[i] for i in dendro.e_i]))/(a*a) + \
-          2*M_dRGT_sq*(Tr_ginv_f_ref-3)
+          2*M_dRGT_sq*(Tr_sqrtA-3)
 V_beta_i = Matrix([2*M_dRGT_sq*sum([b[j]*f_ref[j,i] for j in dendro.e_i])/sqrt(x_var) for i in dendro.e_i])
 calgt = sum([sum([gt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 gtjk = Matrix([sum([igt[j,l]*gt[l,k] for l in dendro.e_i]) for j,k in dendro.e_ij])
 gtjk = gtjk.reshape(3,3)
-V_pi_ij = Matrix([ Tr_ginv_f_ref*igt[i,j] for i,j in dendro.e_ij]) + \
-          Matrix([ ginv_f_refMat_01[i]*b_ref[j] for i,j in dendro.e_ij]) + \
-          Matrix([ sum([2*ginv_f_refMat_11[i,k]*gtjk[j,k] for k in dendro.e_i]) for i,j in dendro.e_ij])
+V_pi_ij = Matrix([ Tr_sqrtA*igt[i,j] for i,j in dendro.e_ij]) + \
+          Matrix([ sqrtA_01[i]*b_ref[j] for i,j in dendro.e_ij]) + \
+          Matrix([ sum([2*sqrtA_11[i,k]*gtjk[j,k] for k in dendro.e_i]) for i,j in dendro.e_ij])
 
 V_pi_ij = 2*M_dRGT_sq*a*sqrt(calgt)/2 * V_pi_ij
 
