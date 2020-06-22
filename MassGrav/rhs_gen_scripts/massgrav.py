@@ -204,8 +204,7 @@ Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(3,2)*Matrix([ \
             sum([igt[j,k]*At[k,i]*d(j,chi)/chi for j,k in dendro.e_ij])  \
             for i in dendro.e_i]) -\
-      Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) - \
-    Matrix([Sit[i] for i in dendro.e_i])
+      Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) 
 Rti= [item for sublist in Rti.tolist() for item in sublist]
 
 Rti_dt = 0
