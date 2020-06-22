@@ -163,9 +163,6 @@ St = sum([sum([Sijt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 
-b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
-        l2 * dendro.vec_j_ad_j(b, b[i])
-         for i in dendro.e_i ] + 0*dendro.kodiss(b)
 
 gt_rhs = dendro.lie(b, gt, weight) - 2*a*At + 0*dendro.kodiss(gt)
 
@@ -198,6 +195,10 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
          l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
          for i in dendro.e_i]
 
+# Theory dependent shift condition
+b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
+        l2 * dendro.vec_j_ad_j(b, b[i])
+         for i in dendro.e_i ] + 0*dendro.kodiss(b)
 
 #_I = gt*igt
 #print(simplify(_I))
