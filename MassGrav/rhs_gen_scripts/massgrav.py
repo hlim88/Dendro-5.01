@@ -195,10 +195,29 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
          l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
          for i in dendro.e_i]
 
+#Compute Rti
+
+Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
+              sum(dendro.C2[m,k,i]*At[j,m] for m in dendro.e_i)) \
+                  for j,k in dendro.e_ij]) for i in dendro.e_i]) - \
+      Matrix([sum([Gt[j]*At[i,j] for j in dendro.e_i]) for i in dendro.e_i]) -\
+      Rational(3,2)*Matrix([ \
+            sum([igt[j,k]*At[k,i]*d(j,chi)/chi for j,k in dendro.e_ij])  \
+            for i in dendro.e_i]) -\
+      Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) - \
+    Matrix([Sit[i] for i in dendro.e_i])
+Rti= [item for sublist in Rti.tolist() for item in sublist]
+
+Rti_dt = 0
+
+# Some prefactor
+
+det_gamma = sum([sum([gt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
+
+shift_fac = 1/sqrt(4*M_dRGT_sq*M_dRGT_sq*det_gamma+sum([sum([Rti[k]*f_ref[k,l] for k in dendro.e_i]) for l in dendro.e_i]))
+
 # Theory dependent shift condition
-b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
-        l2 * dendro.vec_j_ad_j(b, b[i])
-         for i in dendro.e_i ] + 0*dendro.kodiss(b)
+b_rhs = a_ref*shift_fac*+ 0*dendro.kodiss(b)
 
 #_I = gt*igt
 #print(simplify(_I))
