@@ -1,6 +1,11 @@
 #include "physcon.h"
 #include "gr.h"
 
+
+//Define massive term for dRGT gravity
+//TODO : fix it as constexpr and as parameter
+#define M_dRGT 0
+
 using namespace massgrav;
 
 

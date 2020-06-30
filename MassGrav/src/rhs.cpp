@@ -8,10 +8,6 @@ using namespace massgrav;
 // Some macro for temporary usage of QA
 // TODO : Fix it for parameter and const expr
 
-// Macro for QG evol vars
-//#define MASSGRAV_EVOL 
-
-
 //Mass from massvie grav
 #define M_dRGT 1.0
 
