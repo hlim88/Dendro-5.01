@@ -39,6 +39,7 @@ Gt_rhs  = dendro.vec3("Gt_rhs", "[pp]")
 
 # declare reference metric related vars
 # TODO : this is not really evolution variables... but somewhat need to be defined
+# I comment out them.
 #a_ref   = dendro.scalar("alpha_ref", "[pp]")
 #b_ref   = dendro.vec3("beta_ref", "[pp]")
 #f_ref  = dendro.sym_3x3("f_ref", "[pp]")
@@ -207,16 +208,22 @@ Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) 
 Rti= [item for sublist in Rti.tolist() for item in sublist]
 
-Rti_dt = 0
+Rti_dt = 6*Matrix([d(i,chi_rhs) for i in dendro.e_i]) + \
+         6*Matrix([sum([d(j,chi)*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) - \
+         Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) 
+#TODO : need to check dt(At_rhs term)
+Rti_dt = [item for sublist in Rti_dt.tolist() for item in sublist]
 
 # Some prefactor
 
 det_gamma = sum([sum([gt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 shift_fac = 1/sqrt(4*M_dRGT_sq*M_dRGT_sq*det_gamma+sum([sum([Rti[k]*f_ref[k,l] for k in dendro.e_i]) for l in dendro.e_i]))
+shift_fac_sq = shift_fac*shitf_fac
 
 # Theory dependent shift condition
-b_rhs = a_ref*shift_fac*+ 0*dendro.kodiss(b)
+b_rhs = a_ref*shift_fac*(Matrix([sum([f_ref[i,j]*Rti_dt[j] for j in dendro.e_i]) for i in dendro.e_i]) - Matrix([sum([f[i,j]*Rti[j] for j in dendro.e_i])*sum([sum([Rti[m]*f_ref[m,n]*Rti_dt[n] for m in dendro.e_i]) for n in dendro.e_i])/shift_fac_sq for i in dendro.e_i]))
+b_rhs = [item for sublit in b_rhs.tolist() for item in sublist]
 
 #_I = gt*igt
 #print(simplify(_I))
