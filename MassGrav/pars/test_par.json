@@ -137,7 +137,7 @@
 
 
     "__comment__" : "========== Select Initial Data =========================",
-            "           " : "0-TwoPuncture Elliptic sol, 1-HAD approximate sol, 2-Kerr-Schild",
+            "           " : "0-TwoPuncture Elliptic sol, 1-HAD approximate sol, 2-Kerr-Schild, 5-Minkowski",
             "MASSGRAV_ID_TYPE": 2,
 
     "__comment__" : "========================================================",

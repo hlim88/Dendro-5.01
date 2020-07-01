@@ -1467,6 +1467,44 @@ double interpolation4( double xx[], double yy[], int np, double xb,
     }
 
 
+    void FlatMinkowski(const double xx1,const double yy1,const double zz1, double *var)
+    {
+
+	    double gtd[3][3], Atd[3][3];
+	    double alpha, Gamt[3];
+	    double Chi, TrK, Betau[3];
+ 	
+        var[VAR::U_ALPHA] = 1.0;
+        var[VAR::U_CHI] = 0.0;
+        var[VAR::U_K] = 0.0;
+
+        var[VAR::U_BETA0] = 0.0;
+        var[VAR::U_BETA1] = 0.0;
+        var[VAR::U_BETA2] = 0.0;
+
+	    var[VAR::U_GT0] = 0.0;
+	    var[VAR::U_GT1] = 0.0;
+	    var[VAR::U_GT2] = 0.0;
+
+        var[VAR::U_B0] = 0.0;
+        var[VAR::U_B1] = 0.0;
+        var[VAR::U_B2] = 0.0;
+	
+	    var[VAR::U_SYMGT0] = 1.0;
+	    var[VAR::U_SYMGT1] = 0.0;
+	    var[VAR::U_SYMGT2] = 0.0;
+	    var[VAR::U_SYMGT3] = 1.0;
+	    var[VAR::U_SYMGT4] = 0.0;
+	    var[VAR::U_SYMGT5] = 1.0;
+
+	    var[VAR::U_SYMAT0] = 0.0;
+	    var[VAR::U_SYMAT1] = 0.0;
+	    var[VAR::U_SYMAT2] = 0.0;
+	    var[VAR::U_SYMAT3] = 0.0;
+	    var[VAR::U_SYMAT4] = 0.0;
+	    var[VAR::U_SYMAT5] = 0.0;
+    }
+
 
     void noiseData(const double xx1,const double yy1,const double zz1, double *var)
     {

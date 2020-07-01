@@ -117,6 +117,9 @@ namespace massgrav
                             else if (massgrav::BSSN_ID_TYPE == 4) {
                                 massgrav::fake_initial_data((double)x,(double)y,(double)z,var);
                             }
+                            else if (massgrav::BSSN_ID_TYPE == 5) {
+                                massgrav::FlatMinkowski((double)x,(double)y,(double)z,var);
+                            }
                             else {
                                 std::cout<<"Unknown ID type"<<std::endl;
                             }

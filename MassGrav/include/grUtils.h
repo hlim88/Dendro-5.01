@@ -58,6 +58,15 @@ namespace massgrav
  void KerrSchildData(const double xx1,const double yy1,const double zz1, double *var);
  
  /**
+  * @brief Compute Minkowski space in Carteisan coordinate
+  * @param xx1 : x coord
+  * @param yy1 : y coord
+  * @param zz1 : z coord
+  * @param var : initialized massgrav variables for the grid points
+  */
+ void FlatMinkowski(const double xx1,const double yy1,const double zz1, double *var);
+ 
+ /**
   * @brief add artificial noise to the initial data.
   * @param xx1 : x coord
   * @param yy1 : y coord
