@@ -30,7 +30,7 @@ K   = dendro.scalar("K", "[pp]")
 
 Gt  = dendro.vec3("Gt", "[pp]")
 b   = dendro.vec3("beta", "[pp]")
-B   = dendro.vec3("B", "[pp]")
+#B   = dendro.vec3("B", "[pp]") # Just comment out
 
 gt  = dendro.sym_3x3("gt", "[pp]")
 At  = dendro.sym_3x3("At", "[pp]")
@@ -191,12 +191,14 @@ Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
 
 eta_func = R0*sqrt(sum([igt[i,j]*d(i,chi)*d(j,chi) for i,j in dendro.e_ij]))/((1-chi**ep1)**ep2)
 
-B_rhs = [Gt_rhs[i] - eta_func * B[i] +
-         l3 * dendro.vec_j_ad_j(b, B[i]) -
-         l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
-         for i in dendro.e_i]
+#B_rhs = [Gt_rhs[i] - eta_func * B[i] +
+#         l3 * dendro.vec_j_ad_j(b, B[i]) -
+#         l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
+#         for i in dendro.e_i]
 
 #Compute Rti
+
+At_rhs_aux = At_rhs.reshape(3,3)
 
 Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
               sum(dendro.C2[m,k,i]*At[j,m] for m in dendro.e_i)) \
@@ -208,10 +210,11 @@ Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) 
 Rti= [item for sublist in Rti.tolist() for item in sublist]
 
-Rti_dt = 6*Matrix([d(i,chi_rhs) for i in dendro.e_i]) + \
-         6*Matrix([sum([d(j,chi)*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) - \
-         Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) 
-#TODO : need to check dt(At_rhs term)
+#TODO : Check this term. First order system?
+Rti_dt = 6*Matrix([sum([d(j,chi)*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) 
+#        + 6*Matrix([d(i,chi_rhs) for i in dendro.e_i]) + \
+#         Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) 
+#         Matrix([ d(j,At_rhs_aux[i,j]) for i,j in dendro.e_ij])
 Rti_dt = [item for sublist in Rti_dt.tolist() for item in sublist]
 
 # Some prefactor
@@ -219,11 +222,11 @@ Rti_dt = [item for sublist in Rti_dt.tolist() for item in sublist]
 det_gamma = sum([sum([gt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 shift_fac = 1/sqrt(4*M_dRGT_sq*M_dRGT_sq*det_gamma+sum([sum([Rti[k]*f_ref[k,l] for k in dendro.e_i]) for l in dendro.e_i]))
-shift_fac_sq = shift_fac*shitf_fac
+shift_fac_sq = shift_fac*shift_fac
 
 # Theory dependent shift condition
-b_rhs = a_ref*shift_fac*(Matrix([sum([f_ref[i,j]*Rti_dt[j] for j in dendro.e_i]) for i in dendro.e_i]) - Matrix([sum([f[i,j]*Rti[j] for j in dendro.e_i])*sum([sum([Rti[m]*f_ref[m,n]*Rti_dt[n] for m in dendro.e_i]) for n in dendro.e_i])/shift_fac_sq for i in dendro.e_i]))
-b_rhs = [item for sublit in b_rhs.tolist() for item in sublist]
+b_rhs = a_ref*shift_fac*(Matrix([sum([f_ref[i,j]*Rti_dt[j] for j in dendro.e_i]) for i in dendro.e_i]) - Matrix([sum([f_ref[i,j]*Rti[j] for j in dendro.e_i])*sum([sum([Rti[m]*f_ref[m,n]*Rti_dt[n] for m in dendro.e_i]) for n in dendro.e_i])/shift_fac_sq for i in dendro.e_i]))
+b_rhs = [item for sublist in b_rhs.tolist() for item in sublist]
 
 #_I = gt*igt
 #print(simplify(_I))
@@ -248,8 +251,10 @@ b_rhs = [item for sublit in b_rhs.tolist() for item in sublist]
 # generate code
 ###################################################################
 
-outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
-vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
+#outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
+#vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
+outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs]
+vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs']
 #dendro.generate_debug(outs, vnames)
 dendro.generate(outs, vnames, '[pp]')
 #numVars=len(outs)
