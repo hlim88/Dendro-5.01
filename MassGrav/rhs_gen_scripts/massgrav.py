@@ -211,9 +211,9 @@ Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
 Rti= [item for sublist in Rti.tolist() for item in sublist]
 
 #TODO : Check this term. First order system?
-Rti_dt = 6*Matrix([sum([d(j,chi)*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) 
-#        + 6*Matrix([d(i,chi_rhs) for i in dendro.e_i]) + \
-#         Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) 
+Rti_dt = 6*Matrix([sum([d(j,chi)*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) \
+        + 6*Matrix([d(i,chi_rhs) for i in dendro.e_i]) + \
+         Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) 
 #         Matrix([ d(j,At_rhs_aux[i,j]) for i,j in dendro.e_ij])
 Rti_dt = [item for sublist in Rti_dt.tolist() for item in sublist]
 
