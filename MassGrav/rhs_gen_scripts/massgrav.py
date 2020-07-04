@@ -36,6 +36,7 @@ gt  = dendro.sym_3x3("gt", "[pp]")
 At  = dendro.sym_3x3("At", "[pp]")
 
 Gt_rhs  = dendro.vec3("Gt_rhs", "[pp]")
+dtDjAij  = dendro.vec3("dtDjAij", "[pp]")
 
 # declare reference metric related vars
 # TODO : this is not really evolution variables... but somewhat need to be defined
@@ -210,8 +211,11 @@ Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) 
 Rti= [item for sublist in Rti.tolist() for item in sublist]
 
-#TODO : still missed last term in (2.20)
-#         Matrix([ d(j,At_rhs_aux[i,j]) for i,j in dendro.e_ij])
+#TODO: define special term in Rti_dt -- I first wanted to check whether we have covariant derivatives of tensors and christoffels predefined because that would make things easier
+#dtDjAij = ...
+
+#TODO : add special term in Rti_dt
+
 Rti_dt = - Rational(2,3)*Matrix([sum([d(j,chi)/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) - \
 	Rational(2,3)*Matrix([sum([d(j,chi_rhs)/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) + \
 	Rational(2,3)*Matrix([sum([d(j,chi)/chi*chi_rhs/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) - \
