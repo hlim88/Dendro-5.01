@@ -36,7 +36,7 @@ gt  = dendro.sym_3x3("gt", "[pp]")
 At  = dendro.sym_3x3("At", "[pp]")
 
 Gt_rhs  = dendro.vec3("Gt_rhs", "[pp]")
-dtDjAij  = dendro.vec3("dtDjAij", "[pp]")
+#dtDjAij  = dendro.vec3("dtDjAij", "[pp]") # HL : this term is not evolution var
 
 # declare reference metric related vars
 # TODO : this is not really evolution variables... but somewhat need to be defined
@@ -165,7 +165,6 @@ St = sum([sum([Sijt[i,j]*igt[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 
-
 gt_rhs = dendro.lie(b, gt, weight) - 2*a*At + 0*dendro.kodiss(gt)
 
 chi_rhs = dendro.lie(b, chi, weight) + Rational(2,3) * (chi*a*K) + 0*dendro.kodiss(chi)
@@ -211,25 +210,32 @@ Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) 
 Rti= [item for sublist in Rti.tolist() for item in sublist]
 
-#TODO: 1st and 3rd commented out terms below are not correct yet because gt_rhs should be with upper indices
-#TODO: also, not sure how indices in DiTd are properly called
 
-#Matrix([sum([sum([dendro.DiTd(At)[k,i,j]*gt_rhs[j,k] for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i]) \
-# + Matrix([sum([sum([igt[j,k]*dendro.DiTd(At_rhs)[k,i,j] for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i]) \
-# + Matrix([sum([sum([sum([C3[i,k,l]*At[i,j]*gt_rhs[k,l] for l in dendro.e_i]) for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i]) \
+#Define gt_rhs_up_up form
+gt_rhs_UU = - dendro.up_up(gt_rhs)
+
+#DkAij*gt_rhs_uu[j,k] term
+inter1 = Matrix([sum([sum([gt_rhs_UU[j,k]*(d(k,At[i,j]) - \
+           sum([dendro.C2[l,k,j]*At[l,i]+dendro.C2[l,k,i]*At[l,j] for l in dendro.e_i])) for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
+
+#igt[j,k]*DkAt_rhs[i,j] term
+inter2 = Matrix([sum([sum([igt[j,k]*(d(k,At_rhs[i,j]) - \
+           sum([dendro.C2[l,k,j]*At_rhs[l,i]+dendro.C2[l,k,i]*At_rhs[l,j] for l in dendro.e_i])) for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
+
+# Gamma[i,j,k]*At[i,j]*gt_rhs_uu[k,q] term
+inter3 = Matrix([sum([sum([sum([dendro.C2[j,q,k]*At[i,j]*gt_rhs_UU[k,q] for j in dendro.e_i]) for q in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
 
 dtDjAij = - Matrix([sum([At[i,j]*Gt_rhs[j] for j in dendro.e_i]) for i in dendro.e_i]) \
 	+ Rational(1,2)*Matrix([sum([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*igt[s,s1]*gt_rhs[r,s1]*d(i,gt[q,s]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for s1 in dendro.e_i]) for i in dendro.e_i]) \
 	- Rational(1,2)*Matrix([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*d(i,gt_rhs[q,r]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for i in dendro.e_i]) \
 	+ Rational(1,2)*Matrix([sum([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*igt[s,s1]*gt_rhs[r,s1]*d(q,gt[i,s]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for s1 in dendro.e_i]) for i in dendro.e_i]) \
-	- Rational(1,2)*Matrix([sum([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*igt[s,s1]*gt_rhs[r,s1]*d(s,gt[i,q]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for s1 in dendro.e_i]) for i in dendro.e_i])
-
-#TODO : add special term in Rti_dt
+	- Rational(1,2)*Matrix([sum([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*igt[s,s1]*gt_rhs[r,s1]*d(s,gt[i,q]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for s1 in dendro.e_i]) for i in dendro.e_i]) \
+    + inter1 + inter2 + inter3 # Some terms predefined
 
 Rti_dt = - Rational(2,3)*Matrix([sum([d(j,chi)/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) - \
 	Rational(2,3)*Matrix([sum([d(j,chi_rhs)/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) + \
 	Rational(2,3)*Matrix([sum([d(j,chi)/chi*chi_rhs/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) - \
-         Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) 
+         Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) + dtDjAij
 
 Rti_dt = [item for sublist in Rti_dt.tolist() for item in sublist]
 
