@@ -51,6 +51,15 @@ a_ref = 1
 b_ref = Matrix([[0,0,0]])
 f_ref = eye(3)
 
+#Different reference metric term. This is Schwarzschild in isotropic coordinatea
+#Uncomment this if you want to use.
+#x, y, z = symbols('x, y, z')
+#M_ref = symbols('M_ref')
+#r_mag = sqrt(x*x + y*y + z*z)
+#a_ref = (2*r_mag - M_ref)/(2*r_mag + M_ref)
+#b_ref = Matrix([[0,0,0]])
+#f_ref = (1+M_ref/(2*r_mag))**4*eye(3)
+
 # Lie derivative weight
 weight = -Rational(2,3)
 weight_Gt = Rational(2,3)
@@ -191,6 +200,7 @@ Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
 
 eta_func = R0*sqrt(sum([igt[i,j]*d(i,chi)*d(j,chi) for i,j in dendro.e_ij]))/((1-chi**ep1)**ep2)
 
+# Commented out unneccesarry term. But we may need later?
 #B_rhs = [Gt_rhs[i] - eta_func * B[i] +
 #         l3 * dendro.vec_j_ad_j(b, B[i]) -
 #         l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
@@ -236,6 +246,7 @@ Rti_dt = - Rational(2,3)*Matrix([sum([d(j,chi)/chi*At_rhs[i,j] for j in dendro.e
 	Rational(2,3)*Matrix([sum([d(j,chi_rhs)/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) + \
 	Rational(2,3)*Matrix([sum([d(j,chi)/chi*chi_rhs/chi*At_rhs[i,j] for j in dendro.e_i ]) for i in dendro.e_i]) - \
          Rational(2,3)*Matrix([d(i,K_rhs) for i in dendro.e_i]) + dtDjAij
+#dtDjAij is added at the end but need to check
 
 Rti_dt = [item for sublist in Rti_dt.tolist() for item in sublist]
 
