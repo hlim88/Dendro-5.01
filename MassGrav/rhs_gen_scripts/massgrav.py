@@ -211,8 +211,18 @@ Rti = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i]) 
 Rti= [item for sublist in Rti.tolist() for item in sublist]
 
-#TODO: define special term in Rti_dt -- I first wanted to check whether we have covariant derivatives of tensors and christoffels predefined because that would make things easier
-#dtDjAij = ...
+#TODO: 1st and 3rd commented out terms below are not correct yet because gt_rhs should be with upper indices
+#TODO: also, not sure how indices in DiTd are properly called
+
+#Matrix([sum([sum([dendro.DiTd(At)[k,i,j]*gt_rhs[j,k] for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i]) \
+# + Matrix([sum([sum([igt[j,k]*dendro.DiTd(At_rhs)[k,i,j] for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i]) \
+# + Matrix([sum([sum([sum([C3[i,k,l]*At[i,j]*gt_rhs[k,l] for l in dendro.e_i]) for j in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i]) \
+
+dtDjAij = - Matrix([sum([At[i,j]*Gt_rhs[j] for j in dendro.e_i]) for i in dendro.e_i]) \
+	+ Rational(1,2)*Matrix([sum([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*igt[s,s1]*gt_rhs[r,s1]*d(i,gt[q,s]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for s1 in dendro.e_i]) for i in dendro.e_i]) \
+	- Rational(1,2)*Matrix([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*d(i,gt_rhs[q,r]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for i in dendro.e_i]) \
+	+ Rational(1,2)*Matrix([sum([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*igt[s,s1]*gt_rhs[r,s1]*d(q,gt[i,s]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for s1 in dendro.e_i]) for i in dendro.e_i]) \
+	- Rational(1,2)*Matrix([sum([sum([sum([sum([sum([sum([ At[j,k]*igt[j,q]*igt[k,r]*igt[s,s1]*gt_rhs[r,s1]*d(s,gt[i,q]) for j in dendro.e_i]) for k in dendro.e_i]) for q in dendro.e_i]) for r in dendro.e_i]) for s in dendro.e_i]) for s1 in dendro.e_i]) for i in dendro.e_i])
 
 #TODO : add special term in Rti_dt
 
