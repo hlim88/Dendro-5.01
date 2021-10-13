@@ -125,6 +125,7 @@ d_a_n_a_down = -a_rhs + d(i,b) for i in dendro.e_i - a*C1[0,0,0]
 
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
+#TODO : below looks for BSSN 
 Rsch_rhs1 = dendro.lie(b, Rsch) - a*chi*sum(igt[i,j]*d2(i,j,Rsc) for i,j in dendro.e_ij) - \
            chi*sum(igt[i,j]*d(i,a)*d(j,Rsc) for i,j in dendro.e_ij) + \
            a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
@@ -145,7 +146,6 @@ Rshc_rhs2 =  a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
            1/2*a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
            a*K*Rsch + a*Rsc/(32*PI*(3*b_const-2*a_const))
 
-#TODO: not sure if I understand but in the implementation Rtt is a 3D object while in the notes R_ab is still 4D? Same for Vat.
 Rtt_rhs = dendro.lie(b, Rtt, weight) - a * Vat 
 
 

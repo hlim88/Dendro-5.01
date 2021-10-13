@@ -172,6 +172,8 @@ mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i])
 mom = [item for sublist in mom.tolist() for item in sublist]
 
+#Additional constraints?
+
 # Output for this should be included psi4_real and psi4_img as double precision  
 ###################################################################
 # generate code
