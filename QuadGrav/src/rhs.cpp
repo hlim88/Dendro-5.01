@@ -6,19 +6,20 @@ using namespace std;
 using namespace quadgrav;
 
 // Some macro for temporary usage of QA
-// TODO : Fix it for parameter and const expr
 
 // Macro for QG evol vars
 #define QUADGRAV_EVOL 
 
 //QG related constant
 //Alpah_c
-#define a_const 1.0
+constexpr double a_const = 1.0
 //Beta_c
-#define b_const 1.0
+constexpr double b_const = 1.0
+#if 0
+// HL : I think that we don't need
 //Tuning param for QG : handling some problematic terms
-#define qg_ho_coup 1e-4
-
+constexpr double qg_ho_coup = 1e-4
+#endif
 
 void quadgravRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks)
 {
@@ -133,20 +134,24 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
     //Additional variable from quadratic terms
     #if 1
     #ifdef QUADGRAV_EVOL
+    // Evolution from Ricci scalar
     const double *Rsc = &uZipVars[VAR::U_RSC][offset];
     const double *Rsch = &uZipVars[VAR::U_RSCH][offset];
-    const double *Rtt0 = &uZipVars[VAR::U_SYMRTT0][offset];
-    const double *Rtt1 = &uZipVars[VAR::U_SYMRTT1][offset];
-    const double *Rtt2 = &uZipVars[VAR::U_SYMRTT2][offset];
-    const double *Rtt3 = &uZipVars[VAR::U_SYMRTT3][offset];
-    const double *Rtt4 = &uZipVars[VAR::U_SYMRTT4][offset];
-    const double *Rtt5 = &uZipVars[VAR::U_SYMRTT5][offset];
-    const double *Vat0 = &uZipVars[VAR::U_SYMVAT0][offset];
-    const double *Vat1 = &uZipVars[VAR::U_SYMVAT1][offset];
-    const double *Vat2 = &uZipVars[VAR::U_SYMVAT2][offset];
-    const double *Vat3 = &uZipVars[VAR::U_SYMVAT3][offset];
-    const double *Vat4 = &uZipVars[VAR::U_SYMVAT4][offset];
-    const double *Vat5 = &uZipVars[VAR::U_SYMVAT5][offset];
+    // Evolution from Ricci tensor
+    const double *Atr = &uZipVars[VAR::U_ATR][offset];
+    const double *Aij0 = &uZipVars[VAR::U_SYMAIJ0][offset];
+    const double *Aij1 = &uZipVars[VAR::U_SYMAIJ1][offset];
+    const double *Aij2 = &uZipVars[VAR::U_SYMAIJ2][offset];
+    const double *Aij3 = &uZipVars[VAR::U_SYMAIJ3][offset];
+    const double *Aij4 = &uZipVars[VAR::U_SYMAIJ4][offset];
+    const double *Aij5 = &uZipVars[VAR::U_SYMAIJ5][offset];
+    const double *Btr = &uZipVars[VAR::U_BTR][offset];
+    const double *Bij0 = &uZipVars[VAR::U_SYMBIJ0][offset];
+    const double *Bij1 = &uZipVars[VAR::U_SYMBIJ1][offset];
+    const double *Bij2 = &uZipVars[VAR::U_SYMBIJ2][offset];
+    const double *Bij3 = &uZipVars[VAR::U_SYMBIJ3][offset];
+    const double *Bij4 = &uZipVars[VAR::U_SYMBIJ4][offset];
+    const double *Bij5 = &uZipVars[VAR::U_SYMBIJ5][offset];
     #endif
     #endif
 
@@ -177,20 +182,24 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
 
     #if 1
     #ifdef QUADGRAV_EVOL
-    double *Rsc_rhs = &unzipVarsRHS[VAR::U_RSC][offset];
-    double *Rsch_rhs = &unzipVarsRHS[VAR::U_RSCH][offset];
-    double *Rtt_rhs00 = &unzipVarsRHS[VAR::U_SYMRTT0][offset];
-    double *Rtt_rhs01 = &unzipVarsRHS[VAR::U_SYMRTT1][offset];
-    double *Rtt_rhs02 = &unzipVarsRHS[VAR::U_SYMRTT2][offset];
-    double *Rtt_rhs11 = &unzipVarsRHS[VAR::U_SYMRTT3][offset];
-    double *Rtt_rhs12 = &unzipVarsRHS[VAR::U_SYMRTT4][offset];
-    double *Rtt_rhs22 = &unzipVarsRHS[VAR::U_SYMRTT5][offset];
-    double *Vat_rhs00 = &unzipVarsRHS[VAR::U_SYMVAT0][offset];
-    double *Vat_rhs01 = &unzipVarsRHS[VAR::U_SYMVAT1][offset];
-    double *Vat_rhs02 = &unzipVarsRHS[VAR::U_SYMVAT2][offset];
-    double *Vat_rhs11 = &unzipVarsRHS[VAR::U_SYMVAT3][offset];
-    double *Vat_rhs12 = &unzipVarsRHS[VAR::U_SYMVAT4][offset];
-    double *Vat_rhs22 = &unzipVarsRHS[VAR::U_SYMVAT5][offset];
+    // Evolution from Ricci scalar
+    const double *Rsc_rhs = &uZipVarsRHS[VAR::U_RSC][offset];
+    const double *Rsch_rhs = &uZipVarsRHS[VAR::U_RSCH][offset];
+    // Evolution from Ricci tensor
+    const double *Atr_rhs = &uZipVarsRHS[VAR::U_ATR][offset];
+    const double *Aij_rhs00 = &uZipVarsRHS[VAR::U_SYMAIJ0][offset];
+    const double *Aij_rhs01 = &uZipVarsRHS[VAR::U_SYMAIJ1][offset];
+    const double *Aij_rhs02 = &uZipVarsRHS[VAR::U_SYMAIJ2][offset];
+    const double *Aij_rhs11 = &uZipVarsRHS[VAR::U_SYMAIJ3][offset];
+    const double *Aij_rhs12 = &uZipVarsRHS[VAR::U_SYMAIJ4][offset];
+    const double *Aij_rhs22 = &uZipVarsRHS[VAR::U_SYMAIJ5][offset];
+    const double *Btr_rhs = &uZipVarsRHS[VAR::U_BTR][offset];
+    const double *Bij_rhs00 = &uZipVarsRHS[VAR::U_SYMBIJ0][offset];
+    const double *Bij_rhs01 = &uZipVarsRHS[VAR::U_SYMBIJ1][offset];
+    const double *Bij_rhs02 = &uZipVarsRHS[VAR::U_SYMBIJ2][offset];
+    const double *Bij_rhs11 = &uZipVarsRHS[VAR::U_SYMBIJ3][offset];
+    const double *Bij_rhs12 = &uZipVarsRHS[VAR::U_SYMBIJ4][offset];
+    const double *Bij_rhs22 = &uZipVarsRHS[VAR::U_SYMBIJ5][offset];
     #endif
     #endif
 
