@@ -26,7 +26,7 @@ kappa = 1/(16*PI)
 R0 = symbols('QUADGRAV_ETA_R0')
 ep1, ep2 = symbols('QUADGRAV_ETA_POWER[0] QUADGRAV_ETA_POWER[1]')
 
-# declare variables
+# declare variables (BSSN vars)
 a   = dendro.scalar("alpha", "[pp]")
 chi = dendro.scalar("chi", "[pp]")
 K   = dendro.scalar("K", "[pp]")
@@ -40,14 +40,29 @@ At  = dendro.sym_3x3("At", "[pp]")
 
 Gt_rhs  = dendro.vec3("Gt_rhs", "[pp]")
 
+# Ricci scalar, R 
 Rsc = dendro.scalar("Rsc", "[pp]")
+# Aux Ricci scalar, R^
 Rsch = dendro.scalar("Rsch", "[pp]")
-Rtt = dendro.sym_3x3("Rtt", "[pp]")
-Vat = dendro.sym_3x3("Vat", "[pp]")
 
-Qsc = dendro.scalar("sc", "[pp]")
-Yabnp = dendro.sym_3x3("Yabp", "[pp]")
-Yabp = dendro.sym_3x3("Yabnp", "[pp]")
+
+#TODO : Clear up for documentation
+# Ricci tensor, R_ab
+#Rab = dendro.sym_3x3("Rab", "[pp]")
+# Aux Ricci tensor, V_ab
+#Vab = dendro.sym_3x3("Vab", "[pp]")
+
+# Spatial projection of Ricci tensor related quantities
+# From R_ab 
+Atr = dendro.scalar("Atr", "[pp]")
+Aij  = dendro.sym_3x3("Aij", "[pp]")
+# From V_ab 
+Btr = dendro.scalar("Btr", "[pp]")
+Bij  = dendro.sym_3x3("Bij", "[pp]")
+
+# Additional constraint as evolutions vars
+Ci = dendro.vec3("Ci","[pp]")
+Ei = dendro.vec3("Ei","[pp]")
 
 # Lie derivative weight
 weight = -Rational(2,3)
@@ -92,6 +107,7 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
          for i in dendro.e_i]
 
 # Metric and extrinsic curvature
+# TODO : add fiducial matter source term into BSSN Eqn. (only matter for K and At)
 
 gt_rhs = dendro.lie(b, gt, weight) - 2*a*At + 0*dendro.kodiss(gt)
 
@@ -99,6 +115,7 @@ chi_rhs = dendro.lie(b, chi, weight) + Rational(2,3) * (chi*a*K) + 0*dendro.kodi
 
 AikAkj = Matrix([sum([At[i, k] * sum([dendro.inv_metric[k, l]*At[l, j] for l in dendro.e_i]) for k in dendro.e_i]) for i, j in dendro.e_ij])
 
+#NOTE : "CAUTION" THIS IS DIFFERENT THEN Atr for Ricci. 
 At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
 
 K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*dendro.kodiss(K)
@@ -123,48 +140,34 @@ d_a_n_a_down = -a_rhs + d(i,b) for i in dendro.e_i - a*C1[0,0,0]
 
 # Ricci tensor and scalar
 
+# Ricci scalar, R
+# Eqn.23
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
-#TODO : below looks for BSSN 
-Rsch_rhs1 = dendro.lie(b, Rsch) - a*chi*sum(igt[i,j]*d2(i,j,Rsc) for i,j in dendro.e_ij) - \
-           chi*sum(igt[i,j]*d(i,a)*d(j,Rsc) for i,j in dendro.e_ij) + \
-           a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
-           1/2*a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
-           a*K*Rsch + a*Rsc/(32*PI*(3*b_const-2*a_const))
+# Aux Ricci scalar, R^
+# Eqn.24
+Rsch_rhs = dendro.lie(b, Rsch) - a*(#RHS of Eqn.24, need carefully evaluate between ADM and BSSN) 
 
-Rshc_rhs2 =  a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
-           1/2*a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
-           a*K*Rsch + a*Rsc/(32*PI*(3*b_const-2*a_const))+\
-           dendro.lie(b, Rsch) - a*chi*sum(igt[i,j]*d2(i,j,Rsc) for i,j in dendro.e_ij) - \
-           chi*sum(igt[i,j]*d(i,a)*d(j,Rsc) for i,j in dendro.e_ij) + \
-           a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
-           1/2*a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
-           a*K*Rsch + a*Rsc/(32*PI*(3*b_const-2*a_const))- \
-           a*chi*sum(igt[i,j]*d2(i,j,Rsc) for i,j in dendro.e_ij) - \
-           chi*sum(igt[i,j]*d(i,a)*d(j,Rsc) for i,j in dendro.e_ij) + \
-           a*chi*sum(Gt[i]*d(i,Rsc) for i in dendro.e_i) + \
-           1/2*a*sum(igt[i,j]*d(i,Rsc)*d(j,chi) for i,j in dendro.e_ij) + \
-           a*K*Rsch + a*Rsc/(32*PI*(3*b_const-2*a_const))
+# Ricci tensor
+# From R_ab
+# Eqn.38
+Atr_rhs = dendro.lie(b, Atr) - a*(#RHS of Eqn.38)
+# Eqn.39
+Aij_rhs = #RHS of Eqn.29, TODO : evaluate n^c del_c A_ij in terms of time and lie derivatives
 
-Rtt_rhs = dendro.lie(b, Rtt, weight) - a * Vat 
+# Precomputation
+# Spatially projected RHS of Eqn.37
+# TODO : change name
+Ugly = 0
 
+# From V_ab
+# Eqn.42
+Btr_rhs = dendro.lie(b, Btr) - a*(#RHS of Eqn.42)
+# Eqn.43
+Bij_rhs = #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
 
-Yabnp = - kappa*Rtt - \
-	kappa*(2*b_const - a_const)/(8*(3*b_const-a_const))*gt*Rsc
-Yabp = Rtt
+# TODO : Additional constraints, C_k, E_k go here if we want to evolve and monitor
 
-#TODO; confirm that dendro.laplacian(*) works for non-scalar *
-Vat_rhs = Matrix([sum(b[k]*d(k,Vat[i,j]) for k in dendro.e_i) for i,j in dendro.e_ij]) + \
-          Matrix([sum(Vat[i,k]*d(j,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) + \
-          Matrix([sum(Vat[k,j]*d(i,b[k]) for k in dendro.e_i) for i,j in dendro.e_ij]) - \
-          a*Matrix([dendro.laplacian(Rtt[i,j],chi) for i,j in dendro.e_ij]) + \
-	  a*Matrix([K*Vat[i,j] for i,j in dendro.e_ij])
-# TODO: commented out Yabnp and Yabp terms since these require rewriting before implementation
-#+ \
-#	  a*Matrix([Yabnp[i,j] for i,j in dendro.e_ij]) + \
-#	  a*qg_ho_coup*Matrix([Yabp[i,j] for i,j in dendro.e_ij])
-
-          
 #_I = gt*igt
 #print(simplify(_I))
 
@@ -188,8 +191,8 @@ Vat_rhs = Matrix([sum(b[k]*d(k,Vat[i,j]) for k in dendro.e_i) for i,j in dendro.
 # generate code
 ###################################################################
 
-outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Rtt_rhs, Vat_rhs]
-vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs','Rtt_rhs','Vat_rhs']
+outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Atr_rhs, Aij_rhs, Btr_rhs, Bij_rhs]
+vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs','Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Bij_rhs']
 #dendro.generate_debug(outs, vnames)
 dendro.generate(outs, vnames, '[pp]')
 #numVars=len(outs)

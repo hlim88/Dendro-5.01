@@ -158,8 +158,9 @@ psi4_img  = - ( psi4_1_img  + psi4_2_img  - psi4_3_img  - psi4_4_img  )
 # Constraint Equations
 ###################################################################
 
+# TODO : add fiducial rho and S for constraints
 # The Hamiltonian constraint
-ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2
+ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2 
 
 # The momentum  constraints 
 mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
