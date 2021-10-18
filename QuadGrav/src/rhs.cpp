@@ -402,29 +402,33 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
                  1.0, 1.0, sz, bflag);
         quadgrav_bcs(Rsch_rhs, Rsch, grad_0_Rsch, grad_1_Rsch, grad_2_Rsch, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs00, Rtt0, grad_0_Rtt0, grad_1_Rtt0, grad_2_Rtt0, pmin, pmax,
+        quadgrav_bcs(Atr_rhs, Atr, grad_0_Atr, grad_1_Atr, grad_2_Atr, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs01, Rtt1, grad_0_Rtt1, grad_1_Rtt1, grad_2_Rtt1, pmin, pmax,
+        quadgrav_bcs(Aij_rhs00, Aij0, grad_0_Aij0, grad_1_Aij0, grad_2_Aij0, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs02, Rtt2, grad_0_Rtt2, grad_1_Rtt2, grad_2_Rtt2, pmin, pmax,
+        quadgrav_bcs(Aij_rhs01, Aij1, grad_0_Aij1, grad_1_Aij1, grad_2_Aij1, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs11, Rtt3, grad_0_Rtt3, grad_1_Rtt3, grad_2_Rtt3, pmin, pmax,
+        quadgrav_bcs(Aij_rhs02, Aij2, grad_0_Aij2, grad_1_Aij2, grad_2_Aij2, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs12, Rtt4, grad_0_Rtt4, grad_1_Rtt4, grad_2_Rtt4, pmin, pmax,
+        quadgrav_bcs(Aij_rhs11, Aij3, grad_0_Aij3, grad_1_Aij3, grad_2_Aij3, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs22, Rtt5, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
+        quadgrav_bcs(Aij_rhs12, Aij4, grad_0_Aij4, grad_1_Aij4, grad_2_Aij4, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs00, Vat0, grad_0_Vat0, grad_1_Vat0, grad_2_Vat0, pmin, pmax,
+        quadgrav_bcs(Aij_rhs22, Aij5, grad_0_Aij5, grad_1_Aij5, grad_2_Aij5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs01, Vat1, grad_0_Vat1, grad_1_Vat1, grad_2_Vat1, pmin, pmax,
+        quadgrav_bcs(Btr_rhs, Btr, grad_0_Btr, grad_1_Btr, grad_2_Btr, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs02, Vat2, grad_0_Vat2, grad_1_Vat2, grad_2_Vat2, pmin, pmax,
+        quadgrav_bcs(Bij_rhs00, Bij0, grad_0_Bij0, grad_1_Bij0, grad_2_Bij0, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs11, Vat3, grad_0_Vat3, grad_1_Vat3, grad_2_Vat3, pmin, pmax,
+        quadgrav_bcs(Bij_rhs01, Bij1, grad_0_Bij1, grad_1_Bij1, grad_2_Bij1, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs12, Vat4, grad_0_Vat4, grad_1_Vat4, grad_2_Vat4, pmin, pmax,
+        quadgrav_bcs(Bij_rhs02, Bij2, grad_0_Bij2, grad_1_Bij2, grad_2_Bij2, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs22, Vat5, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
+        quadgrav_bcs(Bij_rhs11, Bij3, grad_0_Bij3, grad_1_Bij3, grad_2_Bij3, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        quadgrav_bcs(Bij_rhs12, Bij4, grad_0_Bij4, grad_1_Bij4, grad_2_Bij4, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        quadgrav_bcs(Bij_rhs22, Bij5, grad_0_Bij5, grad_1_Bij5, grad_2_Bij5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
         #endif
         #endif
@@ -547,20 +551,24 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     //Additional variable from quadratic terms
     #if 1
     #ifdef QUADGRAV_EVOL
+    // Evolution from Ricci scalar
     const double *Rsc = &uZipVars[VAR::U_RSC][offset];
     const double *Rsch = &uZipVars[VAR::U_RSCH][offset];
-    const double *Rtt0 = &uZipVars[VAR::U_SYMRTT0][offset];
-    const double *Rtt1 = &uZipVars[VAR::U_SYMRTT1][offset];
-    const double *Rtt2 = &uZipVars[VAR::U_SYMRTT2][offset];
-    const double *Rtt3 = &uZipVars[VAR::U_SYMRTT3][offset];
-    const double *Rtt4 = &uZipVars[VAR::U_SYMRTT4][offset];
-    const double *Rtt5 = &uZipVars[VAR::U_SYMRTT5][offset];
-    const double *Vat0 = &uZipVars[VAR::U_SYMVAT0][offset];
-    const double *Vat1 = &uZipVars[VAR::U_SYMVAT1][offset];
-    const double *Vat2 = &uZipVars[VAR::U_SYMVAT2][offset];
-    const double *Vat3 = &uZipVars[VAR::U_SYMVAT3][offset];
-    const double *Vat4 = &uZipVars[VAR::U_SYMVAT4][offset];
-    const double *Vat5 = &uZipVars[VAR::U_SYMVAT5][offset];
+    // Evolution from Ricci tensor
+    const double *Atr = &uZipVars[VAR::U_ATR][offset];
+    const double *Aij0 = &uZipVars[VAR::U_SYMAIJ0][offset];
+    const double *Aij1 = &uZipVars[VAR::U_SYMAIJ1][offset];
+    const double *Aij2 = &uZipVars[VAR::U_SYMAIJ2][offset];
+    const double *Aij3 = &uZipVars[VAR::U_SYMAIJ3][offset];
+    const double *Aij4 = &uZipVars[VAR::U_SYMAIJ4][offset];
+    const double *Aij5 = &uZipVars[VAR::U_SYMAIJ5][offset];
+    const double *Btr = &uZipVars[VAR::U_BTR][offset];
+    const double *Bij0 = &uZipVars[VAR::U_SYMBIJ0][offset];
+    const double *Bij1 = &uZipVars[VAR::U_SYMBIJ1][offset];
+    const double *Bij2 = &uZipVars[VAR::U_SYMBIJ2][offset];
+    const double *Bij3 = &uZipVars[VAR::U_SYMBIJ3][offset];
+    const double *Bij4 = &uZipVars[VAR::U_SYMBIJ4][offset];
+    const double *Bij5 = &uZipVars[VAR::U_SYMBIJ5][offset];
     #endif
     #endif
 
@@ -591,20 +599,24 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
 
     #if 1
     #ifdef QUADGRAV_EVOL
-    double *Rsc_rhs = &unzipVarsRHS[VAR::U_RSC][offset];
-    double *Rsch_rhs = &unzipVarsRHS[VAR::U_RSCH][offset];
-    double *Rtt_rhs00 = &unzipVarsRHS[VAR::U_SYMRTT0][offset];
-    double *Rtt_rhs01 = &unzipVarsRHS[VAR::U_SYMRTT1][offset];
-    double *Rtt_rhs02 = &unzipVarsRHS[VAR::U_SYMRTT2][offset];
-    double *Rtt_rhs11 = &unzipVarsRHS[VAR::U_SYMRTT3][offset];
-    double *Rtt_rhs12 = &unzipVarsRHS[VAR::U_SYMRTT4][offset];
-    double *Rtt_rhs22 = &unzipVarsRHS[VAR::U_SYMRTT5][offset];
-    double *Vat_rhs00 = &unzipVarsRHS[VAR::U_SYMVAT0][offset];
-    double *Vat_rhs01 = &unzipVarsRHS[VAR::U_SYMVAT1][offset];
-    double *Vat_rhs02 = &unzipVarsRHS[VAR::U_SYMVAT2][offset];
-    double *Vat_rhs11 = &unzipVarsRHS[VAR::U_SYMVAT3][offset];
-    double *Vat_rhs12 = &unzipVarsRHS[VAR::U_SYMVAT4][offset];
-    double *Vat_rhs22 = &unzipVarsRHS[VAR::U_SYMVAT5][offset];
+    // Evolution from Ricci scalar
+    const double *Rsc_rhs = &uZipVarsRHS[VAR::U_RSC][offset];
+    const double *Rsch_rhs = &uZipVarsRHS[VAR::U_RSCH][offset];
+    // Evolution from Ricci tensor
+    const double *Atr_rhs = &uZipVarsRHS[VAR::U_ATR][offset];
+    const double *Aij_rhs00 = &uZipVarsRHS[VAR::U_SYMAIJ0][offset];
+    const double *Aij_rhs01 = &uZipVarsRHS[VAR::U_SYMAIJ1][offset];
+    const double *Aij_rhs02 = &uZipVarsRHS[VAR::U_SYMAIJ2][offset];
+    const double *Aij_rhs11 = &uZipVarsRHS[VAR::U_SYMAIJ3][offset];
+    const double *Aij_rhs12 = &uZipVarsRHS[VAR::U_SYMAIJ4][offset];
+    const double *Aij_rhs22 = &uZipVarsRHS[VAR::U_SYMAIJ5][offset];
+    const double *Btr_rhs = &uZipVarsRHS[VAR::U_BTR][offset];
+    const double *Bij_rhs00 = &uZipVarsRHS[VAR::U_SYMBIJ0][offset];
+    const double *Bij_rhs01 = &uZipVarsRHS[VAR::U_SYMBIJ1][offset];
+    const double *Bij_rhs02 = &uZipVarsRHS[VAR::U_SYMBIJ2][offset];
+    const double *Bij_rhs11 = &uZipVarsRHS[VAR::U_SYMBIJ3][offset];
+    const double *Bij_rhs12 = &uZipVarsRHS[VAR::U_SYMBIJ4][offset];
+    const double *Bij_rhs22 = &uZipVarsRHS[VAR::U_SYMBIJ5][offset];
     #endif
     #endif
 
@@ -893,29 +905,33 @@ void quadgravrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                  1.0, 1.0, sz, bflag);
         quadgrav_bcs(Rsch_rhs, Rsch, grad_0_Rsch, grad_1_Rsch, grad_2_Rsch, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs00, Rtt0, grad_0_Rtt0, grad_1_Rtt0, grad_2_Rtt0, pmin, pmax,
+        quadgrav_bcs(Atr_rhs, Atr, grad_0_Atr, grad_1_Atr, grad_2_Atr, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs01, Rtt1, grad_0_Rtt1, grad_1_Rtt1, grad_2_Rtt1, pmin, pmax,
+        quadgrav_bcs(Aij_rhs00, Aij0, grad_0_Aij0, grad_1_Aij0, grad_2_Aij0, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs02, Rtt2, grad_0_Rtt2, grad_1_Rtt2, grad_2_Rtt2, pmin, pmax,
+        quadgrav_bcs(Aij_rhs01, Aij1, grad_0_Aij1, grad_1_Aij1, grad_2_Aij1, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs11, Rtt3, grad_0_Rtt3, grad_1_Rtt3, grad_2_Rtt3, pmin, pmax,
+        quadgrav_bcs(Aij_rhs02, Aij2, grad_0_Aij2, grad_1_Aij2, grad_2_Aij2, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs12, Rtt4, grad_0_Rtt4, grad_1_Rtt4, grad_2_Rtt4, pmin, pmax,
+        quadgrav_bcs(Aij_rhs11, Aij3, grad_0_Aij3, grad_1_Aij3, grad_2_Aij3, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Rtt_rhs22, Rtt5, grad_0_Rtt5, grad_1_Rtt5, grad_2_Rtt5, pmin, pmax,
+        quadgrav_bcs(Aij_rhs12, Aij4, grad_0_Aij4, grad_1_Aij4, grad_2_Aij4, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs00, Vat0, grad_0_Vat0, grad_1_Vat0, grad_2_Vat0, pmin, pmax,
+        quadgrav_bcs(Aij_rhs22, Aij5, grad_0_Aij5, grad_1_Aij5, grad_2_Aij5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs01, Vat1, grad_0_Vat1, grad_1_Vat1, grad_2_Vat1, pmin, pmax,
+        quadgrav_bcs(Btr_rhs, Btr, grad_0_Btr, grad_1_Btr, grad_2_Btr, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs02, Vat2, grad_0_Vat2, grad_1_Vat2, grad_2_Vat2, pmin, pmax,
+        quadgrav_bcs(Bij_rhs00, Bij0, grad_0_Bij0, grad_1_Bij0, grad_2_Bij0, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs11, Vat3, grad_0_Vat3, grad_1_Vat3, grad_2_Vat3, pmin, pmax,
+        quadgrav_bcs(Bij_rhs01, Bij1, grad_0_Bij1, grad_1_Bij1, grad_2_Bij1, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs12, Vat4, grad_0_Vat4, grad_1_Vat4, grad_2_Vat4, pmin, pmax,
+        quadgrav_bcs(Bij_rhs02, Bij2, grad_0_Bij2, grad_1_Bij2, grad_2_Bij2, pmin, pmax,
                  1.0, 1.0, sz, bflag);
-        quadgrav_bcs(Vat_rhs22, Vat5, grad_0_Vat5, grad_1_Vat5, grad_2_Vat5, pmin, pmax,
+        quadgrav_bcs(Bij_rhs11, Bij3, grad_0_Bij3, grad_1_Bij3, grad_2_Bij3, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        quadgrav_bcs(Bij_rhs12, Bij4, grad_0_Bij4, grad_1_Bij4, grad_2_Bij4, pmin, pmax,
+                 1.0, 1.0, sz, bflag);
+        quadgrav_bcs(Bij_rhs22, Bij5, grad_0_Bij5, grad_1_Bij5, grad_2_Bij5, pmin, pmax,
                  1.0, 1.0, sz, bflag);
         #endif
         #endif
