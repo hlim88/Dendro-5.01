@@ -1429,6 +1429,22 @@ double interpolation4( double xx[], double yy[], int np, double xb,
 	    var[VAR::U_SYMAT4] = Atd[1][2];
 	    var[VAR::U_SYMAT5] = Atd[2][2];
 
+        // Intial set up for QG var. Since this is Ricci flat, initial values are zero
+        var[VAR::U_ATR] = 0.0;
+        var[VAR::U_SYMAIJ0] = 0.0;
+        var[VAR::U_SYMAIJ1] = 0.0;
+        var[VAR::U_SYMAIJ2] = 0.0;
+        var[VAR::U_SYMAIJ3] = 0.0;
+        var[VAR::U_SYMAIJ4] = 0.0;
+        var[VAR::U_SYMAIJ4] = 0.0;
+        var[VAR::U_BTR] = 0.0;
+        var[VAR::U_SYMBIJ0] = 0.0;
+        var[VAR::U_SYMBIJ1] = 0.0;
+        var[VAR::U_SYMBIJ2] = 0.0;
+        var[VAR::U_SYMBIJ3] = 0.0;
+        var[VAR::U_SYMBIJ4] = 0.0;
+        var[VAR::U_SYMBIJ4] = 0.0;
+        
         //std::cout<<"KS init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
 
         #if 0
