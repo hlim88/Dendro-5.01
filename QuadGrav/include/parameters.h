@@ -26,8 +26,7 @@ namespace quadgrav
 
     /**@brief number of variables*/
     #ifdef QUADGRAV_EVOL
-
-    static const unsigned int QUADGRAV_NUM_VARS=38;
+    static const unsigned int QUADGRAV_NUM_VARS=40;
     #else
     //Turn off QG terms
     static const unsigned int QUADGRAV_NUM_VARS=24;
