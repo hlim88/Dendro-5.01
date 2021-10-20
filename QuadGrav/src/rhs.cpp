@@ -12,9 +12,10 @@ using namespace quadgrav;
 
 //QG related constant
 //Alpah_c
-constexpr double a_const = 1.0
+constexpr double a_const = 1.0;
 //Beta_c
-constexpr double b_const = 1.0
+constexpr double b_const = 1.0;
+constexpr double qg_mass = 0.01;
 #if 0
 // HL : I think that we don't need
 //Tuning param for QG : handling some problematic terms

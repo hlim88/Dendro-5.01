@@ -61,8 +61,8 @@ Btr = dendro.scalar("Btr", "[pp]")
 Bij  = dendro.sym_3x3("Bij", "[pp]")
 
 # Additional constraint as evolutions vars
-Ci = dendro.vec3("Ci","[pp]")
-Ei = dendro.vec3("Ei","[pp]")
+#Ci = dendro.vec3("Ci","[pp]")
+#Ei = dendro.vec3("Ei","[pp]")
 
 # Lie derivative weight
 weight = -Rational(2,3)
@@ -140,18 +140,32 @@ d_a_n_a_down = -a_rhs + d(i,b) for i in dendro.e_i - a*C1[0,0,0]
 
 # Ricci tensor and scalar
 
+# Define acceleration 
+a_acc = Matrix([[0,0,0]]) #TODO : using actual definition
+
+# QG mass paramter
+qg_mass_sq = qg_mass*qg_mass
+
 # Ricci scalar, R
 # Eqn.23
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
 # Aux Ricci scalar, R^
 # Eqn.24
-Rsch_rhs = dendro.lie(b, Rsch) - a*(#RHS of Eqn.24, need carefully evaluate between ADM and BSSN) 
+Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian_conformal(Rsc) + sum([a_acc[i]*d(i,Rsc) for i in dendro.e_i]) - \
+                                    K*Rsch - qg_mass_sq*Rsc - 2(rho_qg - S_qg)
 
 # Ricci tensor
+
+# Define additional constraints
+# What these values must be at the initial? Since these are constraints so we can set as zero?
+# We may really need to treat these as evolution variables
+Ci = Matrix([[0,0,0]])
+Ei = Matrix(([0,0,0]])
+
 # From R_ab
 # Eqn.38
-Atr_rhs = dendro.lie(b, Atr) - a*(#RHS of Eqn.38)
+Atr_rhs = dendro.lie(b, Atr) + a*(2*sum([a_acc[i]*Csc[i] for i in dendro.e_i]) - Btr) 
 # Eqn.39
 Aij_rhs = #RHS of Eqn.29, TODO : evaluate n^c del_c A_ij in terms of time and lie derivatives
 
