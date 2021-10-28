@@ -1430,6 +1430,8 @@ double interpolation4( double xx[], double yy[], int np, double xb,
 	    var[VAR::U_SYMAT5] = Atd[2][2];
 
         // Intial set up for QG var. Since this is Ricci flat, initial values are zero
+        var[VAR::U_RSC] = 0.0;
+        var[VAR::U_RSCH] = 0.0;
         var[VAR::U_ATR] = 0.0;
         var[VAR::U_SYMAIJ0] = 0.0;
         var[VAR::U_SYMAIJ1] = 0.0;
