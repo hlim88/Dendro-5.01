@@ -147,7 +147,8 @@ n_vec = Matrix([[1/a, -b[0]/a, -b[1]/a, -b[2]/a]])
 a_acc = (d(i,a) for i in dendro.e_i)/a
 
 # QG mass paramter
-qg_mass_sq = qg_mass*qg_mass
+qg_mass0_sq = qg_mass0*qg_mass0
+qg_mass2_sq = qg_mass2*qg_mass2
 
 # Ricci scalar, R
 # Eqn.23
@@ -156,7 +157,7 @@ Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 # Aux Ricci scalar, R^
 # Eqn.24
 Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian(Rsc) + sum([a_acc[i]*d(i,Rsc) for i in dendro.e_i]) - \
-                                    K*Rsch - qg_mass_sq*Rsc - 2*(rho_qg - S_qg))
+                                    K*Rsch - qg_mass_sq0*Rsc - 2*(rho_qg - S_qg))
 
 # Ricci tensor
 
@@ -176,7 +177,13 @@ Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.
 
 # From V_ab
 # Eqn.42
-Btr_rhs = dendro.lie(b, Btr) - a*(#RHS of Eqn.42)
+Aij_UU = dendro.up_up(Aij)
+Ci_U = sum([Ci[j]*igt[i,j] for j in dendro.e_i])
+
+Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
+          a*(dendro.laplacian(Atr) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) - \
+          a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) + \
+
 # Eqn.43
 Bij_rhs = #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
 
