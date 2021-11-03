@@ -169,12 +169,10 @@ Ei = Matrix([[0,0,0]]) # Ei can be spatial projection of RHS of Eqn.47
 # Eqn.38
 Atr_rhs = dendro.lie(b, Atr) + a*(2*sum([a_acc[i]*Ci[i] for i in dendro.e_i]) - Btr) 
 # Eqn.39
-Aij_rhs = #RHS of Eqn.29, TODO : evaluate n^c del_c A_ij in terms of time and lie derivatives
-
-# Precomputation
-# Spatially projected RHS of Eqn.37
-# TODO : change name
-Ugly = 0
+Aij_rhs1 = Matrix([(sum(b[l]*D(l,Aij[i,j]) for l in dendro.e_i) for i in dendro.e_i) for j in dendro.e_i]) + \
+          2*a/3*Atr*Matrix([(d(i,n_vec[j]) - At[i,j]-gt[i,j]*K/3 for i in dendro.e_i) for j in dendro.e_i]) + \
+          2*a*Matrix([(sum(a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+gt[k,i]*n_vec[j]/3+gt[k,j]*n_vec[i]/3+gt[k,i]*Ci[j]+gt[k,j]*Ci[i]))/2 for i in dendro.e_i) for j in dendro.e_i]) 
+Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.reshape(3,3) 
 
 # From V_ab
 # Eqn.42
