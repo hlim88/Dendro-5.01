@@ -179,10 +179,15 @@ Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.
 # Eqn.42
 Aij_UU = dendro.up_up(Aij)
 Ci_U = sum([Ci[j]*igt[i,j] for j in dendro.e_i])
+Kij = At + 1/3*gt*K
+Kki = dendro.up_down(Kij)
 
 Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
           a*(dendro.laplacian(Atr) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) - \
-          a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) + \
+          a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) - \
+          a/2*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*Atr - 2*K*Rsch + dendro.laplacian(Rsc) - 3/4*qg_mass0_sq*Rsc) + \
+          4*a*(sum([Ci_U[j]*d(j,K) for j in dendro.e_i]) + sum([Ci_U[j]*d(i,Kij[i,j]) for i,j in dendro.e_ij])) + \
+          2*a*(sum([ (Aij_UU[i,j] + Atr*igt[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i]) for i,j in dendro.e_ij])
 
 # Eqn.43
 Bij_rhs = #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
