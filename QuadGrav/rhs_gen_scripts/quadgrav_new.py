@@ -136,16 +136,15 @@ Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
 #Some pre-definitions of derivatives
 d_a_n_a_up = -a_rhs - a*C1[0,0,0]
  
-d_a_n_a_down = -a_rhs + d(i,b) for i in dendro.e_i - a*C1[0,0,0] 
+d_a_n_a_down = -a_rhs + (d(i,b) for i in dendro.e_i) - a*C1[0,0,0] 
 
 # Ricci tensor and scalar
 
 # normal vector n^a
 n_vec = Matrix([[1/a, -b[0]/a, -b[1]/a, -b[2]/a]])
 
-# Define acceleration (n^c \del_c n_a)
-#a_acc = sum([n_vec[a]*(D(n_vec,b)+C[]*n_vec[])]) #TODO : put label and Christoffel symbol
-a_acc = Matrix([[0,0,0]]) #TODO : using actual definition above
+# Define acceleration (n^c \del_c n_a) HL : this is equal to 1/a*D_i a
+a_acc = (d(i,a) for i in dendro.e_i)/a
 
 # QG mass paramter
 qg_mass_sq = qg_mass*qg_mass
