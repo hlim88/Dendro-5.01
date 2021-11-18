@@ -205,12 +205,12 @@ Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
 Bij_rhs = Matrix([(
 	(sum(b[l]*D(l,Bij[i,j]) for l in dendro.e_i)
 	+ 2/3*a*Btr*(
-		(D(i,n[j]) + D(j,n[i]))/2
+		(D(i,n_vec[j]) + D(j,n_vec[i]))/2
 		- Kij[i,j]
 	)
 	+ 2*a*sum([a_acc[k]*(
-		(Bij[k,i]*n[j] + Bij[k,j]*n[i])/2
-		+ Btr*(gs[k,i]*n[j] + gs[k,j]*n[i])/6
+		(Bij[k,i]*n_vec[j] + Bij[k,j]*n_vec[i])/2
+		+ Btr*(gs[k,i]*n_vec[j] + gs[k,j]*n_vec[i])/6
 		+ (gs[k,i]*Ei[j] + gs[k,j]*Ei[i])/2
 	for k in dendro.e_i])
 	- gs[i,j]*Btr_rhs/3
