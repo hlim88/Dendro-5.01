@@ -215,7 +215,7 @@ Bij_rhs = Matrix([(
 	for k in dendro.e_i])
 	- gs[i,j]*Btr_rhs/3
 	- a*(
-		dendro.laplacian(Aij[i,j]) 
+		dendro.DiDj(Aij[i,j]) # HL : I hate this notation. Change it 
 		+ gs[i,j]*dendro.laplacian(Atr)/3
 		- qg_mass2_sq*Aij[i,j]
 		- qg_mass2_sq*Atr/3
@@ -264,13 +264,13 @@ Bij_rhs = Matrix([(
 	for k in dendro.e_i])
 for i in dendro.e_i) for j in dendro.e_i])
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
-#TODO: either define n or express explicitly in terms of lapse and shift
-#TODO: gs[] denotes the spatial (not conformal) metric: either need to implement or rewrite that
-#TODO: not sure whether dendro.laplacian(Aij[i,j]) is defined yet
+#TODO: change n -> n_vec
+#TODO: define gs in terms of gt
+#TODO: dendro.DiDj(Aij[i,j]) is in dendro.py but need to check
 
 #TODO : Additional constraints, C_k, E_k go here if we want to evolve and monitor
-#TODO: probably D[i,d[j,Rsc]] needs extra implementation
-#TODO: probably Riem[i,k,j,l] needs to be implemented
+#TODO: D[i,d[j,Rsc]] -> Dj[i, d[j,Rsc]] which gives cov deri for rank 1
+#TODO: probably Riem[i,k,j,l] needs to be implemented in gs
 
 #_I = gt*igt
 #print(simplify(_I))
