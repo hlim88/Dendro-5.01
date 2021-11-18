@@ -163,19 +163,10 @@ Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian(Rsc) + sum([a_acc[i]*d(i,Rs
 
 # Define additional constraints
 # We may really need to treat these as evolution variables
-Ci = (
-	sum([D(k,Kki[k,i]) for k in dendro.e_i]) 
-	+ d(i,K) 
-for i in dendro.e_i)
+Ci = (sum([D(k,Kki[k,i]) for k in dendro.e_i]) + d(i,K) for i in dendro.e_i)
 # determined by the spatial momentum constraints such that C_i = - D_j K^j_i + D_i K, cf.~Eq.~19
-#TODO: confirm that D is the spatial-metric covD not the conformal-metric covD
-Ei = (
-	- sum([Kki[k,i]*Ci[k] for k in dendro.e_i])
-	- K*Ci[i]
-	- D(k,dendro.up_down(Aij)[k,i])
-	- d(i,Atr)/3
-	+ d(i,Rsc)/4
-for i in dendro.e_i) 
+Ei = (- sum([Kki[k,i]*Ci[k] for k in dendro.e_i]) - K*Ci[i]- D(k,dendro.up_down(Aij)[k,i])- \
+      d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i) 
 # Ei is determined by the spatial projection of RHS of Eqn.47
 
 # From R_ab
@@ -264,8 +255,6 @@ Bij_rhs = Matrix([(
 	for k in dendro.e_i])
 for i in dendro.e_i) for j in dendro.e_i])
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
-#TODO: change n -> n_vec
-#TODO: define gs in terms of gt
 #TODO: dendro.DiDj(Aij[i,j]) is in dendro.py but need to check
 
 #TODO : Additional constraints, C_k, E_k go here if we want to evolve and monitor
