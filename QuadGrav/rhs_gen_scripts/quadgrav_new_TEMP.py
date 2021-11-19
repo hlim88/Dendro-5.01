@@ -184,6 +184,8 @@ Aij_UU = dendro.up_up(Aij)
 Ci_U = sum([Ci[j]*igt[i,j] for j in dendro.e_i])
 Kij = At + 1/3*gt*K
 Kki = dendro.up_down(Kij)
+gs = gt/chi
+igs = igt/chi
 
 Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
           a*(dendro.laplacian(Atr) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) - \
@@ -193,73 +195,25 @@ Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
           2*a*(sum([ (Aij_UU[i,j] + Atr*igt[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i]) for i,j in dendro.e_ij])
 
 # Eqn.43
-Bij_rhs = Matrix([(
-	(sum(b[l]*D(l,Bij[i,j]) for l in dendro.e_i)
-	+ 2/3*a*Btr*(
-		(D(i,n_vec[j]) + D(j,n_vec[i]))/2
-		- Kij[i,j]
-	)
-	+ 2*a*sum([a_acc[k]*(
-		(Bij[k,i]*n_vec[j] + Bij[k,j]*n_vec[i])/2
-		+ Btr*(gs[k,i]*n_vec[j] + gs[k,j]*n_vec[i])/6
-		+ (gs[k,i]*Ei[j] + gs[k,j]*Ei[i])/2
+Bij_rhs =
+	sum(b[l]*D(l,Bij[i,j]) for l in dendro.e_i)
+	+ 2/3*a*Btr*((D(i,n_vec[j]) + D(j,n_vec[i]))/2 - Kij[i,j])
+	+ 2*a*sum([a_acc[k]*((Bij[k,i]*n_vec[j] + Bij[k,j]*n_vec[i])/2 + Btr*(gs[k,i]*n_vec[j] + gs[k,j]*n_vec[i])/6 + (gs[k,i]*Ei[j] + gs[k,j]*Ei[i])/2
 	for k in dendro.e_i])
 	- gs[i,j]*Btr_rhs/3
-	- a*(
-		dendro.DiDj(Aij[i,j]) # HL : I hate this notation. Change it 
-		+ gs[i,j]*dendro.laplacian(Atr)/3
-		- qg_mass2_sq*Aij[i,j]
-		- qg_mass2_sq*Atr/3
-		+ sum([
-			a_acc_UP[k]*D[k,Aij[i,j]]
-			+ a_acc_UP[k]*D[k,Atr]*gs[i,j]/3
-		for k in dendro.e_i])
-	)
+	- a*(dendro.DiDj(Aij[i,j]) + gs[i,j]*dendro.laplacian(Atr)/3 - qg_mass2_sq*Aij[i,j] - qg_mass2_sq*Atr/3) 
+    - a*(sum([a_acc_UP[k]*D[k,Aij[i,j]] + a_acc_UP[k]*D[k,Atr]*gs[i,j]/3 for k in dendro.e_i]))
 	+ a*K*(Bij[i,j] + gs[i,j]*Btr/3)
 	+ 2*a*Sij_qg[i,j]
-	- 2*a*(
-		sum([
-			dendro.up_down(Aij)[k,i]*Aij[k,j]) 
-		for k in dendro.e_i])
-		+ 2/3*Aij[i,j]*Atr
-		- Ci[i]*Ci[j]
-	)
-	+ a/2*gs[i,j](
-		Atr*Atr
-		+ sum([
-			dendro.up_up(Aij)[k,l]*Aij[k,l])
-			+ Ci_U[k]*Ci[k]
-		for k in dendro.e_i])
-	)
-	- a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(
-		Rsc*(Aij[i,j] + gs[i,j]*Atr/3)
-		+ D[i,d[j,Rsc]]
-		- qg_mass0_sq*gs[i,j]*Rsc/4
-		- 2*Kij[i,j]Rsch
-	)
-	+ 2*a*sum([
-		(
-			dendro.up_up(Aij)[k,l]
-			+ dendro.up_up(gs)[k,l]*Atr/3
-		)*(
-			Riem[i,k,j,l]
-			+ Kij[i,j]*Kij[l,k]/2
-			- Kij[i,l]*Kij[j,k]/2
-		)
-	for k in dendro.e_i) for l in dendro.e_i])
-	+ 2*a*sum([
-		Ci_U[k]*D[i,Kij[k,j]]
-		- Ci_U[k]*D[k,Kij[i,j]]
-		+ Ci_U[k]*D[j,Kij[k,i]]
-		- Ci_U[k]*D[k,Kij[j,i]]
-	for k in dendro.e_i])
-for i in dendro.e_i) for j in dendro.e_i])
+	- 2*a*(sum([endro.up_down(Aij)[k,i]*Aij[k,j]) for k in dendro.e_i]) + 2/3*Aij[i,j]*Atr - Ci[i]*Ci[j])
+	+ a/2*gs[i,j](Atr*Atr+ sum([dendro.up_up(Aij)[k,l]*Aij[k,l])+ Ci_U[k]*Ci[k]for k in dendro.e_i])
+	- a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*(Aij[i,j] + gs[i,j]*Atr/3) + D[i,d[j,Rsc]] - qg_mass0_sq*gs[i,j]*Rsc/4 - 2*Kij[i,j]*Rsch)
+	+ 2*a*sum([(Aij_UU[k,l] + igs[k,l]*Atr/3)*(Riem[i,k,j,l] + Kij[i,j]*Kij[l,k]/2 - Kij[i,l]*Kij[j,k]/2) for k in dendro.e_i) for l in dendro.e_i])
+	+ 2*a*sum([Ci_U[k]*D[i,Kij[k,j]] - Ci_U[k]*D[k,Kij[i,j]] + Ci_U[k]*D[j,Kij[k,i]] - Ci_U[k]*D[k,Kij[j,i]] for k in dendro.e_i])
+
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
-#TODO: dendro.DiDj(Aij[i,j]) is in dendro.py but need to check
 
 #TODO : Additional constraints, C_k, E_k go here if we want to evolve and monitor
-#TODO: D[i,d[j,Rsc]] -> Dj[i, d[j,Rsc]] which gives cov deri for rank 1
-#TODO: probably Riem[i,k,j,l] needs to be implemented in gs
 
 #_I = gt*igt
 #print(simplify(_I))
