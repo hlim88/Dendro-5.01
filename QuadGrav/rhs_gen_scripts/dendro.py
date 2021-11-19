@@ -196,6 +196,15 @@ def DiTd(T)
     m = Matrix([d(T[i,j],k) - sum([C3[i,k,l]*T[l,j] + C3[j,k,l]*T[i,l] for l in e_i]) for i,j in e_ij])
     return m.reshape(3,3)
 
+# Covariant derivative acts on tensor type (0,1)
+
+def DiOd(T)
+
+    global d, C3
+
+    m = Matrix([d(T[i],j) - sum([C3[k,j,i]*T[k] for k in e_i]) for i,j in e_ij])
+    return m.reshape(3,3)
+
 # Laplacian for tensor rank 2
 def DiDjT(T)
 
