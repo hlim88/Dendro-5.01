@@ -3,7 +3,6 @@
 # Quad grav rhs generator new version
 #####################################################################
 
-
 import dendro
 from sympy import *
 
@@ -118,6 +117,9 @@ AikAkj = Matrix([sum([At[i, k] * sum([dendro.inv_metric[k, l]*At[l, j] for l in 
 
 #NOTE : "CAUTION" THIS IS DIFFERENT THEN Atr for Ricci. 
 #NOTE : The rho, S, and Sij in BSSN eqns are not "physical" matter.
+#Introduce not conformally transformed metric again
+gs = gt/chi
+igs = igt/chi
 
 # Define additional constraints
 # We may really need to treat these as evolution variables
@@ -167,8 +169,7 @@ qg_mass0_sq = qg_mass0*qg_mass0
 qg_mass2_sq = qg_mass2*qg_mass2
 
 # Some precomputation/definition
-gs = gt/chi
-igs = igt/chi
+
 Aij_UU = dendro.up_up(Aij)*(chi*chi)
 Ci_U = sum([Ci[j]*igs[i,j] for j in dendro.e_i])
 Kij = At + 1/3*gt*K
@@ -195,9 +196,6 @@ Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.
 
 # From V_ab
 # Eqn.42
-
-
-
 Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
           a*(dendro.laplacian(Atr) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) - \
           a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) - \
