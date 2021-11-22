@@ -160,7 +160,7 @@ psi4_img  = - ( psi4_1_img  + psi4_2_img  - psi4_3_img  - psi4_4_img  )
 
 # TODO : add fiducial rho and S for constraints
 # The Hamiltonian constraint
-ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2 
+ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2 - rho_sq
 
 # The momentum  constraints 
 mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
@@ -170,7 +170,7 @@ mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(3,2)*Matrix([ \
             sum([igt[j,k]*At[k,i]*d(j,chi)/chi for j,k in dendro.e_ij])  \
             for i in dendro.e_i]) -\
-      Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i])
+      Rational(2,3)*Matrix([d(i,K) - Si[i] for i in dendro.e_i])
 mom = [item for sublist in mom.tolist() for item in sublist]
 
 #Additional constraints?
