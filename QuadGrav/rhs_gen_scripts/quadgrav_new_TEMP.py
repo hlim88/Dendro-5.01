@@ -109,7 +109,6 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
          for i in dendro.e_i]
 
 # Metric and extrinsic curvature
-# TODO : add fiducial matter source term into BSSN Eqn. (only matter for K and At)
 
 gt_rhs = dendro.lie(b, gt, weight) - 2*a*At + 0*dendro.kodiss(gt)
 
@@ -118,9 +117,24 @@ chi_rhs = dendro.lie(b, chi, weight) + Rational(2,3) * (chi*a*K) + 0*dendro.kodi
 AikAkj = Matrix([sum([At[i, k] * sum([dendro.inv_metric[k, l]*At[l, j] for l in dendro.e_i]) for k in dendro.e_i]) for i, j in dendro.e_ij])
 
 #NOTE : "CAUTION" THIS IS DIFFERENT THEN Atr for Ricci. 
-At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
+#NOTE : The rho, S, and Sij in BSSN eqns are not "physical" matter.
 
-K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*dendro.kodiss(K)
+# Define additional constraints
+# We may really need to treat these as evolution variables
+Ci = (-sum([covD11(k,Kki[k,i]) for k in dendro.e_i]) - d(i,K) for i in dendro.e_i)
+# determined by the spatial momentum constraints such that C_i = - D_j K^j_i + D_i K, cf.~Eq.~19
+AiUjD = dendro.up_down(Aij)*chi
+Ei = (- sum([Kki[k,i]*Ci[k] - covD2(k, AiUjD[k,i] for k in dendro.e_i]) - K*Ci[i] - d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i) 
+# Ei is determined by the spatial projection of RHS of Eqn.47
+
+rho_qg = Rsc/4
+Si_qg = -Ci
+Sij_qg = Matrix([Aij[i,j] + gs[i,j]*Atr/3 + gs[i,j]*Rsc/4 for i,j in dendro.e_ij]).reshape(3,3)
+S_qg = sum([sum([Sij_qg[i,j]*igs[i,j] for i in dendro.e_i]) for j in dendro.e_i])
+
+At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)-8*pi*Sij_qg) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
+
+K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 4*pi*a*(rho_qg + S_qg) + 0*dendro.kodiss(K)
 
 At_UU = dendro.up_up(At)
 
@@ -152,6 +166,14 @@ a_acc = (d(i,a) for i in dendro.e_i)/a
 qg_mass0_sq = qg_mass0*qg_mass0
 qg_mass2_sq = qg_mass2*qg_mass2
 
+# Some precomputation/definition
+gs = gt/chi
+igs = igt/chi
+Aij_UU = dendro.up_up(Aij)*(chi*chi)
+Ci_U = sum([Ci[j]*igs[i,j] for j in dendro.e_i])
+Kij = At + 1/3*gt*K
+Kki = dendro.up_down(Kij)*chi
+
 # Ricci scalar, R
 # Eqn.23
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
@@ -159,42 +181,29 @@ Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 # Aux Ricci scalar, R^
 # Eqn.24
 Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian(Rsc) + sum([a_acc[i]*d(i,Rsc) for i in dendro.e_i]) - \
-                                    K*Rsch - qg_mass_sq0*Rsc - 2*(rho_qg - S_qg))
+                                    K*Rsch - qg_mass0_sq*Rsc - 2*0*(rho - S))
 
 # Ricci tensor
-
-# Define additional constraints
-# We may really need to treat these as evolution variables
-Ci = (sum([D(k,Kki[k,i]) for k in dendro.e_i]) + d(i,K) for i in dendro.e_i)
-# determined by the spatial momentum constraints such that C_i = - D_j K^j_i + D_i K, cf.~Eq.~19
-Ei = (- sum([Kki[k,i]*Ci[k] for k in dendro.e_i]) - K*Ci[i]- D(k,dendro.up_down(Aij)[k,i])- \
-      d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i) 
-# Ei is determined by the spatial projection of RHS of Eqn.47
-
 # From R_ab
 # Eqn.38
 Atr_rhs = dendro.lie(b, Atr) + a*(2*sum([a_acc[i]*Ci[i] for i in dendro.e_i]) - Btr) 
 # Eqn.39
-Aij_rhs1 = Matrix([(sum(b[l]*D(l,Aij[i,j]) for l in dendro.e_i) for i in dendro.e_i) for j in dendro.e_i]) + \
-          2*a/3*Atr*Matrix([(d(i,n_vec[j]) - At[i,j]-gt[i,j]*K/3 for i in dendro.e_i) for j in dendro.e_i]) + \
-          2*a*Matrix([(sum(a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+gt[k,i]*n_vec[j]/3+gt[k,j]*n_vec[i]/3+gt[k,i]*Ci[j]+gt[k,j]*Ci[i]))/2 for i in dendro.e_i) for j in dendro.e_i]) 
+Aij_rhs1 = Matrix([(sum(b[l]*d(l,Aij[i,j]) for l in dendro.e_i) for i in dendro.e_i) for j in dendro.e_i]) + \
+          2*a/3*Atr*Matrix([((covD1(i,n_vec[j]) + covD1(j,n_vec[i]))/2 - At[i,j]-gt[i,j]*K/3 for i in dendro.e_i) for j in dendro.e_i]) + \
+          2*a*Matrix([(sum(a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+Atr*(gs[k,i]*n_vec[j]/3+gs[k,j]*n_vec[i]/3)+gs[k,i]*Ci[j]+gs[k,j]*Ci[i]))/2 for i in dendro.e_i) for j in dendro.e_i]) 
 Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.reshape(3,3) 
 
 # From V_ab
 # Eqn.42
-Aij_UU = dendro.up_up(Aij)
-Ci_U = sum([Ci[j]*igt[i,j] for j in dendro.e_i])
-Kij = At + 1/3*gt*K
-Kki = dendro.up_down(Kij)
-gs = gt/chi
-igs = igt/chi
+
+
 
 Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
           a*(dendro.laplacian(Atr) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) - \
           a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) - \
           a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*Atr - 2*K*Rsch + dendro.laplacian(Rsc) - 3/4*qg_mass0_sq*Rsc) + \
-          4*a*(sum([Ci_U[j]*d(j,K) for j in dendro.e_i]) + sum([Ci_U[j]*d(i,Kij[i,j]) for i,j in dendro.e_ij])) + \
-          2*a*(sum([ (Aij_UU[i,j] + Atr*igt[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i]) for i,j in dendro.e_ij])
+          4*a*(-sum([Ci_U[j]*d(j,K) for j in dendro.e_i]) + sum([Ci_U[j]*covD2(i,Kij[i,j]) for i,j in dendro.e_ij])) + \
+          2*a*(sum([ (Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i]) for i,j in dendro.e_ij])
 
 # Eqn.43
 Bij_rhs_temp =
@@ -209,7 +218,7 @@ Bij_rhs_temp =
 	+ Matrix([a/2*gs[i,j](Atr*Atr+ sum([dendro.up_up(Aij)[k,l]*Aij[k,l])+ Ci_U[k]*Ci[k]for k in dendro.e_i]) for i,j in dendro.e_ij]) \
 	- Matrix([a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*(Aij[i,j] + gs[i,j]*Atr/3) + covD1[i,d[j,Rsc]] - qg_mass0_sq*gs[i,j]*Rsc/4 - 2*Kij[i,j]*Rsch) for i,j in dendro.e_ij]) \
 	+ Matrix([2*a*sum([(Aij_UU[k,l] + igs[k,l]*Atr/3)*(dendro.Riem[i,k,j,l] + Kij[i,j]*Kij[l,k]/2 - Kij[i,l]*Kij[j,k]/2) for k in dendro.e_i) for l in dendro.e_i]) for i,j in dendro.e_ij]) \
-	+ Matrix([2*a*sum([Ci_U[k]*covD2[i,Kij[k,j]] - Ci_U[k]*covD2[k,Kij[i,j]] + Ci_U[k]*covD2[j,Kij[k,i]] - Ci_U[k]*covD2[k,Kij[j,i]] for k in dendro.e_i]) for dendro.e_ij]) \
+	+ Matrix([2*a*sum([Ci_U[k]*covD2[i,Kij[k,j]] - Ci_U[k]*covD2[k,Kij[i,j]] + Ci_U[k]*covD2[j,Kij[k,i]] - Ci_U[k]*covD2[k,Kij[j,i]] for k in dendro.e_i]) for i,j in dendro.e_ij]) \
 
 Bij_rhs = Bij_rhs_temp.reshape(3,3)
 
