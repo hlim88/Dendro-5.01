@@ -60,7 +60,7 @@ Btr = dendro.scalar("Btr", "[pp]")
 Bij  = dendro.sym_3x3("Bij", "[pp]")
 
 # Additional constraint as evolutions vars
-#Ci = dendro.vec3("Ci","[pp]")
+Ci = dendro.vec3("Ci","[pp]")
 #Ei = dendro.vec3("Ei","[pp]")
 
 # Lie derivative weight
@@ -122,9 +122,7 @@ gs = gt/chi
 igs = igt/chi
 
 # Define additional constraints
-# We may really need to treat these as evolution variables
-Ci = (-sum([covD11(k,Kki[k,i]) for k in dendro.e_i]) - d(i,K) for i in dendro.e_i)
-# determined by the spatial momentum constraints such that C_i = - D_j K^j_i + D_i K, cf.~Eq.~19
+# NOTE : Ci is considered as evolution variable but Ei is treated algebraically
 AiUjD = dendro.up_down(Aij)*chi
 Ei = (- sum([Kki[k,i]*Ci[k] - covD2(k, AiUjD[k,i] for k in dendro.e_i]) - K*Ci[i] - d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i) 
 # Ei is determined by the spatial projection of RHS of Eqn.47
@@ -219,6 +217,10 @@ Bij_rhs_temp =
 	+ Matrix([2*a*sum([Ci_U[k]*covD2[i,Kij[k,j]] - Ci_U[k]*covD2[k,Kij[i,j]] + Ci_U[k]*covD2[j,Kij[k,i]] - Ci_U[k]*covD2[k,Kij[j,i]] for k in dendro.e_i]) for i,j in dendro.e_ij]) \
 
 Bij_rhs = Bij_rhs_temp.reshape(3,3)
+
+#Eqn.41
+Ci_rhs_temp = Matrix([sum([a_acc[k]*(Aij[k,i] + gs[i,k]*Atr/3) + n_vec[i]*a_acc[k]*Ci[k] for k in dendro.e_i]) for i in dendro.e_i])
+Ci_rhs = dendro.lie(b, Ci) - Ei + Ci_rhs_temp.reshape(3,3)
 
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
 
