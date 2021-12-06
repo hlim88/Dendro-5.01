@@ -33,7 +33,8 @@ namespace quadgrav
               U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5,
               U_RSC,U_RSCH,U_ATR,U_SYMAIJ0,U_SYMAIJ1,U_SYMAIJ2,U_SYMAIJ3,U_SYMAIJ4,
               U_SYMAIJ5,U_BTR,U_SYMBIJ0,U_SYMBIJ1,U_SYMBIJ2,U_SYMBIJ3,U_SYMBIJ4,
-              U_SYMBIJ5};
+              U_SYMBIJ5,
+              U_CI0, U_CI1, U_CI2};
 
     //enum VAR_PSI4 {C_PSI4_REAL, C_PSI4_IMG};
     enum VAR_CONSTRAINT {C_HAM=0, C_MOM0, C_MOM1, C_MOM2, C_PSI4_REAL, C_PSI4_IMG};
@@ -48,7 +49,8 @@ namespace quadgrav
                                           "U_ATR","U_SYMAIJ0","U_SYMAIJ1","U_SYMAIJ2","U_SYMAIJ3",
                                           "U_SYMAIJ4","U_SYMAIJ5",
                                           "U_BTR","U_SYMBIJ0","U_SYMBIJ1","U_SYMBIJ2","U_SYMBIJ3",
-                                          "U_SYMBIJ4","U_SYMBIJ5"
+                                          "U_SYMBIJ4","U_SYMBIJ5",
+                                          "U_CI0","U_CI1","U_CI2"
                                           };
 
 

@@ -705,7 +705,28 @@ namespace quadgrav
             }
         }
 
-    }
+    // Initial data for additional variables from QG
+    var[VAR::U_RSC] = 0.0;
+    var[VAR::U_RSCH] = 0.0;
+    var[VAR::U_ATR] = 0.0;
+    var[VAR::U_SYMAIJ0] = 0.0;
+    var[VAR::U_SYMAIJ1] = 0.0;
+    var[VAR::U_SYMAIJ2] = 0.0;
+    var[VAR::U_SYMAIJ3] = 0.0;
+    var[VAR::U_SYMAIJ4] = 0.0;
+    var[VAR::U_SYMAIJ5] = 0.0;
+    var[VAR::U_BTR] = 0.0;
+    var[VAR::U_SYMBIJ0] = 0.0;
+    var[VAR::U_SYMBIJ1] = 0.0;
+    var[VAR::U_SYMBIJ2] = 0.0;
+    var[VAR::U_SYMBIJ3] = 0.0;
+    var[VAR::U_SYMBIJ4] = 0.0;
+    var[VAR::U_SYMBIJ5] = 0.0;
+    var[VAR::U_CI0] = 0.0;
+    var[VAR::U_CI1] = 0.0;
+    var[VAR::U_CI2] = 0.0;
+    
+   }
     
 namespace trumpet_data { 
 
@@ -1407,29 +1428,29 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         var[VAR::U_BETA1] = Betau[1];
         var[VAR::U_BETA2] = Betau[2];
 
-	    var[VAR::U_GT0] = Gamt[0];
-	    var[VAR::U_GT1] = Gamt[1];
-	    var[VAR::U_GT2] = Gamt[2];
+	var[VAR::U_GT0] = Gamt[0];
+	var[VAR::U_GT1] = Gamt[1];
+	var[VAR::U_GT2] = Gamt[2];
 
         var[VAR::U_B0] = 0.0;
         var[VAR::U_B1] = 0.0;
         var[VAR::U_B2] = 0.0;
 	
-	    var[VAR::U_SYMGT0] = gtd[0][0];
-	    var[VAR::U_SYMGT1] = gtd[0][1];
-	    var[VAR::U_SYMGT2] = gtd[0][2];
-	    var[VAR::U_SYMGT3] = gtd[1][1];
-	    var[VAR::U_SYMGT4] = gtd[1][2];
-	    var[VAR::U_SYMGT5] = gtd[2][2];
+	var[VAR::U_SYMGT0] = gtd[0][0];
+	var[VAR::U_SYMGT1] = gtd[0][1];
+	var[VAR::U_SYMGT2] = gtd[0][2];
+	var[VAR::U_SYMGT3] = gtd[1][1];
+	var[VAR::U_SYMGT4] = gtd[1][2];
+	var[VAR::U_SYMGT5] = gtd[2][2];
 
-	    var[VAR::U_SYMAT0] = Atd[0][0];
-	    var[VAR::U_SYMAT1] = Atd[0][1];
-	    var[VAR::U_SYMAT2] = Atd[0][2];
-	    var[VAR::U_SYMAT3] = Atd[1][1];
-	    var[VAR::U_SYMAT4] = Atd[1][2];
-	    var[VAR::U_SYMAT5] = Atd[2][2];
-
-        // Intial set up for QG var. Since this is Ricci flat, initial values are zero
+	var[VAR::U_SYMAT0] = Atd[0][0];
+	var[VAR::U_SYMAT1] = Atd[0][1];
+	var[VAR::U_SYMAT2] = Atd[0][2];
+	var[VAR::U_SYMAT3] = Atd[1][1];
+	var[VAR::U_SYMAT4] = Atd[1][2];
+	var[VAR::U_SYMAT5] = Atd[2][2];
+        
+        // Initial data for additional variables from QG
         var[VAR::U_RSC] = 0.0;
         var[VAR::U_RSCH] = 0.0;
         var[VAR::U_ATR] = 0.0;
@@ -1438,15 +1459,17 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         var[VAR::U_SYMAIJ2] = 0.0;
         var[VAR::U_SYMAIJ3] = 0.0;
         var[VAR::U_SYMAIJ4] = 0.0;
-        var[VAR::U_SYMAIJ4] = 0.0;
+        var[VAR::U_SYMAIJ5] = 0.0;
         var[VAR::U_BTR] = 0.0;
         var[VAR::U_SYMBIJ0] = 0.0;
         var[VAR::U_SYMBIJ1] = 0.0;
         var[VAR::U_SYMBIJ2] = 0.0;
         var[VAR::U_SYMBIJ3] = 0.0;
         var[VAR::U_SYMBIJ4] = 0.0;
-        var[VAR::U_SYMBIJ4] = 0.0;
-        
+        var[VAR::U_SYMBIJ5] = 0.0;
+        var[VAR::U_CI0] = 0.0;
+        var[VAR::U_CI1] = 0.0;
+        var[VAR::U_CI2] = 0.0;
         //std::cout<<"KS init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
 
         #if 0
