@@ -118,3 +118,12 @@
   free(agrad_0_Bij5);
   free(agrad_1_Bij5);
   free(agrad_2_Bij5);
+  free(agrad_0_Ci0);
+  free(agrad_1_Ci0);
+  free(agrad_2_Ci0);
+  free(agrad_0_Ci1);
+  free(agrad_1_Ci1);
+  free(agrad_2_Ci1);
+  free(agrad_0_Ci2);
+  free(agrad_1_Ci2);
+  free(agrad_2_Ci2);

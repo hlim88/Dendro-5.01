@@ -37,7 +37,7 @@
             "           " : "grain size N/p , Where N number of total octants, p number of active cores",
             "QUADGRAV_DENDRO_GRAIN_SZ": 100,
             "           " : "variable group size for the asynchronous unzip operation",
-            "QUADGRAV_ASYNC_COMM_K": 2,
+            "QUADGRAV_ASYNC_COMM_K": 1,
             "           " : "dendro coarsening factor, coarsen if computed wavelet tol < QUADGRAV_DENDRO_AMR_FAC*QUADGRAV_WAVELET_TOL ",
             "QUADGRAV_DENDRO_AMR_FAC": 1.0,
             "           " : "dendro load imbalance tolerance for flexible partitioning",

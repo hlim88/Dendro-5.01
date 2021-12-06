@@ -38,6 +38,9 @@
   ko_deriv_x(grad_0_Bij3, Bij3, hx, sz, bflag);
   ko_deriv_x(grad_0_Bij4, Bij4, hx, sz, bflag);
   ko_deriv_x(grad_0_Bij5, Bij5, hx, sz, bflag);
+  ko_deriv_x(grad_0_Ci0, Ci0, hx, sz, bflag);
+  ko_deriv_x(grad_0_Ci1, Ci1, hx, sz, bflag);
+  ko_deriv_x(grad_0_Ci2, Ci2, hx, sz, bflag);
   ko_deriv_y(grad_1_gt0, gt0, hy, sz, bflag);
   ko_deriv_y(grad_1_gt1, gt1, hy, sz, bflag);
   ko_deriv_y(grad_1_gt2, gt2, hy, sz, bflag);
@@ -78,6 +81,9 @@
   ko_deriv_y(grad_1_Bij3, Bij3, hy, sz, bflag);
   ko_deriv_y(grad_1_Bij4, Bij4, hy, sz, bflag);
   ko_deriv_y(grad_1_Bij5, Bij5, hy, sz, bflag);
+  ko_deriv_y(grad_1_Ci0, Ci0, hy, sz, bflag);
+  ko_deriv_y(grad_1_Ci1, Ci1, hy, sz, bflag);
+  ko_deriv_y(grad_1_Ci2, Ci2, hy, sz, bflag);
   ko_deriv_z(grad_2_gt0, gt0, hz, sz, bflag);
   ko_deriv_z(grad_2_gt1, gt1, hz, sz, bflag);
   ko_deriv_z(grad_2_gt2, gt2, hz, sz, bflag);
@@ -118,3 +124,6 @@
   ko_deriv_z(grad_2_Bij3, Bij3, hz, sz, bflag);
   ko_deriv_z(grad_2_Bij4, Bij4, hz, sz, bflag);
   ko_deriv_z(grad_2_Bij5, Bij5, hz, sz, bflag);
+  ko_deriv_z(grad_2_Ci0, Ci0, hz, sz, bflag);
+  ko_deriv_z(grad_2_Ci1, Ci1, hz, sz, bflag);
+  ko_deriv_z(grad_2_Ci2, Ci2, hz, sz, bflag);

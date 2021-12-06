@@ -118,3 +118,12 @@
   double *agrad_0_Bij5 = (double *) malloc(bytes);
   double *agrad_1_Bij5 = (double *) malloc(bytes);
   double *agrad_2_Bij5 = (double *) malloc(bytes);
+  double *agrad_0_Ci0 = (double *) malloc(bytes);
+  double *agrad_1_Ci0 = (double *) malloc(bytes);
+  double *agrad_2_Ci0 = (double *) malloc(bytes);
+  double *agrad_0_Ci1 = (double *) malloc(bytes);
+  double *agrad_1_Ci1 = (double *) malloc(bytes);
+  double *agrad_2_Ci1 = (double *) malloc(bytes);
+  double *agrad_0_Ci2 = (double *) malloc(bytes);
+  double *agrad_1_Ci2 = (double *) malloc(bytes);
+  double *agrad_2_Ci2 = (double *) malloc(bytes);

@@ -28,14 +28,14 @@
       At0, At1, At2, At3, At4, At5,
       Rsc, Rsch, Atr, Aij0, Aij1, Aij2,
       Aij3, Aij4, Aij5, Btr, Bij0, Bij1,
-      Bij2, Bij3, Bij4, Bij5 );
+      Bij2, Bij3, Bij4, Bij5, Ci0, Ci1, Ci2 );
 
 # second derivs required for RHS
 @dd = (gt0, gt1, gt2, gt3, gt4, gt5, chi,
        alpha, beta0, beta1, beta2, 
        Rsc, Rsch, Atr, Aij0, Aij1, Aij2,
        Aij3, Aij4, Aij5, Btr, Bij0, Bij1,
-       Bij2, Bij3, Bij4, Bij5 );
+       Bij2, Bij3, Bij4, Bij5, Ci0, Ci1, Ci2 );
 
 # advective derivatives
 @ad = (gt0, gt1, gt2, gt3, gt4, gt5,
@@ -43,7 +43,7 @@
        alpha, beta0, beta1, beta2, chi, Gt0, Gt1, Gt2, K,
        B0, B1, B2,
        Rsc, Rsch, Atr, Aij0, Aij1, Aij2, Aij3, Aij4, Aij5,
-       Btr, Bij0, Bij1, Bij2, Bij3, Bij4, Bij5 );
+       Btr, Bij0, Bij1, Bij2, Bij3, Bij4, Bij5, Ci0, Ci1, Ci2 );
 
 # first derivs required for constraints--no gauge variables
 @con_d = ( chi, Gt0, Gt1, Gt2, K,
