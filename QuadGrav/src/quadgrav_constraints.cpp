@@ -41,8 +41,8 @@ void enforce_quadgrav_constraints(double **uiVar, const unsigned int node)
                   -  gtd[0][2]*gtd[0][2]*gtd[1][1];
 
   if (det_gtd < 0.0) {
-    std::cout<<"metric determinent is negative "<<det_gtd<<std::endl;
-    exit(0);
+    //std::cout<<"metric determinent is negative "<<det_gtd<<std::endl;
+    //exit(0);
     /* FIXME What to do here? The metric is not physical. Do we reset the metric to be flat? */
     gtd[0][0] = 1.0; gtd[0][1] = 0.0; gtd[0][2] = 0.0;
     gtd[1][0] = 0.0; gtd[1][1] = 1.0; gtd[1][2] = 0.0;
