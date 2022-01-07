@@ -11,16 +11,10 @@ using namespace quadgrav;
 #define QUADGRAV_EVOL 
 
 //QG related constant
-//Alpah_c
 constexpr double a_const = 1.0;
-//Beta_c
 constexpr double b_const = 1.0;
-constexpr double qg_mass = 0.01;
-#if 1
-// HL : I think that we don't need
-//Tuning param for QG : handling some problematic terms
-constexpr double qg_ho_coup = 1e-4;
-#endif
+constexpr double qg_mass0_sq = 0.01;
+constexpr double qg_mass2_sq = 0.01;
 
 void quadgravRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks)
 {
