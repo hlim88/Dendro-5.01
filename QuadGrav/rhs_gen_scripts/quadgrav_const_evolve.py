@@ -73,8 +73,6 @@ d = dendro.set_first_derivative('grad')    # first argument is direction
 d2s = dendro.set_second_derivative('grad2')  # first 2 arguments are directions
 ad = dendro.set_advective_derivative('agrad')  # first argument is direction
 kod = dendro.set_kreiss_oliger_dissipation('kograd')
-covD1 = dendro.DiOd('covd1')
-covD2 = dendro.DiTd('covd2')
 
 d2 = dendro.d2
 
@@ -124,12 +122,20 @@ igs = igt/chi
 
 # Define additional constraints
 # NOTE : Ci is considered as evolution variable but Ei is treated algebraically
+# Some precomputation/definition
+Aij_UU = dendro.up_up(Aij)*(chi*chi)
 AiUjD = dendro.up_down(Aij)*chi
-Ei = (- sum([Kki[k,i]*Ci[k] - covD2(k, AiUjD[k,i] for k in dendro.e_i]) - K*Ci[i] - d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i) 
+Ci_U = Matrix([sum([Ci[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
+Kij = At + 1/3*gt*K
+Kki = dendro.up_down(Kij)*chi
+
 # Ei is determined by the spatial projection of RHS of Eqn.47
+covd_AiUjD = Matrix([sum([(AiUjD[k,i],k) + sum([dendro.C3[k,k,l]*AiUjD[l,i] - dendro.C3[l,k,i]*AiUjD[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
+
+Ei = Matrix([sum([-Kki[k,i]*Ci[k] for k in dendro.e_i]) - K*Ci[i] - d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i]) - covd_AiUjD
 
 rho_qg = Rsc/4
-Si_qg = -Ci
+Si_qg = Matrix([[-Ci[0], -Ci[1], -Ci[2]]])
 Sij_qg = Matrix([Aij[i,j] + gs[i,j]*Atr/3 + gs[i,j]*Rsc/4 for i,j in dendro.e_ij]).reshape(3,3)
 S_qg = sum([sum([Sij_qg[i,j]*igs[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
@@ -156,18 +162,9 @@ Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
 n_vec = Matrix([[1/a, -b[0]/a, -b[1]/a, -b[2]/a]])
 
 # Define acceleration (n^c \del_c n_a) HL : this is equal to 1/a*D_i a
-a_acc = (d(i,a) for i in dendro.e_i)/a
+a_acc = Matrix([d(i,a) for i in dendro.e_i])/a
 
-# QG mass paramter
-qg_mass0_sq = qg_mass0*qg_mass0
-qg_mass2_sq = qg_mass2*qg_mass2
 
-# Some precomputation/definition
-
-Aij_UU = dendro.up_up(Aij)*(chi*chi)
-Ci_U = sum([Ci[j]*igs[i,j] for j in dendro.e_i])
-Kij = At + 1/3*gt*K
-Kki = dendro.up_down(Kij)*chi
 
 # Ricci scalar, R
 # Eqn.23
