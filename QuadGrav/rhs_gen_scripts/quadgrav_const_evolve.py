@@ -16,7 +16,8 @@ lf0, lf1 = symbols('lambda_f[0] lambda_f[1]')
 #QG related constants
 a_const = symbols('a_const')
 b_const = symbols('b_const')
-qg_ho_coup = symbols('qg_ho_coup')
+qg_mass0_sq = symbols('qg_mass0_sq')
+qg_mass2_sq = symbols('qg_mass0_sq')
 
 PI = 3.14159265358979323846
 kappa = 1/(16*PI)
@@ -148,11 +149,6 @@ Gt_rhs = Matrix([sum(b[j]*ad(j,Gt[i]) for j in dendro.e_i) for i in dendro.e_i])
          # + kod(i,Gt[i])
 
 Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
-
-#Some pre-definitions of derivatives
-d_a_n_a_up = -a_rhs - a*C1[0,0,0]
- 
-d_a_n_a_down = -a_rhs + (d(i,b) for i in dendro.e_i) - a*C1[0,0,0] 
 
 # Ricci tensor and scalar
 
