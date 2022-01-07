@@ -16,6 +16,7 @@ from sympy.printing import print_ccode
 from sympy.printing.dot import dotprint
 
 import re as regex
+import numpy as np
 
 import string
 import random
@@ -181,32 +182,52 @@ def DiDj(a):
     return m.reshape(3, 3)
 
 # Covariant derivative acts on tensor type (2,0)
-def DiTu(T)
+def covdr2u(T):
 
     global d, C3
-
-    m = Matrix([d(T[i,j],k) + sum([C3[i,k,l]*T[l,j] + C3[j,k,l]*T[i,l] for l in e_i]) for i,j in e_ij])
-    return m.reshape(3,3)
+    
+    if type(T) == Matrix:
+        m = np.array([d(T[i,j],k) + sum([C3[i,k,l]*T[l,j] + C3[j,k,l]*T[i,l] for l in e_i]) for i,j in e_ij for k in e_i])
+        return m.reshape((3,3,3))
+    else:
+        raise ValueError('Wrong type of input field. Input must be rank 2')
 
 # Covariant derivative acts on tensor type (0,2)
-def DiTd(T)
+def covdr2d(T):
 
     global d, C3
 
-    m = Matrix([d(T[i,j],k) - sum([C3[i,k,l]*T[l,j] + C3[j,k,l]*T[i,l] for l in e_i]) for i,j in e_ij])
-    return m.reshape(3,3)
+    if type(T) == Matrix:
+        m = np.array([d(T[i,j],k) - sum([C3[i,k,l]*T[l,j] + C3[j,k,l]*T[i,l] for l in e_i]) for i,j in e_ij for k in e_i])
+        return m.reshape((3,3,3))
+    else:
+        raise ValueError('Wrong type of input field Input must be rank 2')
+
+# Covariant derivative acts on tensor type (1,0)
+def covdr1u(T):
+
+    global d, C3
+
+    if type(T) == tuple:
+        m = Matrix([d(T[i],j) + sum([C3[k,j,i]*T[k] for k in e_i]) for i,j in e_ij])
+        return m.reshape(3,3)
+    else:
+        raise ValueError('Wrong type of input field. Input must be rank 1')
 
 # Covariant derivative acts on tensor type (0,1)
-
-def DiOd(T)
+def covdr1d(T):
 
     global d, C3
 
-    m = Matrix([d(T[i],j) - sum([C3[k,j,i]*T[k] for k in e_i]) for i,j in e_ij])
-    return m.reshape(3,3)
+    if type(T) == tuple:
+        m = Matrix([d(T[i],j) - sum([C3[k,j,i]*T[k] for k in e_i]) for i,j in e_ij])
+        return m.reshape(3,3)
+    else:
+        raise ValueError('Wrong type of input field. Input must be rank 1')
+
 
 # Laplacian for tensor rank 2
-def DiDjT(T)
+def DiDjT(T):
 
     global d2, C3
     m = 0 
