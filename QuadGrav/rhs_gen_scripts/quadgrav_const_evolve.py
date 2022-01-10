@@ -6,6 +6,7 @@
 import dendro
 from sympy import *
 
+import numpy as np
 ###################################################################
 # initialize
 ###################################################################
@@ -176,6 +177,7 @@ Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian(Rsc,chi) + sum([a_acc[i]*d(
 # From R_ab
 # Eqn.38
 Atr_rhs = dendro.lie(b, Atr) + a*(2*sum([a_acc[i]*Ci[i] for i in dendro.e_i]) - Btr) 
+
 # Eqn.39
 # Precomputataion of covariant derviative
 Djni= Matrix([d(n_vec[i],j) + sum([dendro.C3[k,j,i]*n_vec[k] for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
@@ -189,7 +191,10 @@ Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.
 # From V_ab
 # Eqn.42
 # Precomputation of covariant derivative 
+dRsc = Matrix([d(i,Rsc) for i in dendro.e_i])
+DjdRsci= Matrix([d(dRsc[i],j) + sum([dendro.C3[k,j,i]*dRsc[k] for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
 DiKij = Matrix([sum([d(Kij[i,j],i) + sum([dendro.C3[i,i,l]*Kij[l,j] + dendro.C3[j,i,l]*Kij[i,l] for l in dendro.e_i]) for i in dendro.e_i]) for j in dendro.e_i])
+
 Btr_rhs1 = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) 
 Btr_rhs2 = a*(dendro.laplacian(Atr,chi) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) 
 Btr_rhs3 = a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) 
@@ -197,26 +202,37 @@ Btr_rhs4 = a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*Atr - 2*K*Rsch + dendro.laplac
 Btr_rhs5 = 4*a*(sum([Ci_U[j]*(DiKij[j] - d(j,K)) for j in dendro.e_i])) 
 Btr_rhs6 = 2*a*(sum([(Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i])) for i,j in dendro.e_ij]))
 Btr_rhs = Btr_rhs1 - Btr_rhs2 - Btr_rhs3 - Btr_rhs4 + Btr_rhs5 + Btr_rhs6
-# Eqn.43
-Bij_rhs_temp =
-	Matrix([sum(b[l]*covD2(l,Bij[i,j]) for l in dendro.e_i) for i,j in dendro.e_ij]) \
-	+ Matrix([2/3*a*Btr*((covD1(i,n_vec[j]) + covD1(j,n_vec[i]))/2 - Kij[i,j]) for i,j in dendro.e_ij]) \
-	+ Matrix([2*a*sum([a_acc[k]*((Bij[k,i]*n_vec[j] + Bij[k,j]*n_vec[i])/2 + Btr*(gs[k,i]*n_vec[j] + gs[k,j]*n_vec[i])/6 + (gs[k,i]*Ei[j] + gs[k,j]*Ei[i])/2 for k in dendro.e_i]) for i,j in dendro.e_ij]) \
-	- Matrix([gs[i,j]*Btr_rhs/3 for i,j in dendro.e_ij]) \
-	- Matrix([a*(dendro.DiDj(Aij[i,j]) + gs[i,j]*dendro.laplacian(Atr)/3 - qg_mass2_sq*Aij[i,j] - qg_mass2_sq*Atr/3) for i,j in dendro.e_ij]) \
-    - Matrix([a*(sum([a_acc_UP[k]*covD2[k,Aij[i,j]] + a_acc_UP[k]*d[k,Atr]*gs[i,j]/3 for k in dendro.e_i])) for i,j in dendro.e_ij]) \
-	+ Matrix([a*K*(Bij[i,j] + gs[i,j]*Btr/3) + 2*a*Sij_qg[i,j] for i,j in dendro.e_ij]) \
-	- Matrix([2*a*(sum([endro.up_down(Aij)[k,i]*Aij[k,j]) for k in dendro.e_i]) + 2/3*Aij[i,j]*Atr - Ci[i]*Ci[j]) for i,j in dendro.e_ij]) \
-	+ Matrix([a/2*gs[i,j](Atr*Atr+ sum([dendro.up_up(Aij)[k,l]*Aij[k,l])+ Ci_U[k]*Ci[k]for k in dendro.e_i]) for i,j in dendro.e_ij]) \
-	- Matrix([a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*(Aij[i,j] + gs[i,j]*Atr/3) + covD1[i,d[j,Rsc]] - qg_mass0_sq*gs[i,j]*Rsc/4 - 2*Kij[i,j]*Rsch) for i,j in dendro.e_ij]) \
-	+ Matrix([2*a*sum([(Aij_UU[k,l] + igs[k,l]*Atr/3)*(dendro.Riem[i,k,j,l] + Kij[i,j]*Kij[l,k]/2 - Kij[i,l]*Kij[j,k]/2) for k in dendro.e_i) for l in dendro.e_i]) for i,j in dendro.e_ij]) \
-	+ Matrix([2*a*sum([Ci_U[k]*covD2[i,Kij[k,j]] - Ci_U[k]*covD2[k,Kij[i,j]] + Ci_U[k]*covD2[j,Kij[k,i]] - Ci_U[k]*covD2[k,Kij[j,i]] for k in dendro.e_i]) for i,j in dendro.e_ij]) \
 
-Bij_rhs = Bij_rhs_temp.reshape(3,3)
+# Eqn.43
+# Some precomputation
+a_acc_UP = Matrix([sum([a_acc[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
+# Precomputations of covariant derivative
+DkAij = np.array([ d(Aij[i,j],k) + sum([dendro.C3[i,k,l]*Aij[l,j] + dendro.C3[j,k,l]*Aij[i,l] for l in dendro.e_i]) for i,j in dendro.e_ij for k in dendro.e_i]).reshape((3,3,3))
+DiKkj = np.array([ d(Kij[k,j],i) - sum([dendro.C3[k,i,l]*Kij[l,j] + dendro.C3[j,i,l]*Kij[k,l] for l in dendro.e_i]) for i,j in dendro.e_ij for k in dendro.e_i]).reshape((3,3,3))
+DkKij = np.array([ d(Kij[i,j],k) - sum([dendro.C3[i,k,l]*Kij[l,j] + dendro.C3[j,k,l]*Kij[i,l] for l in dendro.e_i]) for i,j in dendro.e_ij for k in dendro.e_i]).reshape((3,3,3))
+DjKki = np.array([ d(Kij[i,k],j) - sum([dendro.C3[k,j,l]*Kij[l,i] + dendro.C3[i,j,l]*Kij[k,l] for l in dendro.e_i]) for i,j in dendro.e_ij for k in dendro.e_i]).reshape((3,3,3))
+DkKji = np.array([ d(Kij[j,i],k) - sum([dendro.C3[j,k,l]*Kij[l,i] + dendro.C3[i,j,l]*Kij[k,l] for l in dendro.e_i]) for i,j in dendro.e_ij for k in dendro.e_i]).reshape((3,3,3))
+
+Bij_rhs1 = Matrix([sum(b[l]*d(l,Bij[i,j]) for l in dendro.e_i) for i,j in dendro.e_ij]).reshape(3,3)
+Bij_rhs2 = 2/3*a*Btr*((Dinj + Djni)/2 - Kij) 
+Bij_rhs3 = Matrix([2*a*sum([a_acc[k]*((Bij[k,i]*n_vec[j] + Bij[k,j]*n_vec[i])/2 + Btr*(gs[k,i]*n_vec[j] + gs[k,j]*n_vec[i])/6 + (gs[k,i]*Ei[j] + gs[k,j]*Ei[i])/2) for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3) 
+Bij_rhs4 = a*gs*Btr_rhs/3
+Bij_rhs5 = Matrix([a*(gs[i,j]*dendro.laplacian(Atr,chi)/3 - qg_mass2_sq*Aij[i,j] - qg_mass2_sq*gs[i,j]*Atr/3) for i,j in dendro.e_ij]).reshape(3,3) + a*dendro.DiDj(Aij)
+Bij_rhs6 = Matrix([a*(sum([a_acc_UP[k]*DkAij[i,j,k] + a_acc_UP[k]*d(k,Atr)*gs[i,j]/3 for k in dendro.e_i])) for i,j in dendro.e_ij]).reshape(3,3) 
+Bij_rhs7 = Matrix([a*K*(Bij[i,j] + gs[i,j]*Btr/3) + 2*a*Sij_qg[i,j] for i,j in dendro.e_ij]).reshape(3,3) 
+Bij_rhs8 = Matrix([2*a*(sum([AiUjD[k,i]*Aij[k,j] for k in dendro.e_i]) + 2/3*Aij[i,j]*Atr - Ci[i]*Ci[j]) for i,j in dendro.e_ij]).reshape(3,3) 
+Bij_rhs9 = Matrix([a/2*gs[i,j]*(Atr*Atr+ sum([sum([Aij_UU[k,l]*Aij[k,l] for l in dendro.e_i]) + Ci_U[k]*Ci[k] for k in dendro.e_i])) for i,j in dendro.e_ij]).reshape(3,3) 
+Bij_rhs10 = Matrix([a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*(Aij[i,j] + gs[i,j]*Atr/3) + DjdRsci[i,j] - qg_mass0_sq*gs[i,j]*Rsc/4 - 2*Kij[i,j]*Rsch) for i,j in dendro.e_ij]).reshape(3,3) 
+Bij_rhs11 = Matrix([2*a*sum([(Aij_UU[k,l] + igs[k,l]*Atr/3)*(Kij[i,j]*Kij[l,k]/2 - Kij[i,l]*Kij[j,k]/2) for k,l in dendro.e_ij]) for i,j in dendro.e_ij]).reshape(3,3) #Check riemann again 
+Bij_rhs12 = Matrix([2*a*sum([Ci_U[k]*(DiKkj[i,j,k] - DkKij[i,j,k] + DjKki[i,j,k]  - DkKji[i,j,k]) for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)  
+
+Bij_rhs = Bij_rhs1 + Bij_rhs2 + Bij_rhs3 - Bij_rhs4 + Bij_rhs5 + Bij_rhs6 + Bij_rhs7 - Bij_rhs8 + Bij_rhs9 - Bij_rhs10 + Bij_rhs11 + Bij_rhs11 + Bij_rhs12
 
 #Eqn.41
-Ci_rhs_temp = Matrix([sum([a_acc[k]*(Aij[k,i] + gs[i,k]*Atr/3) + n_vec[i]*a_acc[k]*Ci[k] for k in dendro.e_i]) for i in dendro.e_i])
-Ci_rhs = dendro.lie(b, Ci) - Ei + Ci_rhs_temp.reshape(3,3)
+# HL : Lie derivative is broken??
+Ci_rhs1 = Matrix([sum([b[j]*ad(j,Ci[i]) - Ci[j]*d(j,b[i]) + weight*Ci[i]*d(j,b[j])  for j in dendro.e_i]) for i in dendro.e_i])
+Ci_rhs2 = Matrix([sum([a_acc[k]*(Aij[k,i] + gs[i,k]*Atr/3) + n_vec[i]*a_acc[k]*Ci[k] for k in dendro.e_i]) for i in dendro.e_i])
+Ci_rhs = Ci_rhs1 + Ci_rhs2 - Ei
 
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
 
@@ -245,8 +261,8 @@ Ci_rhs = dendro.lie(b, Ci) - Ei + Ci_rhs_temp.reshape(3,3)
 # generate code
 ###################################################################
 
-outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Atr_rhs, Aij_rhs, Btr_rhs, Bij_rhs]
-vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs','Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Bij_rhs']
+outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Atr_rhs, Aij_rhs, Btr_rhs, Bij_rhs, Ci_rhs]
+vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs','Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Bij_rhs', 'Ci_rhs']
 #dendro.generate_debug(outs, vnames)
 dendro.generate(outs, vnames, '[pp]')
 #numVars=len(outs)
