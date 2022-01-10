@@ -172,18 +172,22 @@ Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
 # Aux Ricci scalar, R^
 # Eqn.24
-Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian(Rsc) + sum([a_acc[i]*d(i,Rsc) for i in dendro.e_i]) - \
-                                    K*Rsch - qg_mass0_sq*Rsc - 2*0*(rho - S))
+Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian(Rsc,chi) + sum([a_acc[i]*d(i,Rsc) for i in dendro.e_i]) - \
+                                    K*Rsch - qg_mass0_sq*Rsc) #- 2*0*a*(rho_qg - S)
 
 # Ricci tensor
 # From R_ab
 # Eqn.38
 Atr_rhs = dendro.lie(b, Atr) + a*(2*sum([a_acc[i]*Ci[i] for i in dendro.e_i]) - Btr) 
 # Eqn.39
-Aij_rhs1 = Matrix([(sum(b[l]*d(l,Aij[i,j]) for l in dendro.e_i) for i in dendro.e_i) for j in dendro.e_i]) + \
-          2*a/3*Atr*Matrix([((covD1(i,n_vec[j]) + covD1(j,n_vec[i]))/2 - At[i,j]-gt[i,j]*K/3 for i in dendro.e_i) for j in dendro.e_i]) + \
-          2*a*Matrix([(sum(a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+Atr*(gs[k,i]*n_vec[j]/3+gs[k,j]*n_vec[i]/3)+gs[k,i]*Ci[j]+gs[k,j]*Ci[i]))/2 for i in dendro.e_i) for j in dendro.e_i]) 
-Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.reshape(3,3) 
+# Precomputataion of covariant derviative
+Djni= Matrix([d(n_vec[i],j) + sum([dendro.C3[k,j,i]*n_vec[k] for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
+Dinj= Matrix([d(n_vec[j],i) + sum([dendro.C3[k,i,j]*n_vec[k] for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
+
+Aij_rhs1 = Matrix([sum([b[l]*d(l,Aij[i,j]) for l in dendro.e_i]) for i,j in dendro.e_ij]) 
+Aij_rhs2 = 2*a/2*Atr*((Djni+Dinj)/2 - Kij)
+Aij_rhs3 = 2*a*Matrix([sum([a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+Atr*(gs[k,i]*n_vec[j]/3+gs[k,j]*n_vec[i]/3)+(gs[k,i]*Ci[j]+gs[k,j]*Ci[i])/2)for k in dendro.e_i]) for i,j in dendro.e_ij]) 
+Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.reshape(3,3) + Aij_rhs2 + Aij_rhs3.reshape(3,3)
 
 # From V_ab
 # Eqn.42
