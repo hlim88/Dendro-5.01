@@ -76,7 +76,7 @@ void enforce_quadgrav_constraints(double **uiVar, const unsigned int node)
     std::cout<<"      gtd(2,3)="<<gtd[1][2]<<std::endl;
     std::cout<<"      gtd(3,3)="<<gtd[2][2]<<std::endl;
     
-    exit(0);
+ //   exit(0);
     
   }
 
@@ -125,8 +125,9 @@ void enforce_quadgrav_constraints(double **uiVar, const unsigned int node)
     std::cout<<"      Atd(2,2)="<<Atd[1][1]<<std::endl;
     std::cout<<"      Atd(2,3)="<<Atd[1][2]<<std::endl;
     std::cout<<"      Atd(3,3)="<<Atd[2][2]<<std::endl;
-    
-    exit(0);
+  
+    tr_A = 1.0;
+//    exit(0);
   }
 
 

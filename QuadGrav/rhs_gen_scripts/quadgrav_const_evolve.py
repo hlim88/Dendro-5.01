@@ -88,6 +88,7 @@ C2 = dendro.get_second_christoffel()
 #what's this...tried to comment it out and python compilation fails
 C2_spatial = dendro.get_complete_christoffel(chi)
 R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
+Rie = dendro.compute_riemann()
 ###################################################################
 # evolution equations
 ###################################################################
@@ -153,7 +154,7 @@ Gt_rhs = Matrix([sum(b[j]*ad(j,Gt[i]) for j in dendro.e_i) for i in dendro.e_i])
          Matrix([sum([2*a*dendro.C2[i, j, k]*At_UU[j, k] for j,k in dendro.e_ij]) for i in dendro.e_i]) - \
          Matrix([sum([a*(3/chi*At_UU[i,j]*d(j, chi) + Rational(4,3)*dendro.inv_metric[i, j]*d(j, K)) for j in dendro.e_i]) for i in dendro.e_i])
          # + kod(i,Gt[i])
-
+n_vec = Matrix([[1/a, -b[0]/a, -b[1]/a, -b[2]/a]])
 Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
 
 # Ricci tensor and scalar
@@ -204,6 +205,7 @@ Btr_rhs6 = 2*a*(sum([(Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([K
 Btr_rhs = Btr_rhs1 - Btr_rhs2 - Btr_rhs3 - Btr_rhs4 + Btr_rhs5 + Btr_rhs6
 
 # Eqn.43
+
 # Some precomputation
 a_acc_UP = Matrix([sum([a_acc[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
 # Precomputations of covariant derivative
@@ -223,16 +225,19 @@ Bij_rhs7 = Matrix([a*K*(Bij[i,j] + gs[i,j]*Btr/3) + 2*a*Sij_qg[i,j] for i,j in d
 Bij_rhs8 = Matrix([2*a*(sum([AiUjD[k,i]*Aij[k,j] for k in dendro.e_i]) + 2/3*Aij[i,j]*Atr - Ci[i]*Ci[j]) for i,j in dendro.e_ij]).reshape(3,3) 
 Bij_rhs9 = Matrix([a/2*gs[i,j]*(Atr*Atr+ sum([sum([Aij_UU[k,l]*Aij[k,l] for l in dendro.e_i]) + Ci_U[k]*Ci[k] for k in dendro.e_i])) for i,j in dendro.e_ij]).reshape(3,3) 
 Bij_rhs10 = Matrix([a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*(Aij[i,j] + gs[i,j]*Atr/3) + DjdRsci[i,j] - qg_mass0_sq*gs[i,j]*Rsc/4 - 2*Kij[i,j]*Rsch) for i,j in dendro.e_ij]).reshape(3,3) 
-Bij_rhs11 = Matrix([2*a*sum([(Aij_UU[k,l] + igs[k,l]*Atr/3)*(Kij[i,j]*Kij[l,k]/2 - Kij[i,l]*Kij[j,k]/2) for k,l in dendro.e_ij]) for i,j in dendro.e_ij]).reshape(3,3) #Check riemann again 
+Bij_rhs11 = Matrix([2*a*sum([(Aij_UU[k,l] + igs[k,l]*Atr/3)*(Rie[i,k,j,l] + Kij[i,j]*Kij[l,k]/2 - Kij[i,l]*Kij[j,k]/2) for k,l in dendro.e_ij]) for i,j in dendro.e_ij]).reshape(3,3)  
 Bij_rhs12 = Matrix([2*a*sum([Ci_U[k]*(DiKkj[i,j,k] - DkKij[i,j,k] + DjKki[i,j,k]  - DkKji[i,j,k]) for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)  
 
 Bij_rhs = Bij_rhs1 + Bij_rhs2 + Bij_rhs3 - Bij_rhs4 + Bij_rhs5 + Bij_rhs6 + Bij_rhs7 - Bij_rhs8 + Bij_rhs9 - Bij_rhs10 + Bij_rhs11 + Bij_rhs11 + Bij_rhs12
+
+#Bij_rhs = -2*Btr*Kij/3 
 
 #Eqn.41
 # HL : Lie derivative is broken??
 Ci_rhs1 = Matrix([sum([b[j]*ad(j,Ci[i]) - Ci[j]*d(j,b[i]) + weight*Ci[i]*d(j,b[j])  for j in dendro.e_i]) for i in dendro.e_i])
 Ci_rhs2 = Matrix([sum([a_acc[k]*(Aij[k,i] + gs[i,k]*Atr/3) + n_vec[i]*a_acc[k]*Ci[k] for k in dendro.e_i]) for i in dendro.e_i])
 Ci_rhs = Ci_rhs1 + Ci_rhs2 - Ei
+Ci_rhs = [item for sublist in Ci_rhs.tolist() for item in sublist]
 
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
 
@@ -261,8 +266,11 @@ Ci_rhs = Ci_rhs1 + Ci_rhs2 - Ei
 # generate code
 ###################################################################
 
+#outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Atr_rhs, Aij_rhs, Btr_rhs, Ci_rhs]
+#vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs', 'Rsch_rhs', 'Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Ci_rhs']
 outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Atr_rhs, Aij_rhs, Btr_rhs, Bij_rhs, Ci_rhs]
-vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs','Rsch_rhs','Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Bij_rhs', 'Ci_rhs']
+vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs', 'Rsch_rhs', 'Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Bij_rhs', 'Ci_rhs']
+#vnames = ['Bij_rhs']
 #dendro.generate_debug(outs, vnames)
 dendro.generate(outs, vnames, '[pp]')
 #numVars=len(outs)

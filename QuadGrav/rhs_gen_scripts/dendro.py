@@ -578,6 +578,26 @@ def compute_ricci(Gt, chi):
 
     return [Rt.reshape(3, 3) + Rphi, Rt.reshape(3,3), Rphi, CalGt]
 
+def compute_riemann():
+    """
+    Computes the 3dim Riemann tensor Rijkl. e.g.,
+
+    dendro.set_metric(gt)
+    Rie = dendro.compute_riemann()
+
+    or
+
+    dendro.compute_riemann()
+    and use
+    dendro.riemann
+    """
+    
+    global metric
+
+    Riemann = np.array([0.5*(d2(k, l, metric[i, m]) + d2(i, m, metric[k,l]) - d2(k, m, metric[i, l]) - d2(i, l, metric[k, m])) for i,k in e_ij for l, m in e_ij]).reshape((3,3,3,3))
+
+    return Riemann
+
 ##########################################################################
 # code generation function
 ##########################################################################
