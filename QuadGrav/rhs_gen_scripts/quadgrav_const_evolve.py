@@ -130,9 +130,8 @@ Kij = At + 1/3*gt*K
 Kki = dendro.up_down(Kij)*chi
 
 # Ei is determined by the spatial projection of RHS of Eqn.47
-covd_AiUjD = Matrix([sum([(AiUjD[k,i],k) + sum([dendro.C3[k,k,l]*AiUjD[l,i] - dendro.C3[l,k,i]*AiUjD[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
-
-Ei = Matrix([sum([-Kki[k,i]*Ci[k] for k in dendro.e_i]) - K*Ci[i] - d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i]) - covd_AiUjD
+DiAiUjD = Matrix([sum([d(AiUjD[k,i],k) + sum([dendro.C3[k,k,l]*AiUjD[l,i] - dendro.C3[l,k,i]*AiUjD[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
+Ei = Matrix([sum([-Kki[k,i]*Ci[k] for k in dendro.e_i]) - K*Ci[i] - d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i]) - DiAiUjD
 
 rho_qg = Rsc/4
 Si_qg = Matrix([[-Ci[0], -Ci[1], -Ci[2]]])
@@ -164,8 +163,6 @@ n_vec = Matrix([[1/a, -b[0]/a, -b[1]/a, -b[2]/a]])
 # Define acceleration (n^c \del_c n_a) HL : this is equal to 1/a*D_i a
 a_acc = Matrix([d(i,a) for i in dendro.e_i])/a
 
-
-
 # Ricci scalar, R
 # Eqn.23
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
@@ -191,13 +188,15 @@ Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.
 
 # From V_ab
 # Eqn.42
-Btr_rhs = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) - \
-          a*(dendro.laplacian(Atr) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) - \
-          a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) - \
-          a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*Atr - 2*K*Rsch + dendro.laplacian(Rsc) - 3/4*qg_mass0_sq*Rsc) + \
-          4*a*(-sum([Ci_U[j]*d(j,K) for j in dendro.e_i]) + sum([Ci_U[j]*covD2(i,Kij[i,j]) for i,j in dendro.e_ij])) + \
-          2*a*(sum([ (Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i]) for i,j in dendro.e_ij])
-
+# Precomputation of covariant derivative 
+DiKij = Matrix([sum([d(Kij[i,j],i) + sum([dendro.C3[i,i,l]*Kij[l,j] + dendro.C3[j,i,l]*Kij[i,l] for l in dendro.e_i]) for i in dendro.e_i]) for j in dendro.e_i])
+Btr_rhs1 = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) 
+Btr_rhs2 = a*(dendro.laplacian(Atr,chi) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) 
+Btr_rhs3 = a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) 
+Btr_rhs4 = a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*Atr - 2*K*Rsch + dendro.laplacian(Rsc,chi) - 3/4*qg_mass0_sq*Rsc) 
+Btr_rhs5 = 4*a*(sum([Ci_U[j]*(DiKij[j] - d(j,K)) for j in dendro.e_i])) 
+Btr_rhs6 = 2*a*(sum([(Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i])) for i,j in dendro.e_ij]))
+Btr_rhs = Btr_rhs1 - Btr_rhs2 - Btr_rhs3 - Btr_rhs4 + Btr_rhs5 + Btr_rhs6
 # Eqn.43
 Bij_rhs_temp =
 	Matrix([sum(b[l]*covD2(l,Bij[i,j]) for l in dendro.e_i) for i,j in dendro.e_ij]) \
