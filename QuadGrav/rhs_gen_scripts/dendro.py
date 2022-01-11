@@ -227,10 +227,18 @@ def covdr1d(T):
 
 
 # Laplacian for tensor rank 2
-def DiDjT(T):
+def laplacianR2(T,chi):
 
-    global d2, C3
-    m = 0 
+    global d, metric, C3
+
+    full_metric = metric/chi
+    inv_full_metric = simplify(full_metric.inv('ADJ'))
+    
+    if type(T) == Matrix:
+        m = Matrix([sum([inv_full_metric[i,j]*d2(i,j,T[k,l]) for i,j in e_ij]) for k,l in e_ij])
+    else:
+        raise ValueError('Wrong type of input field. Input must be rank 2')
+
     return m.reshape(3,3)
 
 def _Di_Dj(a):
