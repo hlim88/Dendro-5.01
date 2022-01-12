@@ -318,8 +318,7 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
                 #endif
   
                 #ifdef QUADGRAV_EVOL
-                  //#include "quadgraveqs.cpp"
-                  #include "quadgraveqs_fake.cpp"
+                  #include "quadgraveqs.cpp"
                 #else
                   #include "bssneqs_eta_const_standard_gauge.cpp"
                 #endif
