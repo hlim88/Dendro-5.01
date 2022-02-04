@@ -259,7 +259,7 @@ void RK_QUADGRAV::applyInitialConditions(DendroScalar** zipIn)
                         else if (quadgrav::QUADGRAV_ID_TYPE == 4) {
                             quadgrav::constData((double)x,(double)y,(double)z,var);
                         }
-                        else if (quadgrav::QUADGRAV_ID_TYPE == 4) {
+                        else if (quadgrav::QUADGRAV_ID_TYPE == 5) {
                             quadgrav::fake_initial_data((double)x,(double)y,(double)z,var);
                         }
                         else {
