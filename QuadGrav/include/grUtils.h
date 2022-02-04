@@ -69,7 +69,8 @@ namespace quadgrav
   * @param var : initialized quadgrav variables for the grid points
   */
  void noiseData(const double xx1,const double yy1,const double zz1, double *var);
-
+ void constData(const double xx1,const double yy1,const double zz1, double *var);
+ 
  /**
   * @brief fake initial data. 
   * @param xx1 : x coord

@@ -1,12 +1,6 @@
 /**
  * @file quadgravCtx.cpp
- * @author Milinda Fernando (milinda@cs.utah.edu)
  * @brief BSSN contex file. 
- * @version 0.1
- * @date 2019-12-20
- * 
- * School of Computing, University of Utah. 
- * @copyright Copyright (c) 2019
  * 
  */
 

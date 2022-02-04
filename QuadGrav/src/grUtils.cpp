@@ -1559,8 +1559,81 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         var[VAR::U_SYMAT4] = noise_amp * random_variable[22] ; //YZ
         var[VAR::U_SYMAT5] = noise_amp * random_variable[23] ; //ZZ
 
+        var[VAR::U_RSC] = 0.0;
+        var[VAR::U_RSCH] = 0.0;
+        var[VAR::U_ATR] = 0.0;
+        var[VAR::U_SYMAIJ0] = 0.0;
+        var[VAR::U_SYMAIJ1] = 0.0;
+        var[VAR::U_SYMAIJ2] = 0.0;
+        var[VAR::U_SYMAIJ3] = 0.0;
+        var[VAR::U_SYMAIJ4] = 0.0;
+        var[VAR::U_SYMAIJ5] = 0.0;
+        var[VAR::U_BTR] = 0.0;
+        var[VAR::U_SYMBIJ0] = 0.0;
+        var[VAR::U_SYMBIJ1] = 0.0;
+        var[VAR::U_SYMBIJ2] = 0.0;
+        var[VAR::U_SYMBIJ3] = 0.0;
+        var[VAR::U_SYMBIJ4] = 0.0;
+        var[VAR::U_SYMBIJ5] = 0.0;
+        var[VAR::U_CI0] = 0.0;
+        var[VAR::U_CI1] = 0.0;
+        var[VAR::U_CI2] = 0.0;
     }
 
+    void constData(const double xx1,const double yy1,const double zz1, double *var)
+    {
+        var[VAR::U_ALPHA] = 1.0 ;  
+        
+        var[VAR::U_CHI] = 1.0 ;
+
+        var[VAR::U_K] = 0.0 ;
+
+        var[VAR::U_GT0] = 0.0 ;
+        var[VAR::U_GT1] = 0.0 ;
+        var[VAR::U_GT2] = 0.0 ;
+
+        var[VAR::U_BETA0] = 0.0 ;
+        var[VAR::U_BETA1] = 0.0 ;
+        var[VAR::U_BETA2] = 0.0 ;
+
+        var[VAR::U_B0] = 0.0 ;
+        var[VAR::U_B1] = 0.0 ;
+        var[VAR::U_B2] = 0.0 ;
+
+        var[VAR::U_SYMGT0] = 1.0  ; 
+        var[VAR::U_SYMGT1] = 0.0  ; 
+        var[VAR::U_SYMGT2] = 0.0  ; 
+        var[VAR::U_SYMGT3] = 1.0  ; 
+        var[VAR::U_SYMGT4] = 0.0  ; 
+        var[VAR::U_SYMGT5] = 1.0  ; 
+
+        var[VAR::U_SYMAT0] = 0.0  ; 
+        var[VAR::U_SYMAT1] = 0.0  ; 
+        var[VAR::U_SYMAT2] = 0.0  ; 
+        var[VAR::U_SYMAT3] = 0.0  ; 
+        var[VAR::U_SYMAT4] = 0.0  ; 
+        var[VAR::U_SYMAT5] = 0.0  ; 
+
+        var[VAR::U_RSC] = 0.0;
+        var[VAR::U_RSCH] = 0.0;
+        var[VAR::U_ATR] = 0.0;
+        var[VAR::U_SYMAIJ0] = 0.0;
+        var[VAR::U_SYMAIJ1] = 0.0;
+        var[VAR::U_SYMAIJ2] = 0.0;
+        var[VAR::U_SYMAIJ3] = 0.0;
+        var[VAR::U_SYMAIJ4] = 0.0;
+        var[VAR::U_SYMAIJ5] = 0.0;
+        var[VAR::U_BTR] = 0.0;
+        var[VAR::U_SYMBIJ0] = 0.0;
+        var[VAR::U_SYMBIJ1] = 0.0;
+        var[VAR::U_SYMBIJ2] = 0.0;
+        var[VAR::U_SYMBIJ3] = 0.0;
+        var[VAR::U_SYMBIJ4] = 0.0;
+        var[VAR::U_SYMBIJ5] = 0.0;
+        var[VAR::U_CI0] = 0.0;
+        var[VAR::U_CI1] = 0.0;
+        var[VAR::U_CI2] = 0.0;
+    }
 
     void fake_initial_data(double xx1, double yy1, double zz1, double *u)
     {
