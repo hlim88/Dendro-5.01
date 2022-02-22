@@ -1470,44 +1470,86 @@ double interpolation4( double xx[], double yy[], int np, double xb,
         var[VAR::U_CI0] = 0.0;
         var[VAR::U_CI1] = 0.0;
         var[VAR::U_CI2] = 0.0;
-        //std::cout<<"KS init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
-
-        #if 0
-            //QUADGRAV vars for Kerr-Schild
-            var[VAR::U_ALPHA] = sqrt(rv1/(2.0*M+rv1));
-            var[VAR::U_CHI] = 1.0/pow(1.0+2.0*M/rv1, 1.0/3.0);
-            var[VAR::U_K] = 2.0*M*sqrt(rv1/(2.0*M+rv1))*(rv1+3.0*M)/(rv1*rv1*(2.0*M+rv1));
-
-            var[VAR::U_BETA0] = 2.0*M*x1/(rv1*(2.0*M+rv1));
-            var[VAR::U_BETA1] = 2.0*M*y1/(rv1*(2.0*M+rv1));
-            var[VAR::U_BETA2] = 2.0*M*z1/(rv1*(2.0*M+rv1));
-
-            var[VAR::U_GT0] = pow(2,8.0/3.0)*M*x1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
-            var[VAR::U_GT1] = pow(2,8.0/3.0)*M*y1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
-            var[VAR::U_GT2] = pow(2,8.0/3.0)*M*z1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
-
-            var[VAR::U_B0] = M*x1/(500.0*rv1*(M/5.0+rv1));
-            var[VAR::U_B1] = M*y1/(500.0*rv1*(M/5.0+rv1));
-            var[VAR::U_B2] = M*z1/(500.0*rv1*(M/5.0+rv1));
-
-            var[VAR::U_SYMGT0] = (M*x1*x1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //XX
-            var[VAR::U_SYMGT1] = M*x1*y1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XY
-            var[VAR::U_SYMGT2] = M*x1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XZ
-            var[VAR::U_SYMGT3] = (M*y1*y1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //YY
-            var[VAR::U_SYMGT4] = M*y1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //YZ
-            var[VAR::U_SYMGT5] = (M*z1*z1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //ZZ
-
-            var[VAR::U_SYMAT0] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*x1*x1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XX
-            var[VAR::U_SYMAT1] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*y1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XY
-            var[VAR::U_SYMAT2] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XZ
-            var[VAR::U_SYMAT3] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*y1*y1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YY
-            var[VAR::U_SYMAT4] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*y1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YZ
-            var[VAR::U_SYMAT5] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*z1*z1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //ZZ
-        #endif
-
     }
 
 
+    void KerrSchildData2(const double xx1,const double yy1,const double zz1, double *var)
+    {
+
+        const double xx=GRIDX_TO_X(xx1);
+        const double yy=GRIDY_TO_Y(yy1);
+        const double zz=GRIDZ_TO_Z(zz1);
+
+        // parameters for the BH (mass, location, spin parameter)
+        double M = BH1.getBHMass();
+        double bh1x = BH1.getBHCoordX();
+        double bh1y = BH1.getBHCoordY();
+        double bh1z = BH1.getBHCoordZ();
+        double spin1 = BH1.getBHSpin();
+
+        // coordinates relative to the center of the BH
+        double x1 = xx - bh1x;
+        double y1 = yy - bh1y;
+        double z1 = zz - bh1z;
+
+        //locating as a radial form
+        double rv1 = sqrt(x1*x1 + y1*y1 + z1*z1);
+
+	    //HL : Angular momentum parameter will be added as param file after testing
+	    double a = spin1;
+
+        var[VAR::U_ALPHA] = sqrt(rv1/(2.0*M+rv1));
+        var[VAR::U_CHI] = 1.0/pow(1.0+2.0*M/rv1, 1.0/3.0);
+        var[VAR::U_K] = 2.0*M*sqrt(rv1/(2.0*M+rv1))*(rv1+3.0*M)/(rv1*rv1*(2.0*M+rv1));
+
+        var[VAR::U_BETA0] = 2.0*M*x1/(rv1*(2.0*M+rv1));
+        var[VAR::U_BETA1] = 2.0*M*y1/(rv1*(2.0*M+rv1));
+        var[VAR::U_BETA2] = 2.0*M*z1/(rv1*(2.0*M+rv1));
+
+        var[VAR::U_GT0] = pow(2,8.0/3.0)*M*x1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
+        var[VAR::U_GT1] = pow(2,8.0/3.0)*M*y1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
+        var[VAR::U_GT2] = pow(2,8.0/3.0)*M*z1*(M+rv1*rv1+(3*M*M*rv1+x1*x1+y1*y1)/5.0)/(pow(5.0,1.0/3.0)*rv1*pow(M/5.0+rv1,2.0)*pow(M/(5.0*rv1)+1.0,2.0/3.0));
+
+        var[VAR::U_B0] = M*x1/(500.0*rv1*(M/5.0+rv1));
+        var[VAR::U_B1] = M*y1/(500.0*rv1*(M/5.0+rv1));
+        var[VAR::U_B2] = M*z1/(500.0*rv1*(M/5.0+rv1));
+
+        var[VAR::U_SYMGT0] = (M*x1*x1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //XX
+        var[VAR::U_SYMGT1] = M*x1*y1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XY
+        var[VAR::U_SYMGT2] = M*x1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //XZ
+        var[VAR::U_SYMGT3] = (M*y1*y1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //YY
+        var[VAR::U_SYMGT4] = M*y1*z1/(50.0*pow(10.0,2.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0)); //YZ
+        var[VAR::U_SYMGT5] = (M*z1*z1/2.0+rv1*rv1)/pow(10,5.0/3.0)*rv1*rv1*pow(M/(5.0*rv1)+1.0,1.0/3.0); //ZZ
+
+        var[VAR::U_SYMAT0] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*x1*x1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XX
+        var[VAR::U_SYMAT1] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*y1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XY
+        var[VAR::U_SYMAT2] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*x1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //XZ
+        var[VAR::U_SYMAT3] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*y1*y1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YY
+        var[VAR::U_SYMAT4] = -(((1.0/5.0+M/(10.0*rv1))*sqrt(rv1/(M/5.0+rv1))*x1*y1)/(50.0*sqrt(10.0)*M*rv1)+(M*M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0*rv1)*y1*z1)/(750.0*sqrt(10.0)*rv1*rv1*(M/5.0*rv1)))/pow(0.1+M/(50.0*rv1),1.0/3.0); //YZ
+        var[VAR::U_SYMAT5] = (sqrt(rv1/(M/5.0+rv1))*(rv1-(1.0/5.0+M/(10.0*rv1))*z1*z1)-M*sqrt(rv1/(M/5.0+rv1))*(3.0*M/10.0+rv1)*(1.0/10.0+M*x1*x1/(50.0*rv1*rv1))/(150.0*sqrt(10.0)*(M/5.0+rv1)*rv1))/pow(0.1+M/(50.0*rv1),1.0/3.0); //ZZ
+        
+        var[VAR::U_RSC] = 0.0;
+        var[VAR::U_RSCH] = 0.0;
+        var[VAR::U_ATR] = 0.0;
+        var[VAR::U_SYMAIJ0] = 0.0;
+        var[VAR::U_SYMAIJ1] = 0.0;
+        var[VAR::U_SYMAIJ2] = 0.0;
+        var[VAR::U_SYMAIJ3] = 0.0;
+        var[VAR::U_SYMAIJ4] = 0.0;
+        var[VAR::U_SYMAIJ5] = 0.0;
+        var[VAR::U_BTR] = 0.0;
+        var[VAR::U_SYMBIJ0] = 0.0;
+        var[VAR::U_SYMBIJ1] = 0.0;
+        var[VAR::U_SYMBIJ2] = 0.0;
+        var[VAR::U_SYMBIJ3] = 0.0;
+        var[VAR::U_SYMBIJ4] = 0.0;
+        var[VAR::U_SYMBIJ5] = 0.0;
+        var[VAR::U_CI0] = 0.0;
+        var[VAR::U_CI1] = 0.0;
+        var[VAR::U_CI2] = 0.0;
+        //std::cout<<"KS init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
+
+    }
 
     void noiseData(const double xx1,const double yy1,const double zz1, double *var)
     {

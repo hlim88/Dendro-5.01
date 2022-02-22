@@ -60,6 +60,7 @@ namespace quadgrav
   * @param var : initialized quadgrav variables for the grid points
   */
  void KerrSchildData(const double xx1,const double yy1,const double zz1, double *var);
+ void KerrSchildData2(const double xx1,const double yy1,const double zz1, double *var);
  
  /**
   * @brief add artificial noise to the initial data.
