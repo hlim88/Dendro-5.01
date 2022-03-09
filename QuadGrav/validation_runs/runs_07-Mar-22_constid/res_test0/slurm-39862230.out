@@ -1,0 +1,33 @@
+[1;31m  Compiled without QUADGRAV_COMPUTE_CONSTRAINTS[0m
+[0;32m  Compiled with QUADGRAV_ENABLE_VTU_CONSTRAINT_OUTPUT[0m
+[0;32m  Compiled with QUADGRAV_ENABLE_VTU_OUTPUT[0m
+[1;31m  Compiled without  QUADGRAV_ETA_FUNCTION[0m
+[0;32m  Compiled with  QUADGRAV_EXTRACT_BH_LOCATIONS[0m
+[1;31m  Compiled without  QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES[0m
+[1;31m  Compiled without  QUADGRAV_EXTRACT_GRAVITATIONAL_WAVES[0m
+[1;31m  Compiled without  QUADGRAV_GAUGE_ROCHESTER[0m
+[1;31m  Compiled without  QUADGRAV_KERR_SCHILD_TEST[0m
+[1;31m  Compiled without  QUADGRAV_REFINE_BASE_EH[0m
+[1;31m  Compiled without  USE_FD_INTERP_FOR_UNZIP[0m
+ reading parameter file :./contsid_par.json
+./contsid_par.json parameter file open failed 
+terminate called after throwing an instance of 'nlohmann::detail::parse_error'
+  what():  [json.exception.parse_error.101] parse error at 1: syntax error - unexpected end of input; expected '[', '{', or a literal
+[della-i13n3:3867044] *** Process received signal ***
+[della-i13n3:3867044] Signal: Aborted (6)
+[della-i13n3:3867044] Signal code:  (-6)
+[della-i13n3:3867044] [ 0] /lib64/libpthread.so.0(+0x12c20)[0x15281338ac20]
+[della-i13n3:3867044] [ 1] /lib64/libc.so.6(gsignal+0x10f)[0x152812fea37f]
+[della-i13n3:3867044] [ 2] /lib64/libc.so.6(abort+0x127)[0x152812fd4db5]
+[della-i13n3:3867044] [ 3] /lib64/libstdc++.so.6(+0x9009b)[0x152813a7809b]
+[della-i13n3:3867044] [ 4] /lib64/libstdc++.so.6(+0x9653c)[0x152813a7e53c]
+[della-i13n3:3867044] [ 5] /lib64/libstdc++.so.6(+0x96597)[0x152813a7e597]
+[della-i13n3:3867044] [ 6] /lib64/libstdc++.so.6(+0x967f8)[0x152813a7e7f8]
+[della-i13n3:3867044] [ 7] /home/ah2156/DENDRO/Dendro-5.01/build/QuadGrav/quadgravSolver(_ZNK8nlohmann6detail6parserINS_10basic_jsonISt3mapSt6vectorNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEblmdSaNS_14adl_serializerEEEE15throw_exceptionEv+0x14d)[0x43ea7d]
+[della-i13n3:3867044] [ 8] /home/ah2156/DENDRO/Dendro-5.01/build/QuadGrav/quadgravSolver(_ZN8nlohmann6detail6parserINS_10basic_jsonISt3mapSt6vectorNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEblmdSaNS_14adl_serializerEEEE14parse_internalEbRSC_+0x776)[0x454a66]
+[della-i13n3:3867044] [ 9] /home/ah2156/DENDRO/Dendro-5.01/build/QuadGrav/quadgravSolver(_ZN8quadgrav13readParamFileEPKcP19ompi_communicator_t+0x329)[0x47f6f9]
+[della-i13n3:3867044] [10] /home/ah2156/DENDRO/Dendro-5.01/build/QuadGrav/quadgravSolver(main+0x8d)[0x420a7d]
+[della-i13n3:3867044] [11] /lib64/libc.so.6(__libc_start_main+0xf3)[0x152812fd6493]
+[della-i13n3:3867044] [12] /home/ah2156/DENDRO/Dendro-5.01/build/QuadGrav/quadgravSolver(_start+0x2e)[0x425dce]
+[della-i13n3:3867044] *** End of error message ***
+/var/spool/slurmd/job39862230/slurm_script: line 16: 3867044 Aborted                 (core dumped) ~/DENDRO/Dendro-5.01/build/QuadGrav/quadgravSolver ./contsid_par.json
