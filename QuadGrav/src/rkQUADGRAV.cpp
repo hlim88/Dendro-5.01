@@ -254,12 +254,15 @@ void RK_QUADGRAV::applyInitialConditions(DendroScalar** zipIn)
                             quadgrav::KerrSchildData((double)x,(double)y,(double)z,var);
                         }
                         else if (quadgrav::QUADGRAV_ID_TYPE == 3) {
-                            quadgrav::noiseData((double)x,(double)y,(double)z,var);
+                            quadgrav::KerrSchildData2((double)x,(double)y,(double)z,var);
                         }
                         else if (quadgrav::QUADGRAV_ID_TYPE == 4) {
-                            quadgrav::constData((double)x,(double)y,(double)z,var);
+                            quadgrav::noiseData((double)x,(double)y,(double)z,var);
                         }
                         else if (quadgrav::QUADGRAV_ID_TYPE == 5) {
+                            quadgrav::constData((double)x,(double)y,(double)z,var);
+                        }
+                        else if (quadgrav::QUADGRAV_ID_TYPE == 6) {
                             quadgrav::fake_initial_data((double)x,(double)y,(double)z,var);
                         }
                         else {
