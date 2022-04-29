@@ -725,7 +725,6 @@ namespace quadgrav
     var[VAR::U_CI0] = 0.0;
     var[VAR::U_CI1] = 0.0;
     var[VAR::U_CI2] = 0.0;
-    
    }
     
 namespace trumpet_data { 

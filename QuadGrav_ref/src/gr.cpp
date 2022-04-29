@@ -156,6 +156,9 @@ int main (int argc, char** argv)
         std::cout<<YLW<<"\tQUADGRAV_TRK0 :"<<quadgrav::QUADGRAV_TRK0<<NRM<<std::endl;
         std::cout<<YLW<<"\tDISSIPATION_TYPE :"<<quadgrav::DISSIPATION_TYPE<<NRM<<std::endl;
         std::cout<<YLW<<"\tKO_DISS_SIGMA :"<<quadgrav::KO_DISS_SIGMA<<NRM<<std::endl;
+        std::cout<<YLW<<"\tQG_MASS0_SQ :"<<quadgrav::QG_MASS0_SQ<<NRM<<std::endl;
+        std::cout<<YLW<<"\tQG_MASS2_SQ :"<<quadgrav::QG_MASS2_SQ<<NRM<<std::endl;
+        std::cout<<YLW<<"\tKO_DISS_SIGMA :"<<quadgrav::KO_DISS_SIGMA<<NRM<<std::endl;
 
         std::cout<<YLW<<"\tBH1 MASS :"<<quadgrav::BH1.getBHMass()<<NRM<<std::endl;
         std::cout<<YLW<<"\tBH1 POSITION (x,y,z) : ("<<quadgrav::BH1.getBHCoordX()<<", "<<quadgrav::BH1.getBHCoordY()<<", "<<quadgrav::BH1.getBHCoordZ()<<" )"<<NRM<<std::endl;

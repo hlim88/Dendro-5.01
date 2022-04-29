@@ -93,6 +93,8 @@ namespace quadgrav
     double ETA_DAMPING_EXP=1.0;
     double CHI_FLOOR=0.1;
     double KO_DISS_SIGMA=0.01;
+    double QG_MASS0_SQ = 0.05;
+    double QG_MASS2_SQ = 0.05;
 
     unsigned int DISSIPATION_TYPE=0;
 

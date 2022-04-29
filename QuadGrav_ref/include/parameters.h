@@ -227,6 +227,10 @@ namespace quadgrav
     /**@brief: Kreiss-Oliger dissipation */
     extern double KO_DISS_SIGMA;
 
+    /**@brief: QG mass coupling values */
+    extern double QG_MASS0_SQ;
+    extern double QG_MASS2_SQ;
+
     /**@brief: QUADGRAV_USE_WAVELET_TOL_FUNCTION */
     extern unsigned int QUADGRAV_USE_WAVELET_TOL_FUNCTION;
 

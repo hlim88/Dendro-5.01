@@ -10,11 +10,10 @@ using namespace quadgrav;
 // Macro for QG evol vars
 #define QUADGRAV_EVOL 
 
-//QG related constant
-constexpr double a_const = 1.0;
-constexpr double b_const = 1.0;
+#if 0
 constexpr double qg_mass0_sq = 0.01;
 constexpr double qg_mass2_sq = 0.01;
+#endif
 
 void quadgravRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks)
 {
@@ -318,6 +317,8 @@ void quadgravrhs(double **unzipVarsRHS, const double **uZipVars,
                 #endif
   
                 #ifdef QUADGRAV_EVOL
+                  double qg_mass0_sq = QG_MASS0_SQ;
+                  double qg_mass2_sq = QG_MASS2_SQ;
                   #include "quadgraveqs.cpp"
                 #else
                   #include "bssneqs_eta_const_standard_gauge.cpp"
