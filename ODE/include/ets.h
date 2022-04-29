@@ -37,9 +37,140 @@ namespace ts
      * @brief General explicit time stepper class for Dendro-5.0
      * @tparam T 
      */
+
+    #ifdef __PROFILE_ETS__
+        enum ETSPROFILE {EVOLVE=0, ETS_LAST};
+    #endif
+    
+
     template<typename T, typename Ctx>
     class ETS
     {
+
+        #ifdef __PROFILE_ETS__
+            public :
+                std::vector<profiler_t> m_uiCtxpt = std::vector<profiler_t>(static_cast<int>(ETSPROFILE::ETS_LAST)); 
+                const char *ETSPROFILE_NAMES[static_cast<int>(ETSPROFILE::ETS_LAST)] = {"evolve"};
+
+                void init_pt()
+                {
+                    for(unsigned int i=0; i < m_uiCtxpt.size(); i++)
+                        m_uiCtxpt[i].start();
+
+
+                    m_uiAppCtx->init_pt();
+                }
+
+                void reset_pt()
+                {
+                    for(unsigned int i=0; i < m_uiCtxpt.size(); i++)
+                        m_uiCtxpt[i].snapreset();
+
+                    m_uiAppCtx->reset_pt();
+                }
+
+                void dump_pt(std::ostream& outfile)
+                {
+                    const ot::Mesh* m_uiMesh = m_uiAppCtx->get_mesh();
+                    
+                    if(!(m_uiMesh->isActive()))
+                        return;
+
+                    int rank = m_uiMesh->getMPIRank();
+                    int npes = m_uiMesh->getMPICommSize();
+
+                    MPI_Comm comm = m_uiMesh->getMPICommunicator();
+                    const unsigned int currentStep = m_uiAppCtx->get_ts_info()._m_uiStep;
+                    double t_stat;
+                    double t_stat_g[3];
+
+                    if(!rank)
+                    {
+                        //writes the header
+                        if(currentStep<=1)
+                        outfile<<"step_ets\t act_npes\t glb_npes\t maxdepth\t numOcts\t dof_cg\t dof_uz\t"<<\
+                        "gele_min\t gele_mean\t gele_max\t"\
+                        "lele_min\t lele_mean\t lele_max\t"\
+                        "lnodes_min\t lnodes_mean\t lnodes_max\t"\
+                        "remsh_igt_min\t remesh_igt_mean\t remesh_igt_max\t"\
+                        "evolve_min\t evolve_mean\t evolve_max\t"\
+                        "unzip_async_min\t unzip_async_mean\t unzip_async_max\t"\
+                        "rhs_min\t rhs_mean\t rhs_max\t"\
+                        "zip_async_min\t zip_async_mean\t zip_async_max\t"<<std::endl;
+                    }
+                        
+                    if(!rank) outfile<<currentStep<<"\t ";
+                    if(!rank) outfile<<m_uiMesh->getMPICommSize()<<"\t ";
+                    if(!rank) outfile<<m_uiMesh->getMPICommSizeGlobal()<<"\t ";
+                    if(!rank) outfile<<m_uiMaxDepth<<"\t ";
+
+                    DendroIntL localSz=m_uiMesh->getNumLocalMeshElements();
+                    DendroIntL globalSz;
+
+                    par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,comm);
+                    if(!rank)outfile<<globalSz<<"\t ";
+
+                    localSz=m_uiMesh->getNumLocalMeshNodes();
+                    par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,comm);
+                    if(!rank)outfile<<globalSz<<"\t ";
+
+                    localSz=m_uiMesh->getDegOfFreedomUnZip();
+                    par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,comm);
+                    if(!rank)outfile<<globalSz<<"\t ";
+
+                    DendroIntL ghostElements=m_uiMesh->getNumPreGhostElements()+m_uiMesh->getNumPostGhostElements();
+                    DendroIntL localElements=m_uiMesh->getNumLocalMeshElements();
+
+                    t_stat=ghostElements;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+
+                    t_stat=localElements;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+
+                    DendroIntL ghostNodes=m_uiMesh->getNumPreMeshNodes()+m_uiMesh->getNumPostMeshNodes();
+                    DendroIntL localNodes=m_uiMesh->getNumLocalMeshNodes();
+
+                    t_stat=localNodes;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+
+                    t_stat= m_uiAppCtx->m_uiCtxpt[CTXPROFILE::REMESH].snap;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+
+                    t_stat=m_uiCtxpt[ETSPROFILE::EVOLVE].snap;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+
+
+                    t_stat = m_uiAppCtx->m_uiCtxpt[CTXPROFILE::UNZIP].snap;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+
+                    t_stat = m_uiAppCtx->m_uiCtxpt[CTXPROFILE::RHS].snap;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+
+                    t_stat = m_uiAppCtx->m_uiCtxpt[CTXPROFILE::ZIP].snap;
+                    min_mean_max(&t_stat,t_stat_g,comm);
+                    if(!rank) outfile<<t_stat_g[0]<<"\t "<<t_stat_g[1]<<"\t "<<t_stat_g[2]<<"\t ";
+                    
+
+                    if(!rank) outfile<<std::endl;
+
+
+                    
+
+
+
+
+
+                }
+        #endif
+
+
         protected: 
 
             /** @brief Application context. */
@@ -75,16 +206,18 @@ namespace ts
             /**@brief: evolution temp vector*/
             DVec m_uiEVecTmp[2];
             
+            /**@brief: state true if the internal variables are allocated. */
+            bool m_uiIsInternalAlloc=false;
 
         private:
             /**
              * @brief Allocates internal variables for the time stepper. 
              * @return int 
              */
-            virtual int allocate_internal_vars();
+            int allocate_internal_vars();
 
             /**@brief: Deallocate internal variables. */
-            virtual int deallocate_internal_vars();
+            int deallocate_internal_vars();
             
 
         public: 
@@ -168,10 +301,13 @@ namespace ts
             inline TSInfo get_timestep_info() const {return m_uiTimeInfo;} 
 
             /**@brief: perform synchronizations with correct variable allocations for the new mesh: should be called after remeshing.  */
-            virtual int sync_with_mesh();
+            int sync_with_mesh();
             
             /**@brief: advance to next time step*/
             void evolve();
+            
+            /**@brief: dump load statistics*/
+            void dump_load_statistics(std::ostream & sout);
             
     };
 
@@ -212,6 +348,10 @@ namespace ts
     template<typename T, typename Ctx>
     int ETS<T,Ctx> :: allocate_internal_vars()
     {
+
+        if(m_uiIsInternalAlloc)
+            return 0;
+
         m_uiStVec.resize(m_uiNumStages);
         for(unsigned int i=0; i < m_uiNumStages; i++)
             m_uiStVec[i].VecCreate(m_uiAppCtx->get_mesh(), m_uiEVar.IsGhosted() , m_uiEVar.IsUnzip(), m_uiEVar.IsElemental() , m_uiEVar.GetDof());
@@ -219,12 +359,18 @@ namespace ts
         m_uiEVecTmp[0].VecCreate(m_uiAppCtx->get_mesh(), m_uiEVar.IsGhosted() , m_uiEVar.IsUnzip(), m_uiEVar.IsElemental() , m_uiEVar.GetDof());
 
         m_uiEVecTmp[1].VecCreate(m_uiAppCtx->get_mesh(), m_uiEVar.IsGhosted() , m_uiEVar.IsUnzip(), m_uiEVar.IsElemental() , m_uiEVar.GetDof());
+        
+        m_uiIsInternalAlloc = true;
         return 0;
     }
     
     template<typename T, typename Ctx>
     int ETS<T,Ctx> :: deallocate_internal_vars()
     {
+
+        if(!m_uiIsInternalAlloc)
+            return 0;
+
         for(unsigned int i=0; i < m_uiNumStages; i++)
             m_uiStVec[i].VecDestroy();
 
@@ -233,6 +379,7 @@ namespace ts
         m_uiEVecTmp[0].VecDestroy();
         m_uiEVecTmp[1].VecDestroy();
         
+        m_uiIsInternalAlloc=false;
         return 0; 
     }
 
@@ -304,6 +451,9 @@ namespace ts
         m_uiAppCtx->initialize();
         m_uiTimeInfo = m_uiAppCtx->get_ts_info();
         allocate_internal_vars();
+        //Ctx initialize might have changed the mesh i.e. converge untill mesh adapted to the initial data. 
+        m_uiAppCtx->set_ets_synced(false);
+        this->sync_with_mesh();
 
     }
 
@@ -317,11 +467,21 @@ namespace ts
     template<typename T, typename  Ctx>
     void ETS<T, Ctx>::evolve()
     {
+
+        #ifdef __PROFILE_ETS__
+            m_uiCtxpt[ETSPROFILE::EVOLVE].start();
+        #endif
+
         const ot::Mesh* pMesh = m_uiAppCtx->get_mesh();
         m_uiTimeInfo = m_uiAppCtx->get_ts_info();
         const double current_t= m_uiTimeInfo._m_uiT;
         double current_t_adv=current_t;
         const double dt = m_uiTimeInfo._m_uiTh;
+
+        m_uiAppCtx->pre_timestep(m_uiEVar);
+
+        const unsigned int DOF = m_uiEVar.GetDof();
+        const unsigned int szPDof = pMesh->getDegOfFreedom();
 
         if(pMesh->isActive())
         {
@@ -331,22 +491,41 @@ namespace ts
             const unsigned int nodeLocalBegin=pMesh->getNodeLocalBegin();
             const unsigned int nodeLocalEnd=pMesh->getNodeLocalEnd();
 
-            const std::vector<ot::Block> blkList=pMesh->getLocalBlockList();
+            const std::vector<ot::Block>& blkList=pMesh->getLocalBlockList();
             unsigned int offset;
             double ptmin[3], ptmax[3];
             unsigned int sz[3];
             unsigned int bflag;
             double dx,dy,dz;
             
-            m_uiAppCtx->pre_timestep(m_uiEVar);
             for(int stage=0; stage< m_uiNumStages ; stage++)
             {
-                //m_uiEVecTmp[0].VecCopy(m_uiEVar,true);
-                m_uiEVecTmp[0].VecFMA(m_uiAppCtx->get_mesh(),m_uiEVar,0,1.0,true); 
+                m_uiEVecTmp[0].VecCopy(m_uiEVar,true);
                 
-                for(int p = 0 ; p < stage;  p++ )
-                    m_uiEVecTmp[0].VecFMA(m_uiAppCtx->get_mesh(), m_uiStVec[stage], 1, m_uiAij[(stage)*m_uiNumStages + p]*dt,true);
+                const T* eptr = m_uiEVar.GetVecArray();
+                T* tmp  = (T*)m_uiEVecTmp[0].GetVecArray();
 
+
+                for(unsigned int v=0; v < DOF; v++)
+                {
+                    for(unsigned int node=pMesh->getNodeLocalBegin(); node < pMesh->getNodeLocalEnd(); node++)
+                    {
+                        for(int p = 0 ; p < stage;  p++ )
+                        {
+                            const T* sptr = m_uiStVec[p].GetVecArray();
+                            tmp[v*szPDof + node ] += (m_uiAij[(stage)*m_uiNumStages + p] * dt * sptr[v*szPDof + node]);
+                        }
+                    }
+                }
+
+                // 01/09/20 Milinda :  no need to update the ghost zones. 
+                // for(int p = 0 ; p < stage;  p++ )
+                // {
+                //     const T* sptr = m_uiStVec[p].GetVecArray();
+                //     for(unsigned int n=0; n < m_uiEVar.GetSize(); n++)
+                //         tmp[n]+= (m_uiAij[(stage)*m_uiNumStages + p]*dt*sptr[n]);
+                // }
+                
                 current_t_adv=current_t+m_uiCi[stage] * dt;
 
                 m_uiAppCtx -> pre_stage(m_uiStVec[stage]);
@@ -359,14 +538,17 @@ namespace ts
             for(unsigned int k=0; k< m_uiNumStages; k++)
                 m_uiEVar.VecFMA(m_uiAppCtx->get_mesh(), m_uiStVec[k], 1, m_uiBi[k]*dt, true);
             
-            m_uiAppCtx->post_timestep(m_uiEVar);
-            
-
         }
+
+        m_uiAppCtx->post_timestep(m_uiEVar);
 
         m_uiAppCtx->increment_ts_info();
         m_uiTimeInfo = m_uiAppCtx->get_ts_info();
         pMesh->waitAll();
+
+        #ifdef __PROFILE_ETS__
+            m_uiCtxpt[ETSPROFILE::EVOLVE].stop();
+        #endif
 
         
     }
@@ -428,5 +610,34 @@ namespace ts
         return 0;
     }
 
+
+    template<typename T, typename Ctx>
+    void ETS<T,Ctx>::dump_load_statistics(std::ostream & sout)
+    {
+
+        const ot::Mesh* pMesh = m_uiAppCtx->get_mesh();
+        
+        if(pMesh->isActive())
+        {
+            double local_weight=pMesh->getNumLocalMeshElements();
+            // const ot::TreeNode* pNodes = pMesh->getAllElements().data();
+            // for(unsigned int ele = pMesh->getElementLocalBegin(); ele < pMesh->getElementLocalEnd(); ele++)
+            //     local_weight+=getOctWeight(&pNodes[ele]);
+            double ld_stat[3];
+            MPI_Comm aComm =pMesh->getMPICommunicator();
+
+            par::Mpi_Reduce(&local_weight,ld_stat+0,1,MPI_MIN,0,aComm);
+            par::Mpi_Reduce(&local_weight,ld_stat+1,1,MPI_SUM,0,aComm);
+            ld_stat[1]=ld_stat[1]/(double)pMesh->getMPICommSize();
+            par::Mpi_Reduce(&local_weight,ld_stat+2,1,MPI_MAX,0,aComm);
+
+            if(!pMesh->getMPIRank())
+                std::cout<<YLW<<"\t LD Bal: (min,mean,max): "<<ld_stat[0]<<"|\t"<<ld_stat[1]<<"|\t"<<ld_stat[2]<<NRM<<std::endl;
+
+        }
+
+        return ;
+
+    }
 
 }// end of namespace ts
