@@ -149,10 +149,17 @@ namespace ot
              */
             inline I GetSize() const { return m_uiSize;}
 
-            /**@brief get the 2D array for a multiple dof vector
+            /**@brief:
+             * get the 2D array for a multiple dof vector (note that the v2d should be a pointer in heap. )
              * @param isAlloc: true if the mem allocated for T*. False otherwise. 
             */
             void Get2DArray(T** & v2d, bool isAlloc = false);
+
+            /**
+             * @brief returns the 2D vector. Note that the v2d assumeed to allocated no need to be on the heap;
+             * @param v2d 
+             */
+            void Get2DVec(T** v2d);
 
             /**@brief: get size per dof*/
             inline I GetSizePerDof() const {return (m_uiSize/m_uiDof) ;}
@@ -326,6 +333,21 @@ namespace ot
     }
 
 
+    template<typename T, typename I>
+    void DVector<T,I>::Get2DVec(T** v2d)
+    {
+
+        assert((m_uiSize%m_uiDof)==0);
+        const I sz_per_dof = m_uiSize/m_uiDof;
+        
+        for(unsigned int i=0; i< m_uiDof; i++)
+            v2d[i] = m_uiData + i*sz_per_dof;
+
+        return;
+
+    }
+
+
     template<typename T, typename I >
     void DVector<T,I>::VecCopy(DVector<T,I> v, bool isAlloc)
     {
@@ -351,16 +373,16 @@ namespace ot
     }
 
     template<typename T, typename I>
-    void DVector<T,I>::VecFMA(const ot::Mesh * pMesh , DVector<T,I> v, T a, T b, bool localOnly)
+    void DVector<T,I>::VecFMA(const ot::Mesh * pMesh , DVector<T,I> vec, T a, T b, bool localOnly)
     {   
         
         if(!(pMesh->isActive()))
             return;
 
-        assert((this->IsElemental() == v.IsElemental()) && (this->IsUnzip() == v.IsUnzip()) && (this->IsGhosted() == v.IsGhosted()) && (this->GetSize() == v.GetSize()) && (this->GetDof() == v.GetDof()) );
+        assert((this->IsElemental() == vec.IsElemental()) && (this->IsUnzip() == vec.IsUnzip()) && (this->IsGhosted() == vec.IsGhosted()) && (this->GetSize() == vec.GetSize()) && (this->GetDof() == vec.GetDof()) );
 
-        const T* dptr = v.GetVecArray();
-        const I nPDOF = v.GetSizePerDof();
+        const T* dptr = vec.GetVecArray();
+        const I nPDOF = vec.GetSizePerDof();
 
         if(m_uiIsUnzip==true)
         {
@@ -409,7 +431,7 @@ namespace ot
                 {
                     for(unsigned int n = pMesh->getNodeLocalBegin(); n < pMesh->getNodeLocalEnd(); n++ )
                         m_uiData[ v*nPDOF + n ] = a*m_uiData[v*nPDOF + n] + b* dptr[v*nPDOF + n];
-
+                    
                 }   
     
             }else
@@ -506,10 +528,14 @@ namespace ot
     template<typename T, typename I>
     void DVector<T,I>::VecMinMax(const ot::Mesh* pMesh, T& min, T& max, unsigned int dof)
     {
-        if(!(pMesh->isActive())) return;
+        if(!(pMesh->isActive())) 
+        {
+            min=0; max=0;
+            return;
+        }
 
         assert( (m_uiIsUnzip==false) && (m_uiIsGhosted==true) && (m_uiIsElemental ==false) ); // current min max implementation. 
-        const I sz = (m_uiSize/m_uiDof);
+        const I sz = pMesh->getDegOfFreedom();
         T* ptr = m_uiData + dof*sz;
 
         const unsigned int num_local_nodes = pMesh->getNumLocalMeshNodes();

@@ -17,7 +17,16 @@ namespace ot
 
         if(!m_uiIsActive) return NULL;
 
-        T* vec=new T[m_uiNumActualNodes];
+        T* vec=NULL;
+
+        try
+        {
+            vec = new T[m_uiNumActualNodes];
+
+        }catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
         
         return vec;
 
@@ -28,7 +37,15 @@ namespace ot
     {
         if(!m_uiIsActive) return NULL;
 
-        T* vec=new T[m_uiNumActualNodes*dof];
+        T* vec =NULL;
+        try
+        {
+            vec=new T[m_uiNumActualNodes*dof];
+
+        }catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
 
         for(unsigned int i=0; i < m_uiNumActualNodes*dof; i++)
             vec[i] = initVal;
@@ -42,7 +59,16 @@ namespace ot
 
         if(!m_uiIsActive) return NULL;
 
-        T* vec=new T[m_uiNumTotalElements*dof];
+        T* vec=NULL;
+
+        try
+        {
+            vec=new T[m_uiNumTotalElements*dof];
+
+        }catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
         
         for(unsigned int i=0; i < m_uiNumTotalElements*dof; i++)
             vec[i] = initVal;
@@ -54,7 +80,16 @@ namespace ot
     T* Mesh::createDGVector(T initVal, unsigned int dof) const
     {
         if(!m_uiIsActive) return NULL;
-        T* vec=new T[m_uiNumTotalElements*m_uiNpE*dof];
+        
+        T* vec=NULL;
+        try
+        {
+            vec = new T[m_uiNumTotalElements*m_uiNpE*dof];
+
+        }catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
 
          for(unsigned int i=0; i < m_uiNumTotalElements*m_uiNpE*dof; i++)
             vec[i] = initVal;
@@ -67,7 +102,17 @@ namespace ot
     {
         if(!m_uiIsActive) return NULL;
 
-        T* vec=new T[m_uiNumActualNodes];
+        T* vec=NULL;
+
+        try
+        {
+            vec=new T[m_uiNumActualNodes];
+        }
+        catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
+
 
         for(unsigned int k=0;k<m_uiNumActualNodes;k++)
             vec[k]=initValue;
@@ -80,7 +125,17 @@ namespace ot
     {
         if(!m_uiIsActive) return NULL;
 
-        T* vec=new T[m_uiNumActualNodes];
+        T* vec = NULL;
+
+        try
+        {
+            vec=new T[m_uiNumActualNodes];
+
+        }catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
+
 
         unsigned int nodeLookUp_CG;
         unsigned int nodeLookUp_DG;
@@ -187,29 +242,47 @@ namespace ot
 
 
     template <typename T>
-    T* Mesh::createUnZippedVector() const
+    T* Mesh::createUnZippedVector(unsigned int dof) const
     {
         if(!m_uiIsActive) return NULL;
 
-        T* uvec=new T[m_uiUnZippedVecSz];
+        T* uvec=NULL;
+
+        try
+        {
+            uvec=new T[dof*m_uiUnZippedVecSz];
+            
+        }catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
+
         return uvec;
     }
 
     template <typename T>
-    T* Mesh::createUnZippedVector(const T initValue) const
+    T* Mesh::createUnZippedVector(const T initValue,unsigned int dof) const
     {
         if(!m_uiIsActive) return NULL;
 
-        T* uvec=new T[m_uiUnZippedVecSz];
+        T* uvec=NULL;
+        try
+        {
+            uvec=new T[dof*m_uiUnZippedVecSz];
 
-        for(unsigned int k=0;k<(m_uiUnZippedVecSz);k++)
+        }catch (const std::bad_alloc& e) {
+            std::cout<<" rank: "<<m_uiActiveRank<<" func: "<<__func__<<" bad allocation error "<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
+	    }
+
+        for(unsigned int k=0;k<(dof*m_uiUnZippedVecSz);k++)
             uvec[k]=initValue;
 
         return uvec;
     }
 
     template <typename T>
-    void Mesh::CG2DGVec(T* cg_vec, T*& dg_vec, bool isAllocated, bool gsynced, unsigned int dof) const
+    void Mesh::CG2DGVec(T* cg_vec, T*& dg_vec, bool isAllocated, bool gsynced, unsigned int dof) 
     {
         if(!m_uiIsActive)
             return;
@@ -486,17 +559,17 @@ namespace ot
 
         if(this->isActive())
         {
-            const std::vector<unsigned int> nodeSendCount=this->getNodalSendCounts();
-            const std::vector<unsigned int> nodeSendOffset=this->getNodalSendOffsets();
+            const std::vector<unsigned int>& nodeSendCount=this->getNodalSendCounts();
+            const std::vector<unsigned int>& nodeSendOffset=this->getNodalSendOffsets();
 
-            const std::vector<unsigned int> nodeRecvCount=this->getNodalRecvCounts();
-            const std::vector<unsigned int> nodeRecvOffset=this->getNodalRecvOffsets();
+            const std::vector<unsigned int>& nodeRecvCount=this->getNodalRecvCounts();
+            const std::vector<unsigned int>& nodeRecvOffset=this->getNodalRecvOffsets();
 
-            const std::vector<unsigned int> sendProcList=this->getSendProcList();
-            const std::vector<unsigned int> recvProcList=this->getRecvProcList();
+            const std::vector<unsigned int>& sendProcList=this->getSendProcList();
+            const std::vector<unsigned int>& recvProcList=this->getRecvProcList();
 
-            const std::vector<unsigned int> sendNodeSM=this->getSendNodeSM();
-            const std::vector<unsigned int> recvNodeSM=this->getRecvNodeSM();
+            const std::vector<unsigned int>& sendNodeSM=this->getSendNodeSM();
+            const std::vector<unsigned int>& recvNodeSM=this->getRecvNodeSM();
 
 
             const unsigned int activeNpes=this->getMPICommSize();
@@ -581,17 +654,17 @@ namespace ot
 
         if(this->isActive())
         {
-            const std::vector<unsigned int> nodeSendCount=this->getNodalSendCounts();
-            const std::vector<unsigned int> nodeSendOffset=this->getNodalSendOffsets();
+            const std::vector<unsigned int>& nodeSendCount=this->getNodalSendCounts();
+            const std::vector<unsigned int>& nodeSendOffset=this->getNodalSendOffsets();
 
-            const std::vector<unsigned int> nodeRecvCount=this->getNodalRecvCounts();
-            const std::vector<unsigned int> nodeRecvOffset=this->getNodalRecvOffsets();
+            const std::vector<unsigned int>& nodeRecvCount=this->getNodalRecvCounts();
+            const std::vector<unsigned int>& nodeRecvOffset=this->getNodalRecvOffsets();
 
-            const std::vector<unsigned int> sendProcList=this->getSendProcList();
-            const std::vector<unsigned int> recvProcList=this->getRecvProcList();
+            const std::vector<unsigned int>& sendProcList=this->getSendProcList();
+            const std::vector<unsigned int>& recvProcList=this->getRecvProcList();
 
-            const std::vector<unsigned int> sendNodeSM=this->getSendNodeSM();
-            const std::vector<unsigned int> recvNodeSM=this->getRecvNodeSM();
+            const std::vector<unsigned int>& sendNodeSM=this->getSendNodeSM();
+            const std::vector<unsigned int>& recvNodeSM=this->getRecvNodeSM();
 
 
             const unsigned int activeNpes=this->getMPICommSize();
@@ -600,7 +673,7 @@ namespace ot
             const unsigned int recvBSz=nodeRecvOffset[activeNpes-1] + nodeRecvCount[activeNpes-1];
             unsigned int proc_id;
 
-            unsigned int ctxIndex=0;
+            int ctxIndex=-1;
             for(unsigned int i=0;i<m_uiMPIContexts.size();i++)
             {
                 if(m_uiMPIContexts[i].getBuffer()==vec)
@@ -609,6 +682,12 @@ namespace ot
                     break;
                 }
 
+            }
+
+            if(ctxIndex==-1)
+            {
+                std::cout<<"rank: "<<m_uiActiveRank<<" async ctx not found for vec: "<<&vec<<" in async comm end: "<<__LINE__<<std::endl;
+                MPI_Abort(m_uiCommActive,0);
             }
 
             MPI_Status status;
@@ -757,7 +836,7 @@ namespace ot
             unsigned int proc_id;
 
             
-            unsigned int ctxIndex=0;
+            int ctxIndex=-1;
             for(unsigned int i=0;i<m_uiMPIContexts.size();i++)
             {
                 if(m_uiMPIContexts[i].getBuffer()==vec)
@@ -766,6 +845,12 @@ namespace ot
                     break;
                 }
 
+            }
+            
+            if(ctxIndex==-1)
+            {
+                std::cout<<"rank: "<<m_uiActiveRank<<" async ctx not found for vec: "<<&vec<<" in async comm end: "<<__LINE__<<std::endl;
+                MPI_Abort(m_uiCommActive,0);
             }
 
             assert(m_uiMPIContexts[ctxIndex].getBuffer()==vec);
@@ -845,7 +930,7 @@ namespace ot
                 {
                     proc_id=m_uiElementRecvProcList[recv_p];
                     MPI_Request* req=new MPI_Request();
-                    par::Mpi_Irecv((recvB+dof * m_uiNpE * m_uiRecvEleOffset[proc_id]),dof * m_uiNpE * m_uiRecvEleCount[proc_id],proc_id,m_uiCommTag,commActive,req);
+                    par::Mpi_Irecv((recvB+ dof*m_uiNpE*m_uiRecvEleOffset[proc_id]), dof * m_uiNpE*m_uiRecvEleCount[proc_id],proc_id,m_uiCommTag,commActive,req);
                     ctx.getRequestList().push_back(req);
 
                 }
@@ -865,7 +950,7 @@ namespace ot
                         for (unsigned int k = m_uiSendEleOffset[proc_id]; k < (m_uiSendEleOffset[proc_id] + m_uiSendEleCount[proc_id]); k++)
                         {
                             for(unsigned int node =0; node < m_uiNpE; node++)
-                              sendB[dof*m_uiNpE*(m_uiSendEleOffset[proc_id]) + (var*m_uiNpE*m_uiSendEleCount[proc_id])+ node ] = (vec+var*m_uiNumTotalElements*m_uiNpE)[ (m_uiElementLocalBegin +  m_uiScatterMapElementRound1[k])*m_uiNpE + node];
+                              sendB[dof*m_uiNpE*(m_uiSendEleOffset[proc_id]) + (var*m_uiNpE*m_uiSendEleCount[proc_id]) + (k-m_uiSendEleOffset[proc_id])*m_uiNpE + node ] = (vec+var*m_uiNumTotalElements*m_uiNpE)[ (m_uiElementLocalBegin +  m_uiScatterMapElementRound1[k])*m_uiNpE + node];
                         }
                     }
                 }
@@ -913,7 +998,7 @@ namespace ot
             unsigned int proc_id;
 
             
-            unsigned int ctxIndex=0;
+            int ctxIndex=-1;
             for(unsigned int i=0;i<m_uiMPIContexts.size();i++)
             {
                 if(m_uiMPIContexts[i].getBuffer()==vec)
@@ -922,6 +1007,12 @@ namespace ot
                     break;
                 }
 
+            }
+
+            if(ctxIndex==-1)
+            {
+                std::cout<<"rank: "<<m_uiActiveRank<<" async ctx not found for vec: "<<&vec<<" in async comm end: "<<__LINE__<<std::endl;
+                MPI_Abort(m_uiCommActive,0);
             }
 
             assert(m_uiMPIContexts[ctxIndex].getBuffer()==vec);
@@ -944,7 +1035,7 @@ namespace ot
                     {
                         for (unsigned int k = m_uiRecvEleOffset[proc_id]; k < (m_uiRecvEleOffset[proc_id] + m_uiRecvEleCount[proc_id]); k++)
                             for(unsigned int node =0; node < m_uiNpE; node ++)
-                                (vec+var*m_uiNumTotalElements*m_uiNpE)[m_uiGhostElementRound1Index[k]*m_uiNpE+ node ] = recvB[dof*(m_uiRecvEleOffset[proc_id]) + (var*m_uiNpE*m_uiRecvEleCount[proc_id])+ node];
+                                (vec+var*m_uiNumTotalElements*m_uiNpE)[m_uiGhostElementRound1Index[k]*m_uiNpE+ node ] = recvB[dof*(m_uiRecvEleOffset[proc_id]*m_uiNpE) + (var*m_uiNpE*m_uiRecvEleCount[proc_id]) + (k-m_uiRecvEleOffset[proc_id])*m_uiNpE + node];
                     }
 
                 }
@@ -983,17 +1074,17 @@ namespace ot
         if(this->isActive())
         {
             // inverse direction of the read ghost 
-            const std::vector<unsigned int> nodeSendCount=this->getNodalRecvCounts();
-            const std::vector<unsigned int> nodeSendOffset=this->getNodalRecvOffsets();
+            const std::vector<unsigned int>& nodeSendCount=this->getNodalRecvCounts();
+            const std::vector<unsigned int>& nodeSendOffset=this->getNodalRecvOffsets();
 
-            const std::vector<unsigned int> nodeRecvCount=this->getNodalSendCounts();
-            const std::vector<unsigned int> nodeRecvOffset=this->getNodalSendOffsets();
+            const std::vector<unsigned int>& nodeRecvCount=this->getNodalSendCounts();
+            const std::vector<unsigned int>& nodeRecvOffset=this->getNodalSendOffsets();
 
-            const std::vector<unsigned int> sendProcList=this->getRecvProcList();
-            const std::vector<unsigned int> recvProcList=this->getSendProcList();
+            const std::vector<unsigned int>& sendProcList=this->getRecvProcList();
+            const std::vector<unsigned int>& recvProcList=this->getSendProcList();
 
-            const std::vector<unsigned int> sendNodeSM=this->getRecvNodeSM();
-            const std::vector<unsigned int> recvNodeSM=this->getSendNodeSM();
+            const std::vector<unsigned int>& sendNodeSM=this->getRecvNodeSM();
+            const std::vector<unsigned int>& recvNodeSM=this->getSendNodeSM();
 
 
             const unsigned int activeNpes=this->getMPICommSize();
@@ -1079,17 +1170,17 @@ namespace ot
         if(this->isActive())
         {
             // inverse direction of the read ghost 
-            const std::vector<unsigned int> nodeSendCount=this->getNodalRecvCounts();
-            const std::vector<unsigned int> nodeSendOffset=this->getNodalRecvOffsets();
+            const std::vector<unsigned int>& nodeSendCount=this->getNodalRecvCounts();
+            const std::vector<unsigned int>& nodeSendOffset=this->getNodalRecvOffsets();
 
-            const std::vector<unsigned int> nodeRecvCount=this->getNodalSendCounts();
-            const std::vector<unsigned int> nodeRecvOffset=this->getNodalSendOffsets();
+            const std::vector<unsigned int>& nodeRecvCount=this->getNodalSendCounts();
+            const std::vector<unsigned int>& nodeRecvOffset=this->getNodalSendOffsets();
 
-            const std::vector<unsigned int> sendProcList=this->getRecvProcList();
-            const std::vector<unsigned int> recvProcList=this->getSendProcList();
+            const std::vector<unsigned int>& sendProcList=this->getRecvProcList();
+            const std::vector<unsigned int>& recvProcList=this->getSendProcList();
 
-            const std::vector<unsigned int> sendNodeSM=this->getRecvNodeSM();
-            const std::vector<unsigned int> recvNodeSM=this->getSendNodeSM();
+            const std::vector<unsigned int>& sendNodeSM=this->getRecvNodeSM();
+            const std::vector<unsigned int>& recvNodeSM=this->getSendNodeSM();
 
 
             const unsigned int activeNpes=this->getMPICommSize();
@@ -1098,7 +1189,7 @@ namespace ot
             const unsigned int recvBSz=nodeRecvOffset[activeNpes-1] + nodeRecvCount[activeNpes-1];
             unsigned int proc_id;
 
-            unsigned int ctxIndex=0;
+            int ctxIndex=-1;
             for(unsigned int i=0;i<m_uiMPIContexts.size();i++)
             {
                 if(m_uiMPIContexts[i].getBuffer()==vec)
@@ -1107,6 +1198,12 @@ namespace ot
                     break;
                 }
 
+            }
+
+            if(ctxIndex==-1)
+            {
+                std::cout<<"rank: "<<m_uiActiveRank<<" async ctx not found for vec: "<<&vec<<" in async comm end: "<<__LINE__<<std::endl;
+                MPI_Abort(m_uiCommActive,0);
             }
 
             MPI_Status status;
@@ -1197,17 +1294,17 @@ namespace ot
         if(this->isActive())
         {
             // inverse direction of the read ghost 
-            const std::vector<unsigned int> nodeSendCount=this->getNodalRecvCounts();
-            const std::vector<unsigned int> nodeSendOffset=this->getNodalRecvOffsets();
+            const std::vector<unsigned int>& nodeSendCount=this->getNodalRecvCounts();
+            const std::vector<unsigned int>& nodeSendOffset=this->getNodalRecvOffsets();
 
-            const std::vector<unsigned int> nodeRecvCount=this->getNodalSendCounts();
-            const std::vector<unsigned int> nodeRecvOffset=this->getNodalSendOffsets();
+            const std::vector<unsigned int>& nodeRecvCount=this->getNodalSendCounts();
+            const std::vector<unsigned int>& nodeRecvOffset=this->getNodalSendOffsets();
 
-            const std::vector<unsigned int> sendProcList=this->getRecvProcList();
-            const std::vector<unsigned int> recvProcList=this->getSendProcList();
+            const std::vector<unsigned int>& sendProcList=this->getRecvProcList();
+            const std::vector<unsigned int>& recvProcList=this->getSendProcList();
 
-            const std::vector<unsigned int> sendNodeSM=this->getRecvNodeSM();
-            const std::vector<unsigned int> recvNodeSM=this->getSendNodeSM();
+            const std::vector<unsigned int>& sendNodeSM=this->getRecvNodeSM();
+            const std::vector<unsigned int>& recvNodeSM=this->getSendNodeSM();
 
 
             const unsigned int activeNpes=this->getMPICommSize();
@@ -1896,266 +1993,7 @@ namespace ot
     }
 
 
-    template<typename T>
-    inline void Mesh::interpDownWind(const double *downWind,const unsigned int element,const unsigned int lookup, T* vecLookUp, const unsigned int cnum, const T* parentInterpIn, T* parentInterpOut,const unsigned int padDir,const unsigned int padWidth,const T* zippedVec,T* out)
-    {
-
-        if(!m_uiIsActive) return;
-
-        // no need for interpolation if the padding width is less than eq. 2
-        if(padWidth<=2) return;
-        if(m_uiElementOrder!=4) return; // written only for order 4 elements.
-
-        this->parent2ChildInterpolation(parentInterpIn,parentInterpOut,cnum,3);
-        this->getElementNodalValues(zippedVec,vecLookUp,lookup);
-
-        T interpVal;
-
-        #ifdef DEBUG_UPWIND_INTERP
-                #pragma message("DEBIG_DOWNWIND_INTERP: ON")
-                T adv_val1,adv_val2;
-        #endif
-        const unsigned int stencilWidth=5;
-        if(padDir==OCT_DIR_LEFT)
-        {
-            for(unsigned int k=0;k<(m_uiElementOrder+1);k+=2)
-                for(unsigned int j=0;j<(m_uiElementOrder+1);j+=2)
-                {
-                    interpVal=2*downWind[0]*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(1)];
-                    for(unsigned int index=0;index<(stencilWidth-2);index++)
-                        interpVal+=((downWind[index+1])*(2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(index+2)]-vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(2*index)]));
-
-                    interpVal+=((downWind[4])*(2*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+1]-parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+2]));
-                    interpVal/=downWind[0];
-
-                    out[((((cnum & 4u)>>2u)*m_uiElementOrder+k)>>1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+((((cnum & 2u)>>1u)*m_uiElementOrder+j)>>1)*(m_uiElementOrder+1)+(((((cnum & (1u)))*m_uiElementOrder+2)>>1))]=interpVal;
-
-            #ifdef DEBUG_UPWIND_INTERP
-                    adv_val1=2*downWind[4]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+1];
-                    for(unsigned int index=0;index<(stencilWidth-1);index++)
-                        adv_val1+=2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+index+1]*downWind[index];
-
-                    adv_val2=downWind[4]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+2];
-                    adv_val2+=downWind[0]*interpVal;
-                    for(unsigned int index=1;index<(stencilWidth-1);index++)
-                        adv_val2+=vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(2*index-2)]*downWind[index];
-
-                    if(fabs(adv_val1-adv_val2)>1e-3)
-                        std::cout<<"[left] m_uiActiveRank: "<<m_uiActiveRank<<" adv_val1: "<<adv_val1<<" adv_val_2: "<<adv_val2<<std::endl;
-
-            #endif
-
-                }
-
-
-
-        }else if (padDir==OCT_DIR_DOWN)
-        {
-
-            for(unsigned int k=0;k<(m_uiElementOrder+1);k+=2)
-                for(unsigned int i=0;i<(m_uiElementOrder+1);i+=2)
-                {
-                    interpVal=2*downWind[0]*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(1)*(m_uiElementOrder+1)+(i)];
-                    for(unsigned int index=0;index<(stencilWidth-2);index++)
-                        interpVal+=((downWind[index+1])*(2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(index+2)*(m_uiElementOrder+1)+(i)]-vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(2*index)*(m_uiElementOrder+1)+i]));
-
-                    interpVal+=((downWind[4])*(2*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(1)*(m_uiElementOrder+1)+i]-parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(2)*(m_uiElementOrder+1)+i]));
-                    interpVal/=downWind[0];
-
-                    out[((((cnum & 4u)>>2u)*m_uiElementOrder+k)>>1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+((((cnum & 2u)>>1u)*m_uiElementOrder+2)>>1)*(m_uiElementOrder+1)+(((((cnum & (1u)))*m_uiElementOrder+i)>>1))]=interpVal;
-
-                #ifdef DEBUG_UPWIND_INTERP
-                    adv_val1=2*downWind[4]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(1)*(m_uiElementOrder+1)+i];
-                    for(unsigned int index=0;index<(stencilWidth-1);index++)
-                        adv_val1+=2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(index+1)*(m_uiElementOrder+1)+i]*downWind[index];
-
-                    adv_val2=downWind[4]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+2*(m_uiElementOrder+1)+i];
-                    adv_val2+=downWind[0]*interpVal;
-                    for(unsigned int index=1;index<(stencilWidth-1);index++)
-                        adv_val2+=vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(2*index-2)*(m_uiElementOrder+1)+i]*downWind[index];
-
-                    if(fabs(adv_val1-adv_val2)>1e-3)
-                        std::cout<<"[down] m_uiActiveRank: "<<m_uiActiveRank<<" adv_val1: "<<adv_val1<<" adv_val_2: "<<adv_val2<<std::endl;
-
-                #endif
-                }
-
-
-
-        }else if (padDir==OCT_DIR_BACK)
-        {
-
-            for(unsigned int j=0;j<(m_uiElementOrder+1);j+=2)
-                for(unsigned int i=0;i<(m_uiElementOrder+1);i+=2)
-                {
-                    interpVal=2*downWind[0]*vecLookUp[(1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(i)];
-                    for(unsigned int index=0;index<(stencilWidth-2);index++)
-                        interpVal+=((downWind[index+1])*(2*vecLookUp[(index+2)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(i)]-vecLookUp[(2*index)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]));
-
-                    interpVal+=((downWind[4])*(2*parentInterpOut[(1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]-parentInterpOut[(2)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]));
-                    interpVal/=downWind[0];
-
-                    out[((((cnum & 4u)>>2u)*m_uiElementOrder+2)>>1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+((((cnum & 2u)>>1u)*m_uiElementOrder+j)>>1)*(m_uiElementOrder+1)+(((((cnum & (1u)))*m_uiElementOrder+i)>>1))]=interpVal;
-
-                #ifdef DEBUG_UPWIND_INTERP
-                    adv_val1=2*downWind[4]*parentInterpOut[(1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                    for(unsigned int index=0;index<(stencilWidth-1);index++)
-                        adv_val1+=2*vecLookUp[(index+1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]*downWind[index];
-
-                    adv_val2=downWind[4]*parentInterpOut[(2)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                    adv_val2+=downWind[0]*interpVal;
-                    for(unsigned int index=1;index<(stencilWidth-1);index++)
-                        adv_val2+=vecLookUp[(2*index-2)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]*downWind[index];
-
-                    if(fabs(adv_val1-adv_val2)>1e-3)
-                        std::cout<<"[back] m_uiActiveRank: "<<m_uiActiveRank<<" adv_val1: "<<adv_val1<<" adv_val_2: "<<adv_val2<<std::endl;
-
-                #endif
-                }
-
-
-        }else
-        {
-            std::cout<<"m_uiActiveRank: "<<m_uiActiveRank<<" invalid padding direction specified "<<std::endl;
-        }
-
-
-    }
-
-
-    template<typename T>
-    inline void Mesh::interpUpWind(const double *upWind,const unsigned int element,const unsigned int lookup, T* vecLookUp, const unsigned int cnum, const T* parentInterpIn, T* parentInterpOut,const unsigned int padDir,const unsigned int padWidth,const T* zippedVec,T* out)
-    {
-
-        if(!m_uiIsActive) return;
-
-        // no need for interpolation if the padding width is less than eq. 2
-        if(padWidth<=2) return;
-        if(m_uiElementOrder!=4) return; // written only for order 4 elements.
-
-        this->parent2ChildInterpolation(parentInterpIn,parentInterpOut,cnum,3);
-        this->getElementNodalValues(zippedVec,vecLookUp,lookup);
-
-        const unsigned int stencilWidth=5;
-        T interpVal;
-
-        #ifdef DEBUG_UPWIND_INTERP
-        #pragma message("DEBIG_UPWIND_INTERP: ON")
-                T adv_val1;
-                T adv_val2;
-        #endif
-
-
-        if(padDir==OCT_DIR_RIGHT)
-        {
-            for(unsigned int k=0;k<(m_uiElementOrder+1);k+=2)
-                for(unsigned int j=0;j<(m_uiElementOrder+1);j+=2)
-                {
-
-                    interpVal=2*upWind[4]*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(3)];
-                    interpVal+=((upWind[0])*(2*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+3]-parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+2]));
-                    for(unsigned int index=0;index<(stencilWidth-2);index++)
-                        interpVal+=((upWind[index+1])*(2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+index]-vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(2*index)]));
-
-                    interpVal/=upWind[4];
-                    out[((((cnum & 4u)>>2u)*m_uiElementOrder+k)>>1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+((((cnum & 2u)>>1u)*m_uiElementOrder+j)>>1)*(m_uiElementOrder+1)+(((((cnum & (1u)))*m_uiElementOrder+2)>>1))]=interpVal;
-
-                #ifdef DEBUG_UPWIND_INTERP
-                    adv_val1=2*upWind[0]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+3];
-                    for(unsigned int index=0;index<(stencilWidth-1);index++)
-                        adv_val1+=2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+index]*upWind[index+1];
-
-                    adv_val2=upWind[0]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+2];
-                    for(unsigned int index=1;index<(stencilWidth-1);index++)
-                        adv_val2+=vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+(2*index-2)]*upWind[index];
-
-                    adv_val2+=upWind[4]*interpVal;
-
-                    if(fabs(adv_val1-adv_val2)>1e-3)
-                        std::cout<<"[right] m_uiActiveRank: "<<m_uiActiveRank<<" adv_val1: "<<adv_val1<<" adv_val_2: "<<adv_val2<<std::endl;
-
-                #endif
-
-                }
-
-
-
-
-
-
-        }else if (padDir==OCT_DIR_UP)
-        {
-
-            for(unsigned int k=0;k<(m_uiElementOrder+1);k+=2)
-                for(unsigned int i=0;i<(m_uiElementOrder+1);i+=2)
-                {
-                    interpVal=2*upWind[4]*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(3)*(m_uiElementOrder+1)+i];
-                    interpVal+=((upWind[0])*(2*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(3)*(m_uiElementOrder+1)+i]-parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(2)*(m_uiElementOrder+1)+i]));
-                    for(unsigned int index=0;index<(stencilWidth-2);index++)
-                        interpVal+=((upWind[index+1])*(2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(index)*(m_uiElementOrder+1)+i]-vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(2*index)*(m_uiElementOrder+1)+i]));
-
-                    interpVal/=upWind[4];
-                    out[((((cnum & 4u)>>2u)*m_uiElementOrder+k)>>1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+((((cnum & 2u)>>1u)*m_uiElementOrder+2)>>1)*(m_uiElementOrder+1)+(((((cnum & (1u)))*m_uiElementOrder+i)>>1))]=interpVal;
-
-                #ifdef DEBUG_UPWIND_INTERP
-                    adv_val1=2*upWind[0]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(3)*(m_uiElementOrder+1)+i];
-                    for(unsigned int index=0;index<(stencilWidth-1);index++)
-                        adv_val1+=2*vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(index)*(m_uiElementOrder+1)+i]*upWind[index+1];
-
-                    adv_val2=upWind[0]*parentInterpOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(2)*(m_uiElementOrder+1)+i];
-                    for(unsigned int index=1;index<(stencilWidth-1);index++)
-                        adv_val2+=vecLookUp[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+(2*index-2)*(m_uiElementOrder+1)+i]*upWind[index];
-
-                    adv_val2+=upWind[4]*interpVal;
-
-                    if(fabs(adv_val1-adv_val2)>1e-3)
-                        std::cout<<"[up] m_uiActiveRank: "<<m_uiActiveRank<<" adv_val1: "<<adv_val1<<" adv_val_2: "<<adv_val2<<std::endl;
-
-                #endif
-
-                }
-
-
-        }else if (padDir==OCT_DIR_FRONT)
-        {
-
-            for(unsigned int j=0;j<(m_uiElementOrder+1);j+=2)
-                for(unsigned int i=0;i<(m_uiElementOrder+1);i+=2)
-                {
-                    interpVal=2*upWind[4]*vecLookUp[(3)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                    interpVal+=((upWind[0])*(2*parentInterpOut[(3)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]-parentInterpOut[(2)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]));
-                    for(unsigned int index=0;index<(stencilWidth-2);index++)
-                        interpVal+=((upWind[index+1])*(2*vecLookUp[(index)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]-vecLookUp[(2*index)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]));
-
-                    interpVal/=upWind[4];
-                    out[((((cnum & 4u)>>2u)*m_uiElementOrder+2)>>1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+((((cnum & 2u)>>1u)*m_uiElementOrder+j)>>1)*(m_uiElementOrder+1)+(((((cnum & (1u)))*m_uiElementOrder+i)>>1))]=interpVal;
-
-                #ifdef DEBUG_UPWIND_INTERP
-                    adv_val1=2*upWind[0]*parentInterpOut[(3)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                    for(unsigned int index=0;index<(stencilWidth-1);index++)
-                        adv_val1+=2*vecLookUp[(index)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]*upWind[index+1];
-
-                    adv_val2=upWind[0]*parentInterpOut[(2)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                    for(unsigned int index=1;index<(stencilWidth-1);index++)
-                        adv_val2+=vecLookUp[(2*index-2)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]*upWind[index];
-
-                    adv_val2+=upWind[4]*interpVal;
-
-                    if(fabs(adv_val1-adv_val2)>1e-3)
-                        std::cout<<"[front] m_uiActiveRank: "<<m_uiActiveRank<<" adv_val1: "<<adv_val1<<" adv_val_2: "<<adv_val2<<std::endl;
-
-                #endif
-                }
-
-        }else
-        {
-            std::cout<<"m_uiActiveRank: "<<m_uiActiveRank<<" invalid padding direction specified "<<std::endl;
-        }
-
-
-    }
-
-
+    
     template <typename pKey, typename pNode>
     void Mesh::searchKeys(std::vector<pKey>& pKeys,std::vector<pNode>& pNodes)
     {
@@ -2194,9 +2032,184 @@ namespace ot
 
    
     template <typename T>
-    bool Mesh::isReMeshUnzip(const T **unzippedVec,const unsigned int * varIds,const unsigned int numVars,std::function<double(double,double,double)>wavelet_tol,double amr_coarse_fac, double coarsen_hx)
+    bool Mesh::isReMeshUnzip(const T **unzippedVec,const unsigned int * varIds,const unsigned int numVars,std::function<double(double,double,double,double*)>wavelet_tol,double amr_coarse_fac, double coarsen_hx)
     {
 
+        // This is the default isRMesh code that is used as refiment criteria. (if needed some complicated application specific refinement routine please have a look
+        // at the waveletAMR.h(tcc) file. )
+
+        // new wavelet code goes here.
+        bool isMeshGlobalChanged = false;
+        bool isMeshLocalChanged  = false;
+        //std::cout<<"calling amr"<<std::endl;
+        const bool includeBdy= true; // change this to false to exclude boundary from AMR. 
+        std::vector<unsigned int> refine_flags;
+
+        if(this->isActive())
+        {
+            RefElement* refEl = &m_uiRefEl;
+            wavelet::WaveletEl* wrefEl = new wavelet::WaveletEl(refEl);
+            
+            const std::vector<ot::Block>& blkList = this->getLocalBlockList();
+            const unsigned int eOrder = m_uiElementOrder;
+            
+            const unsigned int numLocalElements = m_uiNumLocalElements;
+            
+            refine_flags.clear();
+            refine_flags.resize(numLocalElements,OCT_NO_CHANGE);
+            
+            std::vector<T> blkIn;
+            std::vector<double> wCout;
+            const ot::TreeNode* pNodes = m_uiAllElements.data();
+
+            std::vector<double> eleWMax;
+            eleWMax.resize(numLocalElements,0);
+
+            const unsigned int eleOfst = m_uiElementLocalBegin;
+
+            
+            for(unsigned int blk=0; blk <blkList.size(); blk++)
+            {   
+                const unsigned int pw = blkList[blk].get1DPadWidth();
+                if((eOrder>>1u) != pw)
+                {
+                    std::cout<<" padding width should be half the eleOrder for generic wavelet computations. "<<std::endl;
+                    MPI_Abort(this->getMPICommunicator(),0);
+                }
+
+                const unsigned int nx = (2*eOrder+1);
+                const unsigned int ny = (2*eOrder+1);
+                const unsigned int nz = (2*eOrder+1);
+
+                //std::cout<<"nx "<<nx<<std::endl;
+        
+                blkIn.resize(numVars*nx*ny*nz);
+                const unsigned int isz[] = {nx,ny,nz};
+                const unsigned int bflag = blkList[blk].getBlkNodeFlag();
+
+                for(unsigned int ele =blkList[blk].getLocalElementBegin(); ele < blkList[blk].getLocalElementEnd(); ele++)
+                {
+
+                    const unsigned int pw = blkList[blk].get1DPadWidth();
+                    const bool isBdyOct = this->isBoundaryOctant(ele);
+
+                    const double oct_dx = (1u<<(m_uiMaxDepth-pNodes[ele].getLevel()))/(double(m_uiElementOrder));
+                    Point oct_pt1 = Point(pNodes[ele].minX() , pNodes[ele].minY(), pNodes[ele].minZ());
+                    Point oct_pt2 = Point(pNodes[ele].minX() + oct_dx , pNodes[ele].minY() + oct_dx, pNodes[ele].minZ() + oct_dx);
+                    Point domain_pt1,domain_pt2,dx_domain;
+                    this->octCoordToDomainCoord(oct_pt1,domain_pt1);
+                    this->octCoordToDomainCoord(oct_pt2,domain_pt2);
+                    dx_domain=domain_pt2-domain_pt1;
+                    double hx[3] ={dx_domain.x(),dx_domain.y(),dx_domain.z()};
+                    const double tol_ele = wavelet_tol(domain_pt1.x(),domain_pt1.y(),domain_pt1.z(),hx);
+
+                    if(!includeBdy && isBdyOct)
+                    {
+                        // tol small enough to not refine but not to coarsen . 
+                        eleWMax[ele - eleOfst] = amr_coarse_fac*tol_ele + 1e-8; 
+                        continue;
+                    }
+                        
+
+                    for(unsigned int v=0; v < numVars; v++)
+                    {
+                        const unsigned int vid = varIds[v];
+                        this->getUnzipElementalNodalValues(unzippedVec[vid],blk, ele, blkIn.data() + v*(nx*ny*nz), true);
+                    }
+
+                    //eleWMax[ele - eleOfst]=wavelet::compute_element_wavelet(this,(const wavelet::WaveletEl*)&wrefEl,blkIn.data(),tol_ele,numVars,isBdyOct);
+                    // compute the wavelet
+                    {
+
+                        double wMax=0.0;
+                        
+                        const unsigned int nx = (2*eOrder+1);
+                        const unsigned int ny = (2*eOrder+1);
+                        const unsigned int nz = (2*eOrder+1); 
+                        assert(pw == (eOrder>>1u));
+
+                        const unsigned int sz_per_dof = nx*ny*nz;
+                        const unsigned int isz[] = {nx,ny,nz};
+                        wCout.resize(sz_per_dof);
+
+                        const unsigned int dof = numVars;
+                        for(unsigned int v=0; v < dof; v++)
+                        {
+                            wrefEl->compute_wavelets_3D((double*)(blkIn.data()+ v*sz_per_dof),isz,wCout,isBdyOct);
+                            const double l_max = (normL2(wCout.data(),wCout.size()))/sqrt(wCout.size());
+
+                            if(wMax < l_max)
+                                wMax = l_max;
+
+                            // for early bail out. 
+                            if(wMax > tol_ele)
+                                break;
+
+                        }
+
+                        eleWMax[ele - eleOfst] = wMax;
+
+                    }
+                    
+                    // if(isBdyOct)
+                    //std::cout<<"ele :  "<<ele<<" eleWMax: "<<eleWMax[ele-eleOfst]<<std::endl;
+                    
+                }
+
+            }
+
+            // delete the wavelet reference element. 
+            delete wrefEl;
+
+
+
+            // mark elements for refinement first. 
+            for(unsigned int ele = m_uiElementLocalBegin; ele < m_uiElementLocalEnd; ele++)
+            {
+                
+                const double oct_dx = (1u<<(m_uiMaxDepth-pNodes[ele].getLevel()))/(double(m_uiElementOrder));
+                Point oct_pt1 = Point(pNodes[ele].minX() , pNodes[ele].minY(), pNodes[ele].minZ());
+                Point oct_pt2 = Point(pNodes[ele].minX() + oct_dx , pNodes[ele].minY() + oct_dx, pNodes[ele].minZ() + oct_dx);
+                Point domain_pt1,domain_pt2,dx_domain;
+                this->octCoordToDomainCoord(oct_pt1,domain_pt1);
+                this->octCoordToDomainCoord(oct_pt2,domain_pt2);
+                dx_domain=domain_pt2-domain_pt1;
+                double hx[3] ={dx_domain.x(),dx_domain.y(),dx_domain.z()};
+                const double tol_ele = wavelet_tol(domain_pt1.x(),domain_pt1.y(),domain_pt1.z(),hx);
+
+                const double l_max = eleWMax[ele - eleOfst];
+
+                if(l_max > tol_ele )
+                {
+                    refine_flags[(ele-eleOfst)] = OCT_SPLIT;
+                    isMeshLocalChanged=true;
+
+                }else if( l_max < amr_coarse_fac *tol_ele)
+                {
+                    refine_flags[ele-eleOfst] = OCT_COARSE;
+                    isMeshLocalChanged=true;
+
+                }else
+                {
+                    refine_flags[ele-eleOfst] = OCT_NO_CHANGE;
+                } 
+
+            }
+            
+
+            if(isMeshLocalChanged)
+                isMeshLocalChanged = this->setMeshRefinementFlags(refine_flags);
+                
+            
+        }
+
+        
+        //par::Mpi_Allreduce(&isMeshLocalChanged,&isMeshGlobalChanged,1,MPI_LOR,this->getMPIGlobalCommunicator());
+        MPI_Allreduce(&isMeshLocalChanged,&isMeshGlobalChanged,1,MPI_CXX_BOOL,MPI_LOR,this->getMPIGlobalCommunicator());
+        return isMeshGlobalChanged;
+
+        // old remesh code hard coded oly for 4th order interp. for refine wavelets and 3rd order for coarsen wavelets. (not encouraged to use :) )
+        #if 0
         bool isOctChange=false;
         if(m_uiIsActive)
         {
@@ -2432,7 +2445,7 @@ namespace ot
             
             isOctChange=false;
             for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
-                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT) // trigger remesh only when some refinement occurs (laid back remesh :)  ) //if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)!=OCT_NO_CHANGE)
+                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)!=OCT_NO_CHANGE)//if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT) // trigger remesh only when some refinement occurs (laid back remesh :)  ) //if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)!=OCT_NO_CHANGE)
                 {
                     isOctChange=true;
                     break;
@@ -2444,8 +2457,7 @@ namespace ot
         MPI_Allreduce(&isOctChange,&isOctChanged_g,1,MPI_CXX_BOOL,MPI_LOR,m_uiCommGlobal);
         //if(!m_uiGlobalRank) std::cout<<"is oct changed: "<<isOctChanged_g<<std::endl;
         return isOctChanged_g;
-
-
+        #endif
 
 
 
@@ -3121,416 +3133,27 @@ namespace ot
     }
 
     template<typename T>
-    void Mesh::interGridTransfer(std::vector<T> & vec,const ot::Mesh* pMesh)
+    void Mesh::interGridTransfer(std::vector<T> & vec,const ot::Mesh* pMesh, INTERGRID_TRANSFER_MODE mode)
     {
 
-
-        MPI_Comm comm=m_uiCommGlobal;
-        int rank,npes;
-
-        MPI_Comm_rank(comm,&rank);
-        MPI_Comm_size(comm,&npes);
-
-        int * sendNodeCount= new int[npes];
-        int * recvNodeCount= new int[npes];
-        int * sendNodeOffset = new int [npes];
-        int * recvNodeOffset = new int [npes];
-        std::vector<T> wVec; // dg of m2prime;
-
-
-        for(unsigned int p=0;p<npes;p++)
-            sendNodeCount[p]=0;
-
-        if(m_uiIsActive)
-        {
-            MPI_Comm comm1=m_uiCommActive;
-            const int rank1=m_uiActiveRank;
-            const int npes1=m_uiActiveNpes;
-
-            //1. compute the number of m2 octants (based of m1 splitters)
-            unsigned int m2primeCount=0;
-            for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
-            {
-                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
-                    m2primeCount+=NUM_CHILDREN;
-                else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
-                {
-                    assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
-                    m2primeCount+=1;
-                    ele+=(NUM_CHILDREN-1);
-                }else
-                {
-                    assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
-                    m2primeCount+=1;
-                }
-
-            }
-
-            const unsigned int numM2PrimeElems=m2primeCount;
-
-            std::vector<T> nodalVals;
-            nodalVals.resize(m_uiNpE);
-
-            std::vector<T> interp_out;
-            interp_out.resize(m_uiNpE);
-
-            wVec.resize(numM2PrimeElems*m_uiNpE);
-
-            std::vector<ot::TreeNode> m2prime; // m2 partiioned with m1 splitters.
-
-            m2primeCount=0;
-            unsigned int cnum;
-            bool isHanging;
-            for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
-            {
-                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
-                {
-                    m_uiAllElements[ele].addChildren(m2prime);
-
-
-                    this->getElementNodalValues(&(*(vec.begin())),&(*(nodalVals.begin())),ele);
-                    for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                    {
-                        cnum=m2prime[m2primeCount+child].getMortonIndex();
-                        this->parent2ChildInterpolation(&(*(nodalVals.begin())),&(*(wVec.begin()+(m2primeCount+child)*m_uiNpE)),cnum,3);
-                    }
-
-                    m2primeCount+=NUM_CHILDREN;
-
-                }
-                else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
-                {
-                    assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
-                    m2prime.push_back(m_uiAllElements[ele].getParent());
-
-                    if(m_uiElementOrder==1)
-                    {
-
-                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                        {
-                            for(unsigned int k=0;k<m_uiElementOrder+1;k++)
-                                for(unsigned int j=0;j<m_uiElementOrder+1;j++)
-                                    for(unsigned int i=0;i<m_uiElementOrder+1;i++)
-                                    {
-
-                                        isHanging=this->isNodeHanging((ele+child),i,j,k);
-                                        if(isHanging)
-                                        {
-                                            wVec[m2primeCount*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]=vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-
-                                        }else{
-                                            
-                                            cnum=m_uiAllElements[(ele+child)].getMortonIndex();
-                                            const unsigned int iix = m_uiElementOrder * (int) (cnum & 1u)  +  i;
-                                            const unsigned int jjy = m_uiElementOrder * (int) ((cnum & 2u)>>1u)  +  j;
-                                            const unsigned int kkz = m_uiElementOrder * (int) ((cnum & 4u)>>2u)  +  k;
-                                            //std::cout<<" iix: "<<iix<<" jjy: "<<jjy<<" kkz: "<<kkz<<std::endl;
-
-                                            if( (iix %2 ==0) && (jjy%2 ==0) && (kkz%2==0))
-                                            {
-                                                wVec[ m2primeCount*m_uiNpE +  (kkz>>1u) * (m_uiElementOrder+1)*(m_uiElementOrder+1) + (jjy>>1u) * (m_uiElementOrder+1)+(iix>>1u)] = vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-                                                
-                                            }
-
-                                        }
-
-                                    }
-
-                        }
-
-                    }else
-                    {
-                        
-                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                        {
-                            for(unsigned int k=0;k<m_uiElementOrder+1;k++)
-                                for(unsigned int j=0;j<m_uiElementOrder+1;j++)
-                                    for(unsigned int i=0;i<m_uiElementOrder+1;i++)
-                                    {
-
-                                        isHanging=this->isNodeHanging((ele+child),i,j,k);
-                                        if(isHanging)
-                                        {
-                                            wVec[m2primeCount*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]=vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-
-                                        }else{
-                                            
-                                            cnum=m_uiAllElements[(ele+child)].getMortonIndex();
-                                            const unsigned int iix = m_uiElementOrder * (int) (cnum & 1u)  +  i;
-                                            const unsigned int jjy = m_uiElementOrder * (int) ((cnum & 2u)>>1u)  +  j;
-                                            const unsigned int kkz = m_uiElementOrder * (int) ((cnum & 4u)>>2u)  +  k;
-                                            //std::cout<<" iix: "<<iix<<" jjy: "<<jjy<<" kkz: "<<kkz<<std::endl;
-
-                                            if( (iix %2 ==0) && (jjy%2 ==0) && (kkz%2==0))
-                                            {
-                                                wVec[ m2primeCount*m_uiNpE +  (kkz>>1u) * (m_uiElementOrder+1)*(m_uiElementOrder+1) + (jjy>>1u) * (m_uiElementOrder+1)+(iix>>1u)] = vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-                                                
-                                            }
-
-                                        }
-
-                                    }
-
-                        }
-
-                    }
-
-
-                    ele+=(NUM_CHILDREN-1);
-                    m2primeCount+=1;
-
-                }else
-                {
-                    assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
-                    m2prime.push_back(m_uiAllElements[ele]);
-
-                    this->getElementNodalValues(&(*(vec.begin())),&(*(wVec.begin()+(m2primeCount*m_uiNpE))),ele);
-                    m2primeCount+=1;
-
-
-                }
-
-            }
-
-
-            assert(seq::test::isUniqueAndSorted(m2prime));
-
-            if(npes1==1 && pMesh->isActive() && pMesh->getMPICommSize()==1)
-            {
-
-                // sequential case.
-
-                if((wVec.size()/m_uiNpE)!=pMesh->getNumLocalMeshElements())
-                    std::cout<<"rank1: "<<rank1<<" seq::[Inter-grid Transfer error ]: Recvn DG elements: "<<(wVec.size()/m_uiNpE)<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
-
-                assert((wVec.size()/m_uiNpE)==pMesh->getNumLocalMeshElements());
-
-                std::vector<T>tVec;
-                pMesh->createVector<T>(tVec,0);
-                const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
-
-                const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
-                const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
-
-                const unsigned int m2LocalNodeBegin=pMesh->getNodeLocalBegin();
-                const unsigned int m2LocalNodeEnd=pMesh->getNodeLocalEnd();
-
-                unsigned int lookUp;
-                const unsigned int eleOrder=pMesh->getElementOrder();
-
-                for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
-                {
-                    for(unsigned int k=0;k<eleOrder+1;k++)
-                        for(unsigned int j=0;j<eleOrder+1;j++)
-                            for(unsigned int i=0;i<eleOrder+1;i++)
-                            {
-                                if(!(pMesh->isNodeHanging(ele,i,j,k)))
-                                {
-                                    lookUp=e2n[ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                                    if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
-                                        tVec[lookUp]=wVec[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                                }
-
-
-
-                            }
-
-                }
-
-
-                std::swap(vec,tVec);
-                tVec.clear();
-                return ;
-            }
-
-            int npes2=0;
-            int rank2=0;
-            std::vector<ot::TreeNode> m2_splitters;
-            //note : assumes that global rank 0 is going to be active always. 
-            if(pMesh->isActive())
-            {
-                npes2=pMesh->getMPICommSize();
-                rank2=pMesh->getMPIRank();
-                const std::vector<ot::TreeNode> m2_splitters_root=pMesh->getSplitterElements();
-                m2_splitters.resize(2*npes2);
-                for(unsigned int w=0;w<m2_splitters_root.size();w++)
-                    m2_splitters[w]=m2_splitters_root[w];
-            } 
-            
-            par::Mpi_Bcast(&npes2,1,0,comm1);
-            par::Mpi_Bcast(&rank2,1,0,comm1);
-            m2_splitters.resize(2*npes2);
-            par::Mpi_Bcast(&(*(m2_splitters.begin())),2*npes2,0,comm1);
-            assert(seq::test::isUniqueAndSorted(m2_splitters));
-
-
-
-                std::vector<ot::SearchKey> m2primeSK;
-                m2primeSK.resize(m2prime.size());
-
-                for(unsigned int e=0;e<m2prime.size();e++)
-                {
-                    m2primeSK[e]=ot::SearchKey(m2prime[e]);
-                    m2primeSK[e].addOwner(rank1); // note that this is the rank in comm1. 
-                }
-
-
-                std::vector<ot::Key> m2_splitterKeys;
-                m2_splitterKeys.resize(2*npes2);
-
-                for(unsigned int p=0;p<npes2;p++)
-                {
-                    m2_splitterKeys[2*p]=ot::Key(m2_splitters[2*p]);
-                    m2_splitterKeys[2*p].addOwner(p);
-
-                    m2_splitterKeys[2*p+1]=ot::Key(m2_splitters[2*p+1]);
-                    m2_splitterKeys[2*p+1].addOwner(p);
-
-                    m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p]));
-                    m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p+1]));
-                }
-
-                ot::SearchKey rootSK(m_uiDim,m_uiMaxDepth);
-                std::vector<ot::SearchKey> tmpNodes;
-
-                SFC::seqSort::SFC_treeSort(&(*(m2primeSK.begin())),m2primeSK.size(),tmpNodes,tmpNodes,tmpNodes,m_uiMaxDepth,m_uiMaxDepth,rootSK,ROOT_ROTATION,1,TS_SORT_ONLY);
-
-                unsigned int skip=0;
-                ot::SearchKey tmpSK;
-                std::vector<ot::SearchKey> tmpSKVec;
-
-                for(unsigned int e=0;e<(m2primeSK.size());e++)
-                {
-                    tmpSK=m2primeSK[e];
-                    skip=1;
-                    while(((e+skip)<m2primeSK.size()) && (m2primeSK[e]==m2primeSK[e+skip]))
-                    {
-                        if(m2primeSK[e+skip].getOwner()>=0){
-                            tmpSK.addOwner(m2primeSK[e+skip].getOwner());
-                        }
-                        skip++;
-                    }
-
-                    tmpSKVec.push_back(tmpSK);
-                    e+=(skip-1);
-
-                }
-
-                std::swap(m2primeSK,tmpSKVec);
-                tmpSKVec.clear();
-
-                assert(seq::test::isUniqueAndSorted(m2primeSK));
-                assert(seq::test::isUniqueAndSorted(m2_splitterKeys));
-
-                ot::Key rootKey(0,0,0,0,m_uiDim,m_uiMaxDepth);
-                SFC::seqSearch::SFC_treeSearch(&(*(m2_splitterKeys.begin())),&(*(m2primeSK.begin())),0,m2_splitterKeys.size(),0,m2primeSK.size(),m_uiMaxDepth,m_uiMaxDepth,ROOT_ROTATION);
-
-
-
-                unsigned int sBegin,sEnd,selectedRank;
-                for(unsigned int p=0;p<npes2;p++)
-                {
-                    assert(m2_splitterKeys[2*p].getFlag() & OCT_FOUND);
-                    assert(m2_splitterKeys[2*p+1].getFlag() & OCT_FOUND);
-
-                    sBegin=m2_splitterKeys[2*p].getSearchResult();
-                    sEnd=m2_splitterKeys[2*p+1].getSearchResult();
-                    assert(sBegin<sEnd);
-                    selectedRank=rankSelectRule(m_uiGlobalNpes,m_uiGlobalRank,npes2,p);
-                    sendNodeCount[selectedRank]=sEnd-sBegin-1;
-
-                    if(m2primeSK[sBegin].getOwner()>=0) sendNodeCount[selectedRank]++;
-                    if(m2primeSK[sEnd].getOwner()>=0) sendNodeCount[selectedRank]++;
-
-                    sendNodeCount[selectedRank]*=m_uiNpE;
-
-                }
-
-                // we don't need below for intergrid transfer, but these can be help full for debugging.
-                m2prime.clear();
-                m2primeSK.clear();
-
-
-
-
-        }
-
-
-        par::Mpi_Alltoall(sendNodeCount,recvNodeCount,1,comm);
-
-        sendNodeOffset[0]=0;
-        recvNodeOffset[0]=0;
-
-        omp_par::scan(sendNodeCount,sendNodeOffset,npes);
-        omp_par::scan(recvNodeCount,recvNodeOffset,npes);
-
-
-        std::vector<T> wVec_m2;
-        wVec_m2.resize(recvNodeOffset[npes-1]+recvNodeCount[npes-1]);
-
-        if((wVec_m2.size()/m_uiNpE)!=pMesh->getNumLocalMeshElements())
-            std::cout<<"rank: "<<rank<<" [Inter-grid Transfer error ]: Recvn DG elements: "<<(wVec_m2.size()/m_uiNpE)<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
-
-        par::Mpi_Alltoallv_sparse(&(*(wVec.begin())),sendNodeCount,sendNodeOffset,&(*(wVec_m2.begin())),recvNodeCount,recvNodeOffset,comm);
-
-        delete [] sendNodeCount;
-        delete [] recvNodeCount;
-        delete [] sendNodeOffset;
-        delete [] recvNodeOffset;
-
-        std::vector<T> tVec;
-        if(pMesh->isActive())
-        {
-            pMesh->createVector<T>(tVec,0);
-            const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
-
-            const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
-            const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
-
-            const unsigned int m2LocalNodeBegin=pMesh->getNodeLocalBegin();
-            const unsigned int m2LocalNodeEnd=pMesh->getNodeLocalEnd();
-
-            unsigned int lookUp;
-            const unsigned int eleOrder=pMesh->getElementOrder();
-
-            for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
-            {
-                for(unsigned int k=0;k<eleOrder+1;k++)
-                    for(unsigned int j=0;j<eleOrder+1;j++)
-                        for(unsigned int i=0;i<eleOrder+1;i++)
-                        {
-                            if(!(pMesh->isNodeHanging(ele,i,j,k)))
-                            {
-                                lookUp=e2n[ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                                if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
-                                    tVec[lookUp]=wVec_m2[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                            }
-
-
-
-                        }
-
-            }
-
-
-            std::swap(vec,tVec);
-
-        }
-
-        tVec.clear();
-        return ;
-
-
-
+        std::vector<T> tvec;
+        pMesh->createVector<T>(tvec,0);
+
+        this->interGridTransfer(vec.data(),tvec.data(),pMesh,mode,1);
+
+        std::swap(vec,tvec);
+        tvec.clear();
+        return;
+       
     }
 
 
     template<typename T>
-    void Mesh::interGridTransfer(T*& vec,const ot::Mesh* pMesh)
+    void Mesh::interGridTransfer(T*& vec,const ot::Mesh* pMesh, INTERGRID_TRANSFER_MODE mode, unsigned int dof)
     {
 
-        T* tVec = pMesh->createVector<T>(0);
-        this->interGridTransfer(vec,tVec,pMesh,true);
+        T* tVec = pMesh->createCGVector<T>(0,dof);
+        this->interGridTransfer(vec,tVec,pMesh,mode,dof);
 
         std::swap(vec,tVec);
         delete [] tVec;
@@ -3538,7 +3161,7 @@ namespace ot
     }
 
     template<typename T>
-    void Mesh::interGridTransfer(T* vec, T* vecOut, const ot::Mesh* pMesh ,bool isAlloc)
+    void Mesh::interGridTransfer(T* vecIn, T* vecOut, const ot::Mesh* pMesh , INTERGRID_TRANSFER_MODE mode,unsigned int dof)
     {
 
         MPI_Comm comm=m_uiCommGlobal;
@@ -3547,548 +3170,78 @@ namespace ot
         MPI_Comm_rank(comm,&rank);
         MPI_Comm_size(comm,&npes);
 
-        int * sendNodeCount= new int[npes];
-        int * recvNodeCount= new int[npes];
-        int * sendNodeOffset = new int [npes];
-        int * recvNodeOffset = new int [npes];
-        std::vector<T> wVec; // dg of m2prime;
+        std::vector<unsigned int> sendC;
+        std::vector<unsigned int> recvC;
 
+        std::vector<unsigned int> sendOfst;
+        std::vector<unsigned int> recvOfst;
 
-        for(unsigned int p=0;p<npes;p++)
-            sendNodeCount[p]=0;
+        sendC.resize(npes);
+        recvC.resize(npes);
+        sendOfst.resize(npes);
+        recvOfst.resize(npes);
 
-        T* out =NULL;
+        
+        
+        this->interGridTransferSendRecvCompute(pMesh);
+        const unsigned int cg_sz_old = m_uiNumActualNodes;
+        const unsigned int cg_sz_new = pMesh->getDegOfFreedom();
+        const ot::TreeNode* m2prime = m_uiM2Prime.data();
 
-        (isAlloc) ? out = vecOut : out=NULL;
-
-        if(m_uiIsActive)
+        // scale the elemental counts by m_uiNpE;
+        for(unsigned int p=0; p < npes; p++)
         {
-            MPI_Comm comm1=m_uiCommActive;
-            const int rank1=m_uiActiveRank;
-            const int npes1=m_uiActiveNpes;
-
-            //1. compute the number of m2 octants (based of m1 splitters)
-            unsigned int m2primeCount=0;
-            for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
-            {
-                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
-                    m2primeCount+=NUM_CHILDREN;
-                else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
-                {
-                    assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
-                    m2primeCount+=1;
-                    ele+=(NUM_CHILDREN-1);
-                }else
-                {
-                    assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
-                    m2primeCount+=1;
-                }
-
-            }
-
-            const unsigned int numM2PrimeElems=m2primeCount;
-
-            std::vector<T> nodalVals;
-            nodalVals.resize(m_uiNpE);
-
-            std::vector<T> interp_out;
-            interp_out.resize(m_uiNpE);
-
-            wVec.resize(numM2PrimeElems*m_uiNpE);
-
-            std::vector<ot::TreeNode> m2prime; // m2 partiioned with m1 splitters.
-
-            m2primeCount=0;
-            unsigned int cnum;
-            bool isHanging;
-            for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
-            {
-                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
-                {
-                    m_uiAllElements[ele].addChildren(m2prime);
-
-
-                    this->getElementNodalValues(vec,&(*(nodalVals.begin())),ele);
-                    for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                    {
-                        cnum=m2prime[m2primeCount+child].getMortonIndex();
-                        this->parent2ChildInterpolation(&(*(nodalVals.begin())),&(*(wVec.begin()+(m2primeCount+child)*m_uiNpE)),cnum,3);
-                    }
-
-                    m2primeCount+=NUM_CHILDREN;
-
-                }
-                else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
-                {
-                    assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
-                    m2prime.push_back(m_uiAllElements[ele].getParent());
-
-
-                    if(m_uiElementOrder==1)
-                    {
-
-                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                        {
-                            for(unsigned int k=0;k<m_uiElementOrder+1;k++)
-                                for(unsigned int j=0;j<m_uiElementOrder+1;j++)
-                                    for(unsigned int i=0;i<m_uiElementOrder+1;i++)
-                                    {
-
-                                        isHanging=this->isNodeHanging((ele+child),i,j,k);
-                                        if(isHanging)
-                                        {
-                                            wVec[m2primeCount*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]=vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-
-                                        }else{
-                                            
-                                            cnum=m_uiAllElements[(ele+child)].getMortonIndex();
-                                            const unsigned int iix = m_uiElementOrder * (int) (cnum & 1u)  +  i;
-                                            const unsigned int jjy = m_uiElementOrder * (int) ((cnum & 2u)>>1u)  +  j;
-                                            const unsigned int kkz = m_uiElementOrder * (int) ((cnum & 4u)>>2u)  +  k;
-                                            //std::cout<<" iix: "<<iix<<" jjy: "<<jjy<<" kkz: "<<kkz<<std::endl;
-
-                                            if( (iix %2 ==0) && (jjy%2 ==0) && (kkz%2==0))
-                                            {
-                                                wVec[ m2primeCount*m_uiNpE +  (kkz>>1u) * (m_uiElementOrder+1)*(m_uiElementOrder+1) + (jjy>>1u) * (m_uiElementOrder+1)+(iix>>1u)] = vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-                                                
-                                            }
-
-                                        }
-
-                                    }
-
-                        }
-
-                    }else
-                    {
-                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                        {
-                            for(unsigned int k=0;k<m_uiElementOrder+1;k++)
-                                for(unsigned int j=0;j<m_uiElementOrder+1;j++)
-                                    for(unsigned int i=0;i<m_uiElementOrder+1;i++)
-                                    {
-
-                                        isHanging=this->isNodeHanging((ele+child),i,j,k);
-                                        if(isHanging)
-                                        {
-                                            wVec[m2primeCount*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]=vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-
-                                        }else{
-                                            
-                                            cnum=m_uiAllElements[(ele+child)].getMortonIndex();
-                                            const unsigned int iix = m_uiElementOrder * (int) (cnum & 1u)  +  i;
-                                            const unsigned int jjy = m_uiElementOrder * (int) ((cnum & 2u)>>1u)  +  j;
-                                            const unsigned int kkz = m_uiElementOrder * (int) ((cnum & 4u)>>2u)  +  k;
-                                            //std::cout<<" iix: "<<iix<<" jjy: "<<jjy<<" kkz: "<<kkz<<std::endl;
-
-                                            if( (iix %2 ==0) && (jjy%2 ==0) && (kkz%2==0))
-                                            {
-                                                wVec[ m2primeCount*m_uiNpE +  (kkz>>1u) * (m_uiElementOrder+1)*(m_uiElementOrder+1) + (jjy>>1u) * (m_uiElementOrder+1)+(iix>>1u)] = vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
-                                                
-                                            }
-
-                                        }
-
-                                    }
-
-                        }
-
-                    }
-
-                    
-
-
-                    ele+=(NUM_CHILDREN-1);
-                    m2primeCount+=1;
-
-                }else
-                {
-                    assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
-                    m2prime.push_back(m_uiAllElements[ele]);
-
-                    this->getElementNodalValues(vec,&(*(wVec.begin()+(m2primeCount*m_uiNpE))),ele);
-                    m2primeCount+=1;
-
-
-                }
-
-            }
-
-
-            assert(seq::test::isUniqueAndSorted(m2prime));
-
-            if(npes1==1 && pMesh->isActive() && pMesh->getMPICommSize()==1)
-            {
-
-                // sequential case.
-
-                if((wVec.size()/m_uiNpE)!=pMesh->getNumLocalMeshElements())
-                    std::cout<<"rank1: "<<rank1<<" seq::[Inter-grid Transfer error ]: Recvn DG elements: "<<(wVec.size()/m_uiNpE)<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
-
-                assert((wVec.size()/m_uiNpE)==pMesh->getNumLocalMeshElements());
-
-                if(!isAlloc)
-                    out=pMesh->createVector<T>(0);
-                
-                const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
-
-                const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
-                const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
-
-                const unsigned int m2LocalNodeBegin=pMesh->getNodeLocalBegin();
-                const unsigned int m2LocalNodeEnd=pMesh->getNodeLocalEnd();
-
-                unsigned int lookUp;
-                const unsigned int eleOrder=pMesh->getElementOrder();
-
-                for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
-                {
-                    for(unsigned int k=0;k<eleOrder+1;k++)
-                        for(unsigned int j=0;j<eleOrder+1;j++)
-                            for(unsigned int i=0;i<eleOrder+1;i++)
-                            {
-                                if(!(pMesh->isNodeHanging(ele,i,j,k)))
-                                {
-                                    lookUp=e2n[ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                                    if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
-                                        out[lookUp]=wVec[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                                }
-
-
-
-                            }
-
-                }
-
-                return ;
-            }
-
-
-            int npes2=0;
-            int rank2=0;
-            std::vector<ot::TreeNode> m2_splitters;
-            //note : assumes that global rank 0 is going to be active always. 
-            if(pMesh->isActive())
-            {
-                npes2=pMesh->getMPICommSize();
-                rank2=pMesh->getMPIRank();
-                const std::vector<ot::TreeNode> m2_splitters_root=pMesh->getSplitterElements();
-                m2_splitters.resize(2*npes2);
-                for(unsigned int w=0;w<m2_splitters_root.size();w++)
-                    m2_splitters[w]=m2_splitters_root[w];
-            } 
-            
-            par::Mpi_Bcast(&npes2,1,0,comm1);
-            par::Mpi_Bcast(&rank2,1,0,comm1);
-            m2_splitters.resize(2*npes2);
-            par::Mpi_Bcast(&(*(m2_splitters.begin())),2*npes2,0,comm1);
-            assert(seq::test::isUniqueAndSorted(m2_splitters));
-           
-           
-               std::vector<ot::SearchKey> m2primeSK;
-               m2primeSK.resize(m2prime.size());
-
-               for(unsigned int e=0;e<m2prime.size();e++)
-               {
-                   m2primeSK[e]=ot::SearchKey(m2prime[e]);
-                   m2primeSK[e].addOwner(rank1); // note that this is the rank in comm1. 
-               }
-
-
-               std::vector<ot::Key> m2_splitterKeys;
-               m2_splitterKeys.resize(2*npes2);
-
-               for(unsigned int p=0;p<npes2;p++)
-               {
-                   m2_splitterKeys[2*p]=ot::Key(m2_splitters[2*p]);
-                   m2_splitterKeys[2*p].addOwner(p);
-
-                   m2_splitterKeys[2*p+1]=ot::Key(m2_splitters[2*p+1]);
-                   m2_splitterKeys[2*p+1].addOwner(p);
-
-                   m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p]));
-                   m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p+1]));
-               }
-
-               ot::SearchKey rootSK(m_uiDim,m_uiMaxDepth);
-               std::vector<ot::SearchKey> tmpNodes;
-
-               SFC::seqSort::SFC_treeSort(&(*(m2primeSK.begin())),m2primeSK.size(),tmpNodes,tmpNodes,tmpNodes,m_uiMaxDepth,m_uiMaxDepth,rootSK,ROOT_ROTATION,1,TS_SORT_ONLY);
-
-               unsigned int skip=0;
-               ot::SearchKey tmpSK;
-               std::vector<ot::SearchKey> tmpSKVec;
-
-               for(unsigned int e=0;e<(m2primeSK.size());e++)
-               {
-                   tmpSK=m2primeSK[e];
-                   skip=1;
-                   while(((e+skip)<m2primeSK.size()) && (m2primeSK[e]==m2primeSK[e+skip]))
-                   {
-                       if(m2primeSK[e+skip].getOwner()>=0){
-                           tmpSK.addOwner(m2primeSK[e+skip].getOwner());
-                       }
-                       skip++;
-                   }
-
-                   tmpSKVec.push_back(tmpSK);
-                   e+=(skip-1);
-
-               }
-
-               std::swap(m2primeSK,tmpSKVec);
-               tmpSKVec.clear();
-
-               assert(seq::test::isUniqueAndSorted(m2primeSK));
-               assert(seq::test::isUniqueAndSorted(m2_splitterKeys));
-
-               ot::Key rootKey(0,0,0,0,m_uiDim,m_uiMaxDepth);
-               SFC::seqSearch::SFC_treeSearch(&(*(m2_splitterKeys.begin())),&(*(m2primeSK.begin())),0,m2_splitterKeys.size(),0,m2primeSK.size(),m_uiMaxDepth,m_uiMaxDepth,ROOT_ROTATION);
-
-
-
-               unsigned int sBegin,sEnd,selectedRank;
-               for(unsigned int p=0;p<npes2;p++)
-               {
-                   assert(m2_splitterKeys[2*p].getFlag() & OCT_FOUND);
-                   assert(m2_splitterKeys[2*p+1].getFlag() & OCT_FOUND);
-
-                   sBegin=m2_splitterKeys[2*p].getSearchResult();
-                   sEnd=m2_splitterKeys[2*p+1].getSearchResult();
-                   assert(sBegin<sEnd);
-                   selectedRank=rankSelectRule(m_uiGlobalNpes,m_uiGlobalRank,npes2,p);
-                   sendNodeCount[selectedRank]=sEnd-sBegin-1;
-
-                   if(m2primeSK[sBegin].getOwner()>=0) sendNodeCount[selectedRank]++;
-                   if(m2primeSK[sEnd].getOwner()>=0) sendNodeCount[selectedRank]++;
-
-                   sendNodeCount[selectedRank]*=m_uiNpE;
-
-               }
-
-               // we don't need below for intergrid transfer, but these can be help full for debugging.
-               m2prime.clear();
-               m2primeSK.clear();
-
-
+            sendC[p] = m_uiIGTSendC[p] * m_uiNpE;
+            recvC[p] = m_uiIGTRecvC[p] * m_uiNpE;
+
+            sendOfst[p] = m_uiIGTSendOfst[p] *  m_uiNpE;
+            recvOfst[p] = m_uiIGTRecvOfst[p] *  m_uiNpE;
         }
 
 
-        par::Mpi_Alltoall(sendNodeCount,recvNodeCount,1,comm);
-
-        sendNodeOffset[0]=0;
-        recvNodeOffset[0]=0;
-
-        omp_par::scan(sendNodeCount,sendNodeOffset,npes);
-        omp_par::scan(recvNodeCount,recvNodeOffset,npes);
-
-
+        std::vector<T> wVec; // dg of m2prime;
+        std::vector<T> nodalVals;
+        nodalVals.resize(m_uiNpE);
+    
+        unsigned int cnum;
+        bool isHanging;
+    
+        std::vector<double> vallchildren;
         std::vector<T> wVec_m2;
-        wVec_m2.resize(recvNodeOffset[npes-1]+recvNodeCount[npes-1]);
+    
+        vallchildren.resize((2*m_uiElementOrder + 1)*(2*m_uiElementOrder + 1)*(2*m_uiElementOrder + 1));
+        wVec_m2.resize(recvOfst[npes-1]+recvC[npes-1]);
 
-        if((wVec_m2.size()/m_uiNpE)!=pMesh->getNumLocalMeshElements())
-            std::cout<<"rank: "<<rank<<" [Inter-grid Transfer error ]: Recvn DG elements: "<<(wVec_m2.size()/m_uiNpE)<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
-
-        par::Mpi_Alltoallv_sparse(&(*(wVec.begin())),sendNodeCount,sendNodeOffset,&(*(wVec_m2.begin())),recvNodeCount,recvNodeOffset,comm);
-
-        delete [] sendNodeCount;
-        delete [] recvNodeCount;
-        delete [] sendNodeOffset;
-        delete [] recvNodeOffset;
-
-        if(pMesh->isActive())
+        for(unsigned int var=0; var < dof; var++)
         {
+            T* vec = vecIn  + (var * cg_sz_old);
+            T* out = vecOut + (var * cg_sz_new);
 
-            if(!isAlloc)    
-                out=pMesh->createVector<T>(0);
-            
-            const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
+            if(m_uiIsActive)
+            {   
 
-            const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
-            const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
+                const unsigned int npes1 = this->getMPICommSize();
+                const unsigned int rank1 = this->getMPIRank(); 
 
-            const unsigned int m2LocalNodeBegin=pMesh->getNodeLocalBegin();
-            const unsigned int m2LocalNodeEnd=pMesh->getNodeLocalEnd();
-
-            unsigned int lookUp;
-            const unsigned int eleOrder=pMesh->getElementOrder();
-
-            for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
-            {
-                for(unsigned int k=0;k<eleOrder+1;k++)
-                    for(unsigned int j=0;j<eleOrder+1;j++)
-                        for(unsigned int i=0;i<eleOrder+1;i++)
-                        {
-                            if(!(pMesh->isNodeHanging(ele,i,j,k)))
-                            {
-                                lookUp=e2n[ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                                if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
-                                    out[lookUp]=wVec_m2[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
-                            }
-                        }
-
-            }
-           
-
-        }
-
-        if(!isAlloc)
-            vecOut = out;
-        
-        return ;
-
-    }
-
-    template<typename T>
-    void Mesh::interGridTransferUnzip(T*& unzip, T*& vec, const ot::Mesh *pMesh)
-    {
-
-        MPI_Comm comm=m_uiCommGlobal;
-        int rank,npes;
-
-        MPI_Comm_rank(comm,&rank);
-        MPI_Comm_size(comm,&npes);
-
-        int * sendNodeCount= new int[npes];
-        int * recvNodeCount= new int[npes];
-        int * sendNodeOffset = new int [npes];
-        int * recvNodeOffset = new int [npes];
-        std::vector<T> wVec; // dg of m2prime;
-
-        for(unsigned int p=0;p<npes;p++)
-            sendNodeCount[p]=0;
-
-        
-        if(m_uiIsActive)
-        {
-
-            MPI_Comm comm1=m_uiCommActive;
-            const int rank1=m_uiActiveRank;
-            const int npes1=m_uiActiveNpes;
-
-            //1. compute the number of m2 octants (based of m1 splitters)
-            unsigned int m2primeCount=0;
-            for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
-            {
-                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
-                    m2primeCount+=NUM_CHILDREN;
-                else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
-                {
-                    assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
-                    m2primeCount+=1;
-                    ele+=(NUM_CHILDREN-1);
-                }else
-                {
-                    assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
-                    m2primeCount+=1;
-                }
-
-            }
-
-            const unsigned int numM2PrimeElems=m2primeCount;
-
-            std::vector<T> nodalVals;
-            nodalVals.resize(m_uiNpE);
-            
-            std::vector<T> interp_out;
-            interp_out.resize(m_uiNpE);
-            
-            const unsigned int ch_1d = 2*(m_uiElementOrder) + 1;
-            std::vector<T> interp_out_all;
-            interp_out_all.resize(ch_1d*ch_1d*ch_1d);
-
-            std::vector<T> nodalVals_unzip;
-            
-
-            wVec.resize(numM2PrimeElems*m_uiNpE);
-            //assert(par::test::isUniqueAndSorted(m_uiLocalBlockList,comm1));
-
-            std::vector<ot::TreeNode> m2prime; // m2 partiioned with m1 splitters.
-
-            m2primeCount=0;
-            unsigned int cnum;
-            bool isHanging;
-            
-            for(unsigned int blk = 0 ; blk < m_uiLocalBlockList.size(); blk++ )
-            {
-
-                const ot::TreeNode blkNode=m_uiLocalBlockList[blk].getBlockNode();
-                assert(blkNode.maxX()<=m_uiMeshDomain_max && blkNode.minX()>=m_uiMeshDomain_min);
-                const unsigned int regLev=m_uiLocalBlockList[blk].getRegularGridLev();
-                
-                const unsigned int eleIndexMin = 0;
-                const unsigned int eleIndexMax = (1u<<(regLev-blkNode.getLevel()))-1;
-                assert(eleIndexMax>=eleIndexMin);
-
-                const unsigned int lx=m_uiLocalBlockList[blk].getAllocationSzX();
-                const unsigned int ly=m_uiLocalBlockList[blk].getAllocationSzY();
-                const unsigned int lz=m_uiLocalBlockList[blk].getAllocationSzZ();
-                const unsigned int offset=m_uiLocalBlockList[blk].getOffset();
-                const unsigned int paddWidth=m_uiLocalBlockList[blk].get1DPadWidth();
-                const unsigned int bflag = m_uiLocalBlockList[blk].getBlkNodeFlag();
-
-                const unsigned int u_sz[3] = { (m_uiElementOrder+1) + 2*paddWidth , (m_uiElementOrder+1) + 2*paddWidth, (m_uiElementOrder+1) + 2*paddWidth};
-                nodalVals_unzip.resize(u_sz[0]*u_sz[1]*u_sz[2]);
-                
+                const unsigned int numM2PrimeElems = m_uiM2Prime.size();
+                wVec.resize(numM2PrimeElems*m_uiNpE);
                 
 
-                //std::cout<<"blk: "<<blk<<" : "<<blkNode<<"eleB: "<<m_uiLocalBlockList[blk].getLocalElementBegin()<<" eleE: "<<m_uiLocalBlockList[blk].getLocalElementEnd()<<std::endl;
-
-                for(unsigned int ele = m_uiLocalBlockList[blk].getLocalElementBegin(); ele < m_uiLocalBlockList[blk].getLocalElementEnd(); ele++ )
+                //std::cout<<"rank1: "<<rank1<<" m2prime: "<<m2prime.size()<<std::endl;
+                
+                unsigned int m2primeCount=0;
+                for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
                 {
-                    assert(m_uiAllElements[ele].getLevel()==regLev); // this is enforced by block construction
 
-                    const unsigned int ei=(m_uiAllElements[ele].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
-                    const unsigned int ej=(m_uiAllElements[ele].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
-                    const unsigned int ek=(m_uiAllElements[ele].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
-
-                    bool fdstyle =true;
-                    
-                    if(isBoundaryOctant(ele))
-                     fdstyle=false;
+                    //std::cout<<" m2primeCount: "<<m2primeCount<<" wvec offset : "<<m2primeCount*m_uiNpE<< " bound:" << (m2primeCount+1)*m_uiNpE <<" wvec size : "<<wVec.size()<<std::endl;
 
                     if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
                     {
-                        m_uiAllElements[ele].addChildren(m2prime);
-                        if(!fdstyle)
+                        this->getElementNodalValues(vec,&(*(nodalVals.begin())),ele);
+                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
                         {
-                            // do element local interpolation
-                            this->getElementNodalValues(vec,nodalVals.data(),ele);
-                            for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                            {
-                                cnum=m2prime[m2primeCount+child].getMortonIndex();
-                                this->parent2ChildInterpolation(&(*(nodalVals.begin())),&(*(wVec.begin()+(m2primeCount+child)*m_uiNpE)),cnum,3);
-                            }
-
-                        }else
-                        {
-
-                            this->getUnzipElementalNodalValues(unzip,blk,ele,nodalVals_unzip.data());
-                            
-                            // for(unsigned int k=0;k< m_uiElementOrder+1 ; k++)
-                            //  for(unsigned int j=0; j< m_uiElementOrder+1; j++)
-                            //   for(unsigned int i=0; i< m_uiElementOrder+1; i++)
-                            //     printf("ele: %d ijk: %d,%d,%d unzip: %f  \t zip: %f\n ",ele,i,j,k,nodalVals_unzip[(k+3)*11*11+ (j+3)*11 + (i+3)],nodalVals[k*5*5+ j*5 +i]);
-
-                            //std::cout<<"interpolation for : "<<m_uiAllElements[ele]<<std::endl;
-
-                            m_uiRefEl.I3D_Parent2Child_FD(nodalVals_unzip.data(),interp_out_all.data(),paddWidth);
-                            for(unsigned int child=0;child<NUM_CHILDREN;child++)
-                            {
-                                cnum=m2prime[m2primeCount+child].getMortonIndex();
-                                const char bit0 = binOp::getBit(cnum, 0);
-                                const char bit1 = binOp::getBit(cnum, 1);
-                                const char bit2 = binOp::getBit(cnum, 2);
-
-                                 for(unsigned int k=0; k < (m_uiElementOrder+1);  k++)
-                                  for(unsigned int j=0; j < (m_uiElementOrder+1);  j++)
-                                   for(unsigned int i=0; i < (m_uiElementOrder+1);  i++)
-                                   {
-                                       wVec[(m2primeCount+child)*m_uiNpE + k*(m_uiElementOrder+1)*(m_uiElementOrder+1) + j* (m_uiElementOrder+1) +i] = interp_out_all[(bit2*m_uiElementOrder+k)*ch_1d*ch_1d + (bit1*m_uiElementOrder+j)*ch_1d + (bit0*m_uiElementOrder+i)];
-                                   }
-
-                            }
-                        
+                            cnum=m2prime[m2primeCount+child].getMortonIndex();
+                            this->parent2ChildInterpolation(&(*(nodalVals.begin())),&(*(wVec.begin()+(m2primeCount+child)*m_uiNpE)),cnum,3);
                         }
 
                         m2primeCount+=NUM_CHILDREN;
@@ -4096,13 +3249,40 @@ namespace ot
                     }
                     else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
                     {
-
                         assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
-                        m2prime.push_back(m_uiAllElements[ele].getParent());
                         
-                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                        if(mode == INTERGRID_TRANSFER_MODE::P2CT)
                         {
-                            for(unsigned int k=0;k<m_uiElementOrder+1;k++)
+
+                            const unsigned int p1d = 2*m_uiElementOrder+1;
+                            for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                            {
+                                
+                                this->getElementNodalValues(vec,nodalVals.data(),ele+child);
+                                for(unsigned int k=0;k<m_uiElementOrder+1;k++)
+                                for(unsigned int j=0;j<m_uiElementOrder+1;j++)
+                                    for(unsigned int i=0;i<m_uiElementOrder+1;i++)
+                                    {
+                                        cnum=m_uiAllElements[(ele+child)].getMortonIndex();
+                                        const unsigned int iix = m_uiElementOrder * (int) (cnum & 1u)  +  i;
+                                        const unsigned int jjy = m_uiElementOrder * (int) ((cnum & 2u)>>1u)  +  j;
+                                        const unsigned int kkz = m_uiElementOrder * (int) ((cnum & 4u)>>2u)  +  k;
+
+                                        vallchildren[kkz*p1d*p1d  + jjy*p1d + iix] = nodalVals[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]; //vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
+
+                                    }
+
+                            }
+
+                            m_uiRefEl.I3D_Children2Parent(vallchildren.data(),&wVec[m2primeCount*m_uiNpE]);
+
+
+                        }else
+                        {
+                            assert(mode == INTERGRID_TRANSFER_MODE::INJECTION);
+                            for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                            {
+                                for(unsigned int k=0;k<m_uiElementOrder+1;k++)
                                 for(unsigned int j=0;j<m_uiElementOrder+1;j++)
                                     for(unsigned int i=0;i<m_uiElementOrder+1;i++)
                                     {
@@ -4112,43 +3292,98 @@ namespace ot
                                         {
                                             wVec[m2primeCount*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]=vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
 
-                                        }else if( (i%2==0) && (j%2==0) && (k%2==0))
+                                        }else
                                         {
+                                            
                                             cnum=m_uiAllElements[(ele+child)].getMortonIndex();
-                                            wVec[m2primeCount*m_uiNpE+((((cnum & 4u)>>2u)*m_uiElementOrder+k)>>1)*(m_uiElementOrder+1)*(m_uiElementOrder+1)+((((cnum & 2u)>>1u)*m_uiElementOrder+j)>>1)*(m_uiElementOrder+1)+(((((cnum & (1u)))*m_uiElementOrder+i)>>1))]=vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
+                                            const unsigned int iix = m_uiElementOrder * (int) (cnum & 1u)  +  i;
+                                            const unsigned int jjy = m_uiElementOrder * (int) ((cnum & 2u)>>1u)  +  j;
+                                            const unsigned int kkz = m_uiElementOrder * (int) ((cnum & 4u)>>2u)  +  k;
+                                            //std::cout<<" iix: "<<iix<<" jjy: "<<jjy<<" kkz: "<<kkz<<std::endl;
+
+                                            if( (iix %2 ==0) && (jjy%2 ==0) && (kkz%2==0))
+                                            {
+                                                wVec[ m2primeCount*m_uiNpE +  (kkz>>1u) * (m_uiElementOrder+1)*(m_uiElementOrder+1) + (jjy>>1u) * (m_uiElementOrder+1)+(iix>>1u)] = vec[m_uiE2NMapping_CG[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]];
+                                                
+                                            }
+
                                         }
 
                                     }
 
+                            }
+
                         }
+
                         ele+=(NUM_CHILDREN-1);
                         m2primeCount+=1;
 
                     }else
                     {
                         assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
-                        m2prime.push_back(m_uiAllElements[ele]);
-
+                        
                         this->getElementNodalValues(vec,&(*(wVec.begin()+(m2primeCount*m_uiNpE))),ele);
                         m2primeCount+=1;
+
                     }
 
                 }
+
+
+                if(npes1==1 && pMesh->isActive() && pMesh->getMPICommSize()==1)
+                {
+
+                    // sequential case.
+
+                    if(numM2PrimeElems !=pMesh->getNumLocalMeshElements())
+                    {
+                        std::cout<<" seq::[Inter-grid Transfer error ]: Recvn DG elements: "<<numM2PrimeElems<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
+                        MPI_Abort(comm,0);
+                    }
+                        
+
+                    const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
+
+                    const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
+                    const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
+
+                    const unsigned int m2LocalNodeBegin=pMesh->getNodeLocalBegin();
+                    const unsigned int m2LocalNodeEnd=pMesh->getNodeLocalEnd();
+
+                    unsigned int lookUp;
+                    const unsigned int eleOrder=pMesh->getElementOrder();
+
+                    for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
+                    {
+
+                        //std::cout<<"ele: "<<ele<<"data copied "<<std::endl;
+                        for(unsigned int k=0;k<eleOrder+1;k++)
+                            for(unsigned int j=0;j<eleOrder+1;j++)
+                                for(unsigned int i=0;i<eleOrder+1;i++)
+                                {
+                                    if(!(pMesh->isNodeHanging(ele,i,j,k)))
+                                    {
+                                        lookUp=e2n[ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                        if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
+                                            out[lookUp] = wVec[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                            
+                                    }
+
+                                }
+
+                    }
+
+                    continue;
+                
+                }
+
+
             }
-
-            assert(seq::test::isUniqueAndSorted(m2prime));
-
-            if(npes1==1 && pMesh->isActive() && pMesh->getMPICommSize()==1)
+            
+            par::Mpi_Alltoallv_sparse(&(*(wVec.begin())), (int*)sendC.data(), (int*)sendOfst.data(), &(*(wVec_m2.begin())), (int*)recvC.data(), (int*)recvOfst.data(), comm);
+            if(pMesh->isActive())
             {
 
-                // sequential case.
-
-                if((wVec.size()/m_uiNpE)!=pMesh->getNumLocalMeshElements())
-                    std::cout<<"rank1: "<<rank1<<" seq::[Inter-grid Transfer error ]: Recvn DG elements: "<<(wVec.size()/m_uiNpE)<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
-
-                assert((wVec.size()/m_uiNpE)==pMesh->getNumLocalMeshElements());
-
-                T * tVec=pMesh->createVector<T>(0);
                 const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
 
                 const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
@@ -4170,201 +3405,371 @@ namespace ot
                                 {
                                     lookUp=e2n[ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
                                     if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
-                                        tVec[lookUp]=wVec[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                        out[lookUp]=wVec_m2[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                }
+                            }
+
+                }
+            
+            }
+            
+
+        }
+        
+        return;
+
+    }
+
+    template <typename T>
+    void Mesh::interGridTransfer_DG(T* vecIn, T* vecOut, const ot::Mesh* pMesh, unsigned int dof)
+    {
+        
+        // Note that this is the intergrid transfer for the DG representation of the vector, 
+        // In DG / octant local representation there is no hanging nodes, each octant has it's own shared nodes. 
+
+        MPI_Comm comm=m_uiCommGlobal;
+        int rank,npes;
+
+        MPI_Comm_rank(comm,&rank);
+        MPI_Comm_size(comm,&npes);
+
+        std::vector<unsigned int> sendC;
+        std::vector<unsigned int> recvC;
+
+        std::vector<unsigned int> sendOfst;
+        std::vector<unsigned int> recvOfst;
+
+        sendC.resize(npes);
+        recvC.resize(npes);
+        sendOfst.resize(npes);
+        recvOfst.resize(npes);
+
+        std::vector<T> wVec; // dg of m2prime;
+        
+        this->interGridTransferSendRecvCompute(pMesh);
+
+        const unsigned int dg_sz_old = getDegOfFreedomDG();
+        const unsigned int dg_sz_new = pMesh->getDegOfFreedomDG();
+
+        const ot::TreeNode* m2prime = m_uiM2Prime.data();
+        // scale the elemental counts by m_uiNpE;
+        for(unsigned int p=0; p < npes; p++)
+        {
+            sendC[p] = m_uiIGTSendC[p] * m_uiNpE;
+            recvC[p] = m_uiIGTRecvC[p] * m_uiNpE;
+
+            sendOfst[p] = m_uiIGTSendOfst[p] *  m_uiNpE;
+            recvOfst[p] = m_uiIGTRecvOfst[p] *  m_uiNpE;
+        }
+
+        std::vector<T> wVec_m2;
+        wVec_m2.resize(recvOfst[npes-1]+recvC[npes-1]);
+
+        std::vector<T> nodalVals;
+        nodalVals.resize(m_uiNpE);
+
+        unsigned int cnum;
+        bool isHanging;
+
+        std::vector<double> vallchildren;
+        vallchildren.resize((2*m_uiElementOrder + 1)*(2*m_uiElementOrder + 1)*(2*m_uiElementOrder + 1));
+
+
+        for(unsigned int v=0; v < dof; v++)
+        {
+            T* vec = vecIn  + v * dg_sz_old;
+            T* out = vecOut + v * dg_sz_new;
+
+            if(m_uiIsActive)
+            {   
+
+                const unsigned int npes1 = this->getMPICommSize();
+                const unsigned int rank1 = this->getMPIRank(); 
+
+                const unsigned int numM2PrimeElems = m_uiM2Prime.size();
+                wVec.resize(numM2PrimeElems*m_uiNpE);
+
+                //std::cout<<"rank1: "<<rank1<<" m2prime: "<<m2prime.size()<<std::endl;
+                
+                unsigned int m2primeCount=0;
+                for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
+                {
+                    if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
+                    {
+                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                        {
+                            cnum=m2prime[m2primeCount+child].getMortonIndex();
+                            this->parent2ChildInterpolation(vec + ele*m_uiNpE, &(*(wVec.begin()+(m2primeCount+child)*m_uiNpE)),cnum,3);
+                        }
+
+                        m2primeCount+=NUM_CHILDREN;
+
+                    }
+                    else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
+                    {
+                        assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
+                        
+                        // for DG we use only one mode for the coarsening, 
+                        // pure injection
+                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                        {
+                            for(unsigned int k=0;k<m_uiElementOrder+1;k++)
+                            for(unsigned int j=0;j<m_uiElementOrder+1;j++)
+                            for(unsigned int i=0;i<m_uiElementOrder+1;i++)
+                            {
+                                    cnum=m_uiAllElements[(ele+child)].getMortonIndex();
+                                    const unsigned int iix = m_uiElementOrder * (int) (cnum & 1u)  +  i;
+                                    const unsigned int jjy = m_uiElementOrder * (int) ((cnum & 2u)>>1u)  +  j;
+                                    const unsigned int kkz = m_uiElementOrder * (int) ((cnum & 4u)>>2u)  +  k;
+                                    //std::cout<<" iix: "<<iix<<" jjy: "<<jjy<<" kkz: "<<kkz<<std::endl;
+
+                                    if( (iix %2 ==0) && (jjy%2 ==0) && (kkz%2==0))
+                                    {
+                                        wVec[ m2primeCount*m_uiNpE +  (kkz>>1u) * (m_uiElementOrder+1)*(m_uiElementOrder+1) + (jjy>>1u) * (m_uiElementOrder+1)+(iix>>1u)] = vec[(ele+child)*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                    }
+                                
                                 }
 
+                        }
 
+                        ele+=(NUM_CHILDREN-1);
+                        m2primeCount+=1;
 
-                            }
+                    }else
+                    {
+                        assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
+                        
+                        for(unsigned int node=0; node < m_uiNpE; node ++)
+                        wVec[(m2primeCount*m_uiNpE) + node] = vec[ele*m_uiNpE + node];
+                        
+                        m2primeCount+=1;
+
+                    }
 
                 }
 
 
-                std::swap(vec,tVec);
-                delete [] tVec;
-                tVec==NULL;
-                return ;
+                if(npes1==1 && pMesh->isActive() && pMesh->getMPICommSize()==1)
+                {
+
+                    // sequential case.
+
+                    if(numM2PrimeElems !=pMesh->getNumLocalMeshElements())
+                    {
+                        std::cout<<" seq::[Inter-grid Transfer error ]: Recvn DG elements: "<<numM2PrimeElems<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
+                        MPI_Abort(comm,0);
+                    }
+                        
+
+                    const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
+
+                    const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
+                    const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
+
+                    const unsigned int m2LocalNodeBegin = m2LocalElemBegin * m_uiNpE ;
+                    const unsigned int m2LocalNodeEnd   = m2LocalElemEnd   * m_uiNpE ;
+
+                    unsigned int lookUp;
+                    const unsigned int eleOrder=pMesh->getElementOrder();
+
+                    for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
+                    {
+                        for(unsigned int k=0;k<eleOrder+1;k++)
+                            for(unsigned int j=0;j<eleOrder+1;j++)
+                                for(unsigned int i=0;i<eleOrder+1;i++)
+                                {
+                                    lookUp= ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i;
+                                    if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
+                                        out[lookUp]=wVec[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                }
+                    }
+
+                    continue ;
+                
+                }
+
+
             }
 
-
-            int npes2=0;
-            int rank2=0;
-            std::vector<ot::TreeNode> m2_splitters;
-            //note : assumes that global rank 0 is going to be active always. 
+            par::Mpi_Alltoallv_sparse(&(*(wVec.begin())), (int*)sendC.data(), (int*)sendOfst.data(), &(*(wVec_m2.begin())), (int*)recvC.data(), (int*)recvOfst.data(), comm);
+        
             if(pMesh->isActive())
             {
-                npes2=pMesh->getMPICommSize();
-                rank2=pMesh->getMPIRank();
-                const std::vector<ot::TreeNode> m2_splitters_root=pMesh->getSplitterElements();
-                m2_splitters.resize(2*npes2);
-                for(unsigned int w=0;w<m2_splitters_root.size();w++)
-                    m2_splitters[w]=m2_splitters_root[w];
-            } 
-            
-            par::Mpi_Bcast(&npes2,1,0,comm1);
-            par::Mpi_Bcast(&rank2,1,0,comm1);
-            m2_splitters.resize(2*npes2);
-            par::Mpi_Bcast(&(*(m2_splitters.begin())),2*npes2,0,comm1);
-            assert(seq::test::isUniqueAndSorted(m2_splitters));
-           
-           
-               std::vector<ot::SearchKey> m2primeSK;
-               m2primeSK.resize(m2prime.size());
 
-               for(unsigned int e=0;e<m2prime.size();e++)
-               {
-                   m2primeSK[e]=ot::SearchKey(m2prime[e]);
-                   m2primeSK[e].addOwner(rank1); // note that this is the rank in comm1. 
-               }
+                const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
+                const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
 
+                const unsigned int m2LocalNodeBegin = m2LocalElemBegin*m_uiNpE ;
+                const unsigned int m2LocalNodeEnd   = m2LocalElemEnd*m_uiNpE ;
 
-               std::vector<ot::Key> m2_splitterKeys;
-               m2_splitterKeys.resize(2*npes2);
+                unsigned int lookUp;
+                const unsigned int eleOrder=pMesh->getElementOrder();
 
-               for(unsigned int p=0;p<npes2;p++)
-               {
-                   m2_splitterKeys[2*p]=ot::Key(m2_splitters[2*p]);
-                   m2_splitterKeys[2*p].addOwner(p);
-
-                   m2_splitterKeys[2*p+1]=ot::Key(m2_splitters[2*p+1]);
-                   m2_splitterKeys[2*p+1].addOwner(p);
-
-                   m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p]));
-                   m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p+1]));
-               }
-
-               ot::SearchKey rootSK(m_uiDim,m_uiMaxDepth);
-               std::vector<ot::SearchKey> tmpNodes;
-
-               SFC::seqSort::SFC_treeSort(&(*(m2primeSK.begin())),m2primeSK.size(),tmpNodes,tmpNodes,tmpNodes,m_uiMaxDepth,m_uiMaxDepth,rootSK,ROOT_ROTATION,1,TS_SORT_ONLY);
-
-               unsigned int skip=0;
-               ot::SearchKey tmpSK;
-               std::vector<ot::SearchKey> tmpSKVec;
-
-               for(unsigned int e=0;e<(m2primeSK.size());e++)
-               {
-                   tmpSK=m2primeSK[e];
-                   skip=1;
-                   while(((e+skip)<m2primeSK.size()) && (m2primeSK[e]==m2primeSK[e+skip]))
-                   {
-                       if(m2primeSK[e+skip].getOwner()>=0){
-                           tmpSK.addOwner(m2primeSK[e+skip].getOwner());
-                       }
-                       skip++;
-                   }
-
-                   tmpSKVec.push_back(tmpSK);
-                   e+=(skip-1);
-
-               }
-
-               std::swap(m2primeSK,tmpSKVec);
-               tmpSKVec.clear();
-
-               assert(seq::test::isUniqueAndSorted(m2primeSK));
-               assert(seq::test::isUniqueAndSorted(m2_splitterKeys));
-
-               ot::Key rootKey(0,0,0,0,m_uiDim,m_uiMaxDepth);
-               SFC::seqSearch::SFC_treeSearch(&(*(m2_splitterKeys.begin())),&(*(m2primeSK.begin())),0,m2_splitterKeys.size(),0,m2primeSK.size(),m_uiMaxDepth,m_uiMaxDepth,ROOT_ROTATION);
-
-
-
-               unsigned int sBegin,sEnd,selectedRank;
-               for(unsigned int p=0;p<npes2;p++)
-               {
-                   assert(m2_splitterKeys[2*p].getFlag() & OCT_FOUND);
-                   assert(m2_splitterKeys[2*p+1].getFlag() & OCT_FOUND);
-
-                   sBegin=m2_splitterKeys[2*p].getSearchResult();
-                   sEnd=m2_splitterKeys[2*p+1].getSearchResult();
-                   assert(sBegin<sEnd);
-                   selectedRank=rankSelectRule(m_uiGlobalNpes,m_uiGlobalRank,npes2,p);
-                   sendNodeCount[selectedRank]=sEnd-sBegin-1;
-
-                   if(m2primeSK[sBegin].getOwner()>=0) sendNodeCount[selectedRank]++;
-                   if(m2primeSK[sEnd].getOwner()>=0) sendNodeCount[selectedRank]++;
-
-                   sendNodeCount[selectedRank]*=m_uiNpE;
-
-               }
-
-               // we don't need below for intergrid transfer, but these can be help full for debugging.
-               m2prime.clear();
-               m2primeSK.clear();
-
-
-        }
-
-        par::Mpi_Alltoall(sendNodeCount,recvNodeCount,1,comm);
-
-        sendNodeOffset[0]=0;
-        recvNodeOffset[0]=0;
-
-        omp_par::scan(sendNodeCount,sendNodeOffset,npes);
-        omp_par::scan(recvNodeCount,recvNodeOffset,npes);
-
-
-        std::vector<T> wVec_m2;
-        wVec_m2.resize(recvNodeOffset[npes-1]+recvNodeCount[npes-1]);
-
-        if((wVec_m2.size()/m_uiNpE)!=pMesh->getNumLocalMeshElements())
-            std::cout<<"rank: "<<rank<<" [Inter-grid Transfer error ]: Recvn DG elements: "<<(wVec_m2.size()/m_uiNpE)<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
-
-        par::Mpi_Alltoallv_sparse(&(*(wVec.begin())),sendNodeCount,sendNodeOffset,&(*(wVec_m2.begin())),recvNodeCount,recvNodeOffset,comm);
-
-        delete [] sendNodeCount;
-        delete [] recvNodeCount;
-        delete [] sendNodeOffset;
-        delete [] recvNodeOffset;
-
-        T * tVec=NULL;
-        if(pMesh->isActive())
-        {
-            tVec=pMesh->createVector<T>(0);
-            const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
-
-            const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
-            const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
-
-            const unsigned int m2LocalNodeBegin=pMesh->getNodeLocalBegin();
-            const unsigned int m2LocalNodeEnd=pMesh->getNodeLocalEnd();
-
-            unsigned int lookUp;
-            const unsigned int eleOrder=pMesh->getElementOrder();
-
-            for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
-            {
-                for(unsigned int k=0;k<eleOrder+1;k++)
-                    for(unsigned int j=0;j<eleOrder+1;j++)
-                        for(unsigned int i=0;i<eleOrder+1;i++)
-                        {
-                            if(!(pMesh->isNodeHanging(ele,i,j,k)))
+                for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
+                {
+                    for(unsigned int k=0;k<eleOrder+1;k++)
+                        for(unsigned int j=0;j<eleOrder+1;j++)
+                            for(unsigned int i=0;i<eleOrder+1;i++)
                             {
-                                lookUp=e2n[ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                lookUp = ele*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i;
+                                
                                 if((lookUp>=m2LocalNodeBegin && lookUp<m2LocalNodeEnd) )
-                                    tVec[lookUp]=wVec_m2[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                out[lookUp]=wVec_m2[(ele-m2LocalElemBegin)*m_uiNpE+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i];
+                                
                             }
 
-
-
-                        }
+                }
+            
 
             }
 
-
-            std::swap(vec,tVec);
-
         }
 
-        delete [] tVec;
-        tVec=NULL;
-        
-        wVec.clear();
-        wVec_m2.clear();
+        return;
 
     }
 
+
+    template<typename T>
+    void Mesh::interGridTransferCellVec(T* vecIn, T* vecOut, const ot::Mesh* pMesh,unsigned int dof,INTERGRID_TRANSFER_MODE mode)
+    {
+
+        MPI_Comm comm=m_uiCommGlobal;
+        int rank,npes;
+
+        MPI_Comm_rank(comm,&rank);
+        MPI_Comm_size(comm,&npes);
+
+        std::vector<T> wVec; // dg of m2prime;
+        this->interGridTransferSendRecvCompute(pMesh);
+
+        // currently hard coded to the cell vec copy. 
+        assert(mode==INTERGRID_TRANSFER_MODE::CELLVEC_CPY);
+
+        const unsigned int cell_sz_old = m_uiAllElements.size();
+        const unsigned int cell_sz_new = pMesh->getAllElements().size();
+
+        const ot::TreeNode* m2prime = m_uiM2Prime.data();
+        
+        const unsigned int * sendC = m_uiIGTSendC.data();
+        const unsigned int * recvC = m_uiIGTRecvC.data();
+        const unsigned int * sendOfst = m_uiIGTSendOfst.data();
+        const unsigned int * recvOfst = m_uiIGTRecvOfst.data();
+
+        std::vector<T> wVec_m2;
+        wVec_m2.resize(recvOfst[npes-1]+recvC[npes-1]);
+
+        for(unsigned int v=0; v < dof; v++)
+        {
+            T* vec = vecIn  + v * cell_sz_old;
+            T* out = vecOut + v * cell_sz_new;
+
+            if(m_uiIsActive)
+            {   
+
+                const unsigned int npes1 = this->getMPICommSize();
+                const unsigned int rank1 = this->getMPIRank(); 
+
+                const unsigned int numM2PrimeElems = m_uiM2Prime.size();
+                wVec.resize(numM2PrimeElems);
+
+                //std::cout<<"rank1: "<<rank1<<" m2prime: "<<m2prime.size()<<std::endl;
+                
+                unsigned int m2primeCount=0;
+                for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
+                {
+                    if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
+                    {
+                        for(unsigned int child=0;child<NUM_CHILDREN;child++)
+                            wVec[m2primeCount+child] = vec[ele];
+
+                        m2primeCount+=NUM_CHILDREN;
+
+                    }
+                    else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
+                    {
+                        assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
+                        // check if the cell vector child cells agrees with the value. 
+                        assert(vec[ele]==vec[ele+NUM_CHILDREN-1]);
+                        wVec[m2primeCount] = vec[ele];
+                        ele+=(NUM_CHILDREN-1);
+                        m2primeCount+=1;
+
+                    }else
+                    {
+                        assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
+                        wVec[m2primeCount] = vec[ele];
+                        m2primeCount+=1;
+
+                    }
+
+                }
+
+
+                if(npes1==1 && pMesh->isActive() && pMesh->getMPICommSize()==1)
+                {
+
+                    // sequential case.
+
+                    if(numM2PrimeElems !=pMesh->getNumLocalMeshElements())
+                    {
+                        std::cout<<" seq::[Inter-grid Transfer error ]: Recvn DG elements: "<<numM2PrimeElems<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
+                        MPI_Abort(comm,0);
+                    }
+                        
+
+                    const unsigned int * e2n=&(*(pMesh->getE2NMapping().begin()));
+
+                    const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
+                    const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
+
+                    const unsigned int m2LocalNodeBegin = m2LocalElemBegin * m_uiNpE ;
+                    const unsigned int m2LocalNodeEnd   = m2LocalElemEnd   * m_uiNpE ;
+
+                    unsigned int lookUp;
+                    const unsigned int eleOrder=pMesh->getElementOrder();
+
+                    for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
+                    {
+                        out[ele] = wVec[(ele-m2LocalElemBegin)];
+                    }
+
+                    continue ;
+                
+                }
+
+
+            }
+
+            par::Mpi_Alltoallv_sparse(&(*(wVec.begin())), (int*)sendC, (int*)sendOfst, &(*(wVec_m2.begin())), (int*)recvC, (int*)recvOfst, comm);
+        
+            if(pMesh->isActive())
+            {
+
+                const unsigned int m2LocalElemBegin=pMesh->getElementLocalBegin();
+                const unsigned int m2LocalElemEnd=pMesh->getElementLocalEnd();
+
+                const unsigned int m2LocalNodeBegin = m2LocalElemBegin*m_uiNpE ;
+                const unsigned int m2LocalNodeEnd   = m2LocalElemEnd*m_uiNpE ;
+
+                unsigned int lookUp;
+                const unsigned int eleOrder=pMesh->getElementOrder();
+
+                for(unsigned int ele=m2LocalElemBegin;ele<m2LocalElemEnd;ele++)
+                    out[ele] = wVec_m2[(ele-m2LocalElemBegin)];
+
+            }
+
+        }
+
+        return;
+
+
+
+
+
+
+    }
 
     template<typename T>
     void Mesh::zip(const T* unzippedVec, T* zippedVec)
@@ -4415,65 +3820,65 @@ namespace ot
 
     }
 
-    template<typename T>
-    void Mesh::zip(const T *unzippedVec, T *zippedVec, const unsigned int *blkIDs, unsigned int numblks, unsigned int ll)
-    {
-        if(!m_uiIsActive)
-            return ;
+    // template<typename T>
+    // void Mesh::zip(const T *unzippedVec, T *zippedVec, const unsigned int *blkIDs, unsigned int numblks, unsigned int ll)
+    // {
+    //     if(!m_uiIsActive)
+    //         return ;
 
-        //std::cout<<"partial zip\n";
+    //     //std::cout<<"partial zip\n";
 
-        ot::TreeNode blkNode;
-        unsigned int ei,ej,ek;
-        unsigned int regLev;
-        const ot::TreeNode * pNodes=&(*(m_uiAllElements.begin()));
-        unsigned int lx,ly,lz,offset,paddWidth;
+    //     ot::TreeNode blkNode;
+    //     unsigned int ei,ej,ek;
+    //     unsigned int regLev;
+    //     const ot::TreeNode * pNodes=&(*(m_uiAllElements.begin()));
+    //     unsigned int lx,ly,lz,offset,paddWidth;
 
-        for(unsigned int b=0; b < numblks; b++)
-        {
+    //     for(unsigned int b=0; b < numblks; b++)
+    //     {
 
-            const unsigned int blk = blkIDs[b];
+    //         const unsigned int blk = blkIDs[b];
 
-            blkNode=m_uiLocalBlockList[blk].getBlockNode();
-            regLev=m_uiLocalBlockList[blk].getRegularGridLev();
+    //         blkNode=m_uiLocalBlockList[blk].getBlockNode();
+    //         regLev=m_uiLocalBlockList[blk].getRegularGridLev();
 
-            lx=m_uiLocalBlockList[blk].getAllocationSzX();
-            ly=m_uiLocalBlockList[blk].getAllocationSzY();
-            lz=m_uiLocalBlockList[blk].getAllocationSzZ();
-            offset=m_uiLocalBlockList[blk].getOffset();
-            paddWidth=m_uiLocalBlockList[blk].get1DPadWidth();
+    //         lx=m_uiLocalBlockList[blk].getAllocationSzX();
+    //         ly=m_uiLocalBlockList[blk].getAllocationSzY();
+    //         lz=m_uiLocalBlockList[blk].getAllocationSzZ();
+    //         offset=m_uiLocalBlockList[blk].getOffset();
+    //         paddWidth=m_uiLocalBlockList[blk].get1DPadWidth();
 
-            for(unsigned int elem=m_uiLocalBlockList[blk].getLocalElementBegin();elem<m_uiLocalBlockList[blk].getLocalElementEnd();elem++)
-            {
-                ei=(pNodes[elem].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
-                ej=(pNodes[elem].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
-                ek=(pNodes[elem].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
+    //         for(unsigned int elem=m_uiLocalBlockList[blk].getLocalElementBegin();elem<m_uiLocalBlockList[blk].getLocalElementEnd();elem++)
+    //         {
+    //             ei=(pNodes[elem].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
+    //             ej=(pNodes[elem].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
+    //             ek=(pNodes[elem].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
 
 
-                assert(pNodes[elem].getLevel()==regLev); // this is enforced by block construction
+    //             assert(pNodes[elem].getLevel()==regLev); // this is enforced by block construction
 
-                // todo : note here we copy values directly if it is hanging or not to the corresponding non hanging nodes. 
-                for(unsigned int k=0;k<m_uiElementOrder+1;k++)
-                    for(unsigned int j=0;j<m_uiElementOrder+1;j++)
-                        for(unsigned int i=0;i<m_uiElementOrder+1;i++)
-                        {
-                            // if(unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)] == 0)
-                            //     std::cout<<" ele "<<elem<<" of: "<<blk<<" write zero "<<std::endl;
-                            // else
-                            //     std::cout<<" ele "<<elem<<" of: "<<blk<<" writes "<<unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]<<std::endl;
-                            // const unsigned int ownerID = (m_uiE2NMapping_DG[elem*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]/m_uiNpE);
-                            // if(m_uiAllElements[ownerID].getLevel() >= (ll-1))
-                                zippedVec[m_uiE2NMapping_CG[elem*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]]=unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)];
-                            //std::cout<<"zipped value: "<<zippedVec[m_uiE2NMapping_CG[elem*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]]<<std::endl;
-                        }
+    //             // todo : note here we copy values directly if it is hanging or not to the corresponding non hanging nodes. 
+    //             for(unsigned int k=0;k<m_uiElementOrder+1;k++)
+    //                 for(unsigned int j=0;j<m_uiElementOrder+1;j++)
+    //                     for(unsigned int i=0;i<m_uiElementOrder+1;i++)
+    //                     {
+    //                         // if(unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)] == 0)
+    //                         //     std::cout<<" ele "<<elem<<" of: "<<blk<<" write zero "<<std::endl;
+    //                         // else
+    //                         //     std::cout<<" ele "<<elem<<" of: "<<blk<<" writes "<<unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]<<std::endl;
+    //                         // const unsigned int ownerID = (m_uiE2NMapping_DG[elem*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]/m_uiNpE);
+    //                         // if(m_uiAllElements[ownerID].getLevel() >= (ll-1))
+    //                             zippedVec[m_uiE2NMapping_CG[elem*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]]=unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)];
+    //                         //std::cout<<"zipped value: "<<zippedVec[m_uiE2NMapping_CG[elem*m_uiNpE+k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i]]<<std::endl;
+    //                     }
 
-            }
+    //         }
 
-        }
+    //     }
         
-        return;
+    //     return;
         
-    }
+    // }
 
 
     template<typename T>
@@ -4526,9 +3931,9 @@ namespace ot
 
         const unsigned int kb=0;
         const unsigned int ke=(m_uiElementOrder+1);
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
         const unsigned int cnum1=3;
@@ -4733,8 +4138,8 @@ namespace ot
         const unsigned int kb=0;
         const unsigned int ke=(m_uiElementOrder+1);
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int je=paddWidth+1;
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
         const unsigned int cnum1=1;
@@ -4935,13 +4340,13 @@ namespace ot
         const  int j_offset=paddWidth;
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
         const unsigned int jb=0;
         const unsigned int je=(m_uiElementOrder+1);
 
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
         const unsigned int cnum1=5;
@@ -5135,12 +4540,12 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=(paddWidth);
+        const unsigned int ke=(paddWidth+1);
 
         const unsigned int jb=0;
         const unsigned int je=(m_uiElementOrder+1);
 
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
         const unsigned int cnum1=1;
@@ -5341,10 +4746,10 @@ namespace ot
 
         const unsigned int kb=0;
         const unsigned int ke=(m_uiElementOrder+1);
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth+1;
 
         const unsigned int cnum1=2;
         const unsigned int cnum2=6;
@@ -5549,9 +4954,9 @@ namespace ot
         const unsigned int kb=0;
         const unsigned int ke=(m_uiElementOrder+1);
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
+        const unsigned int je=paddWidth+1;
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth+1;
 
         const unsigned int cnum1=0;
         const unsigned int cnum2=4;
@@ -5746,14 +5151,14 @@ namespace ot
         const  int j_offset=paddWidth;
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
         const unsigned int jb=0;
         const unsigned int je=(m_uiElementOrder+1);
 
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth+1;
 
         const unsigned int cnum1=4;
         const unsigned int cnum2=6;
@@ -5952,13 +5357,13 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=(paddWidth);
+        const unsigned int ke=(paddWidth+1);
 
         const unsigned int jb=0;
         const unsigned int je=(m_uiElementOrder+1);
 
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth+1;
 
         const unsigned int cnum1=0;
         const unsigned int cnum2=2;
@@ -6156,10 +5561,10 @@ namespace ot
         const  int j_offset=-(m_uiElementOrder-paddWidth);
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
 
         const unsigned int ib=0;
@@ -6361,9 +5766,9 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=paddWidth;
+        const unsigned int ke=paddWidth+1;
 
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
 
         const unsigned int ib=0;
@@ -6564,11 +5969,11 @@ namespace ot
         const  int j_offset=(m_uiElementOrder+paddWidth);
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
+        const unsigned int je=paddWidth+1;
 
         const unsigned int ib=0;
         const unsigned int ie=(m_uiElementOrder+1);
@@ -6768,10 +6173,10 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=paddWidth;
+        const unsigned int ke=paddWidth+1;
 
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
+        const unsigned int je=paddWidth+1;
 
         const unsigned int ib=0;
         const unsigned int ie=(m_uiElementOrder+1);
@@ -6954,13 +6359,13 @@ namespace ot
         const  int j_offset=-(m_uiElementOrder-paddWidth);
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
 
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
 
@@ -7082,14 +6487,14 @@ namespace ot
         const  int j_offset=-(m_uiElementOrder-paddWidth);
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
 
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth+1;
 
 
         unsigned int cnum;
@@ -7210,13 +6615,13 @@ namespace ot
         const  int j_offset=(m_uiElementOrder+paddWidth);
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
+        const unsigned int je=paddWidth+1;
 
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
 
@@ -7339,14 +6744,14 @@ namespace ot
         const  int j_offset=(m_uiElementOrder+paddWidth);
         const  int k_offset=-(m_uiElementOrder-paddWidth);
 
-        const unsigned int kb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int kb=(m_uiElementOrder-paddWidth);
         const unsigned int ke=(m_uiElementOrder+1);
 
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
+        const unsigned int je=paddWidth+1;
 
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth+1;
 
 
         unsigned int cnum;
@@ -7470,12 +6875,12 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=paddWidth;
+        const unsigned int ke=paddWidth+1;
 
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
 
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
 
@@ -7599,13 +7004,13 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=paddWidth;
+        const unsigned int ke=paddWidth + 1;
 
-        const unsigned int jb=(m_uiElementOrder-paddWidth+1);
+        const unsigned int jb=(m_uiElementOrder-paddWidth);
         const unsigned int je=(m_uiElementOrder+1);
 
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth +1;
 
 
         unsigned int cnum;
@@ -7727,12 +7132,12 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=paddWidth;
+        const unsigned int ke=paddWidth +1 ;
 
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
+        const unsigned int je=paddWidth +1;
 
-        const unsigned int ib=(m_uiElementOrder-paddWidth+1);
+        const unsigned int ib=(m_uiElementOrder-paddWidth);
         const unsigned int ie=(m_uiElementOrder+1);
 
 
@@ -7856,13 +7261,13 @@ namespace ot
         const  int k_offset=(m_uiElementOrder+paddWidth);
 
         const unsigned int kb=0;
-        const unsigned int ke=paddWidth;
+        const unsigned int ke=paddWidth+1;
 
         const unsigned int jb=0;
-        const unsigned int je=paddWidth;
+        const unsigned int je=paddWidth+1;
 
         const unsigned int ib=0;
-        const unsigned int ie=paddWidth;
+        const unsigned int ie=paddWidth+1;
 
 
         unsigned int cnum;
@@ -8028,7 +7433,7 @@ namespace ot
     }
 
     template<typename T>
-    void Mesh::unzip(const T* zippedVec, T* unzippedVec, const unsigned int *blkIDs, unsigned int numblks)
+    void Mesh::unzip(const T* in, T* out, const unsigned int *blkIDs, unsigned int numblks, unsigned int dof)
     {
         if( (!m_uiIsActive) || (m_uiLocalBlockList.empty())  ) return;
 
@@ -8116,322 +7521,836 @@ namespace ot
 
         // NOTE: Be careful when you access ghost elements for padding. (You should only access the level 1 ghost elements. You should not access the level 2 ghost elements at any time. )
         paddWidth = m_uiLocalBlockList[0].get1DPadWidth();
-        if(m_uiElementOrder ==4 && paddWidth==3)
+
+        if((m_uiElementOrder+1)/2 < paddWidth)
         {
-            //std::cout<<"read spt points : "<<m_uiElementOrder<<" pwidth : "<<paddWidth<<std::endl;
-            readSpecialPtsBegin(zippedVec);
+            std::cout<<"rank: "<<m_uiActiveRank<<" paddiging with size : "<<paddWidth<<" is too large for element order : "<<m_uiElementOrder<<std::endl;
+            MPI_Abort(m_uiCommGlobal,0);
         }
 
+       
         assert(numblks<=m_uiLocalBlockList.size());
-        for(unsigned int b = 0; b < numblks; b++ )
+
+        for(unsigned int v=0; v < dof; v++)
         {
-            const unsigned int blk = blkIDs[b];
-            blkNode=m_uiLocalBlockList[blk].getBlockNode();
-            assert(blkNode.maxX()<=m_uiMeshDomain_max && blkNode.minX()>=m_uiMeshDomain_min);
-            regLev=m_uiLocalBlockList[blk].getRegularGridLev();
-            //blkNpe_1D=m_uiElementOrder*(1u<<(regLev-blkNode.getLevel()))+1+2*GHOST_WIDTH;
-            //std::cout<<"rank: "<<m_uiActiveRank<<" -- blkNpw_1D: "<<blkNpe_1D<<" blkNode: "<<blkNode<<" regLev: "<<regLev<<std::endl;
+            const T* zippedVec = in  + v * m_uiNumActualNodes;
+            T* unzippedVec = out + v* m_uiUnZippedVecSz; 
 
-            sz=1u<<(m_uiMaxDepth-regLev);
-            eleIndexMax=(1u<<(regLev-blkNode.getLevel()))-1;
-            assert(eleIndexMax>=eleIndexMin);
-
-            lx=m_uiLocalBlockList[blk].getAllocationSzX();
-            ly=m_uiLocalBlockList[blk].getAllocationSzY();
-            lz=m_uiLocalBlockList[blk].getAllocationSzZ();
-            offset=m_uiLocalBlockList[blk].getOffset();
-            paddWidth=m_uiLocalBlockList[blk].get1DPadWidth();
-
-
-            for(unsigned int elem=m_uiLocalBlockList[blk].getLocalElementBegin();elem<m_uiLocalBlockList[blk].getLocalElementEnd();elem++)
+            //if(m_uiElementOrder ==4 && paddWidth==3)
+                //readSpecialPtsBegin(zippedVec);
+        
+            for(unsigned int b = 0; b < numblks; b++ )
             {
-                ei=(pNodes[elem].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
-                ej=(pNodes[elem].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
-                ek=(pNodes[elem].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
+                const unsigned int blk = blkIDs[b];
+                blkNode=m_uiLocalBlockList[blk].getBlockNode();
+                assert(blkNode.maxX()<=m_uiMeshDomain_max && blkNode.minX()>=m_uiMeshDomain_min);
+                regLev=m_uiLocalBlockList[blk].getRegularGridLev();
+                //blkNpe_1D=m_uiElementOrder*(1u<<(regLev-blkNode.getLevel()))+1+2*GHOST_WIDTH;
+                //std::cout<<"rank: "<<m_uiActiveRank<<" -- blkNpw_1D: "<<blkNpe_1D<<" blkNode: "<<blkNode<<" regLev: "<<regLev<<std::endl;
 
-                //std::cout<<"blk: "<<blk<<" : "<<blkNode<<" ek: "<<(ek)<<" ej: "<<(ej)<<" ei: "<<(ei)<<" elem: "<<m_uiAllElements[elem]<<std::endl;
-                assert(pNodes[elem].getLevel()==regLev); // this is enforced by block construction
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_internal.start();
-                #endif
-                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),elem);
-                //this->getElementNodalValues(zippedVec,&(*(parentEleInterpIn.begin())),elem);
-                // note: do not change the parentInterpIn values. These are used to interpolate the 3rd point in the advective terms.
-                for(unsigned int w=0;w<m_uiNpE;w++)
-                    parentEleInterpIn[w]=lookUpElementVec[w];
+                sz=1u<<(m_uiMaxDepth-regLev);
+                eleIndexMax=(1u<<(regLev-blkNode.getLevel()))-1;
+                assert(eleIndexMax>=eleIndexMin);
 
-                // (1). local nodes copy. Not need to interpolate or inject values. By block construction local octants in the block has is the same level as regular grid.
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_cpy.start();
-                #endif
-                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                    for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                        for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                           unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                lx=m_uiLocalBlockList[blk].getAllocationSzX();
+                ly=m_uiLocalBlockList[blk].getAllocationSzY();
+                lz=m_uiLocalBlockList[blk].getAllocationSzZ();
+                offset=m_uiLocalBlockList[blk].getOffset();
+                paddWidth=m_uiLocalBlockList[blk].get1DPadWidth();
 
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_cpy.stop();
-                    dendro::timer::t_unzip_sync_internal.stop();
-                #endif
-                // (2). copy the ghost layer (we only copy GHOST_WIDTH amounts of data from the zipped array )z`
-                //---------------------------------------------------------X direction padding --------------------------------------------------------------------------------------------------------------------
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                            dendro::timer::t_unzip_sync_face[0].start();
-                #endif
-                if((pNodes[elem].minX()==blkNode.minX()))
+
+                for(unsigned int elem=m_uiLocalBlockList[blk].getLocalElementBegin();elem<m_uiLocalBlockList[blk].getLocalElementEnd();elem++)
                 {
-                    assert(ei==eleIndexMin);
+                    ei=(pNodes[elem].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
+                    ej=(pNodes[elem].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
+                    ek=(pNodes[elem].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
 
-                    lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_LEFT];
-                    if(lookUp!=LOOK_UP_TABLE_DEFAULT)
+                    //std::cout<<"blk: "<<blk<<" : "<<blkNode<<" ek: "<<(ek)<<" ej: "<<(ej)<<" ei: "<<(ei)<<" elem: "<<m_uiAllElements[elem]<<std::endl;
+                    assert(pNodes[elem].getLevel()==regLev); // this is enforced by block construction
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_internal.start();
+                    #endif
+                    this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),elem);
+                    //this->getElementNodalValues(zippedVec,&(*(parentEleInterpIn.begin())),elem);
+                    // note: do not change the parentInterpIn values. These are used to interpolate the 3rd point in the advective terms.
+                    for(unsigned int w=0;w<m_uiNpE;w++)
+                        parentEleInterpIn[w]=lookUpElementVec[w];
+
+                    // (1). local nodes copy. Not need to interpolate or inject values. By block construction local octants in the block has is the same level as regular grid.
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_cpy.start();
+                    #endif
+                    for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                        for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                            for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_cpy.stop();
+                        dendro::timer::t_unzip_sync_internal.stop();
+                    #endif
+                    // (2). copy the ghost layer (we only copy GHOST_WIDTH amounts of data from the zipped array )z`
+                    //---------------------------------------------------------X direction padding --------------------------------------------------------------------------------------------------------------------
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                dendro::timer::t_unzip_sync_face[0].start();
+                    #endif
+                    if((pNodes[elem].minX()==blkNode.minX()))
                     {
+                        assert(ei==eleIndexMin);
 
-                        if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                        lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_LEFT];
+                        if(lookUp!=LOOK_UP_TABLE_DEFAULT)
                         {
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c1.start();
-                            #endif
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+                            if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                            {
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                    for(unsigned int i=(m_uiElementOrder-paddWidth);i<(m_uiElementOrder+1);i++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i-(m_uiElementOrder-paddWidth))]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c1.start();
+                                #endif
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c1.stop();
-                            #endif
-
-                        }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c2.start();
-                            #endif
-                            assert(pNodes[lookUp].getLevel()+1==regLev);
-                            mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
-                            cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | ((((pNodes[elem].getX()-sz)) >>mid_bit) & 1u));
-                            //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()-sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
-
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                 dendro::timer::t_unzip_sync_cpy.start();
-                             #endif
-
-
-                            #ifdef USE_FD_INTERP_FOR_UNZIP
-                                const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_LEFT,child.data(),fid,cid);
-                                if(st > 0)
-                                {
-                                    const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
-                                    this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
-                                    for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
-                                    {
-                                        assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_LEFT]]);
-                                        assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
-                                        //assert(m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin) ] == blk);
-
-                                        if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
-                                            continue;
-
-                                        this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
-
-
-                                        const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
-                                        const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
-                                        const unsigned int regL_fd = blk_fd.getRegularGridLev();
-                                        
-                                        const unsigned int lx_fd = blk_fd.getAllocationSzX();
-                                        const unsigned int ly_fd = blk_fd.getAllocationSzY();
-                                        const unsigned int lz_fd = blk_fd.getAllocationSzZ();
-
-                                        const unsigned int offset_fd = blk_fd.getOffset();
-
-
-                                        
-                                        const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
-                                        const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
-                                        const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
-
-                                        assert(paddWidth<(m_uiElementOrder+1));
-                                        for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                        for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
                                         for(unsigned int i=(m_uiElementOrder-paddWidth);i<(m_uiElementOrder+1);i++)
-                                            unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+(ei_fd*m_uiElementOrder+i-(m_uiElementOrder-paddWidth))]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i-(m_uiElementOrder-paddWidth))]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c1.stop();
+                                #endif
+
+                            }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c2.start();
+                                #endif
+                                assert(pNodes[lookUp].getLevel()+1==regLev);
+                                mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
+                                cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | ((((pNodes[elem].getX()-sz)) >>mid_bit) & 1u));
+                                //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()-sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
+
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+
+
+                                #ifdef USE_FD_INTERP_FOR_UNZIP
+                                    const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_LEFT,child.data(),fid,cid);
+                                    if(st > 0)
+                                    {
+                                        const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
+                                        this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
+                                        for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
+                                        {
+                                            assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_LEFT]]);
+                                            assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
+                                            //assert(m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin) ] == blk);
+
+                                            if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
+                                                continue;
+
+                                            this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
+
+
+                                            const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
+                                            const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
+                                            const unsigned int regL_fd = blk_fd.getRegularGridLev();
+                                            
+                                            const unsigned int lx_fd = blk_fd.getAllocationSzX();
+                                            const unsigned int ly_fd = blk_fd.getAllocationSzY();
+                                            const unsigned int lz_fd = blk_fd.getAllocationSzZ();
+
+                                            const unsigned int offset_fd = blk_fd.getOffset();
+
+
+                                            
+                                            const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
+                                            const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
+                                            const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
+
+                                            assert(paddWidth<(m_uiElementOrder+1));
+                                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                            for(unsigned int i=(m_uiElementOrder-paddWidth);i<(m_uiElementOrder+1);i++)
+                                                unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+(ei_fd*m_uiElementOrder+i-(m_uiElementOrder-paddWidth))]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                        }
+
+                                        
+
+
                                     }
+                                #else
+                                    this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+                                    this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
 
                                     
-
-
-                                }
-                            #else
-                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-                                this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
+                                    assert(paddWidth<(m_uiElementOrder+1));
+                                    for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                        for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                            for(unsigned int i=(m_uiElementOrder-paddWidth);i<(m_uiElementOrder+1);i++)
+                                                unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i-(m_uiElementOrder-paddWidth))]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                #endif
 
                                 
-                                assert(paddWidth<(m_uiElementOrder+1));
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop() ;
+                                    dendro::timer::t_unzip_sync_f_c2.stop();
+                                #endif
+
+
+                            }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c3.start();
+                                #endif
+                                assert(pNodes[lookUp].getLevel()==(regLev+1));
+                                //child.resize(NUM_CHILDREN,LOOK_UP_TABLE_DEFAULT);
+                                // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
+                                child[1]=lookUp;
+                                child[3]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_UP];
+                                assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
+                                child[5]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[5]!=LOOK_UP_TABLE_DEFAULT);
+                                child[7]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[7]!=LOOK_UP_TABLE_DEFAULT);
+
+                                if(m_uiElementOrder ==4 && paddWidth==3)
+                                {
+                                    // we need to search for the additional points. 
+                                    child[0]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_LEFT];
+                                    child[2]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_LEFT];
+                                    child[4]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_LEFT];
+                                    child[6]=m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_LEFT];
+
+                                }else
+                                {
+                                    child[0]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_LEFT];
+                                    child[2]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_LEFT];
+                                    child[4]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_LEFT];
+                                    child[6]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_LEFT];
+
+                                }
+
+
+                                this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
+
+                                
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
                                 for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
                                     for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
                                         for(unsigned int i=(m_uiElementOrder-paddWidth);i<(m_uiElementOrder+1);i++)
                                             unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i-(m_uiElementOrder-paddWidth))]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                            #endif
 
-                            
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c3.stop();
+                                #endif
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop() ;
-                                dendro::timer::t_unzip_sync_f_c2.stop();
-                            #endif
-
-
-                        }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c3.start();
-                            #endif
-                            assert(pNodes[lookUp].getLevel()==(regLev+1));
-                            //child.resize(NUM_CHILDREN,LOOK_UP_TABLE_DEFAULT);
-                            // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
-                            child[1]=lookUp;
-                            child[3]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_UP];
-                            assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
-                            child[5]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[5]!=LOOK_UP_TABLE_DEFAULT);
-                            child[7]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[7]!=LOOK_UP_TABLE_DEFAULT);
-
-                            if(m_uiElementOrder ==4 && paddWidth==3)
-                            {
-                                // we need to search for the additional points. 
-                                child[0]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_LEFT];
-                                child[2]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_LEFT];
-                                child[4]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_LEFT];
-                                child[6]=m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_LEFT];
-
-                            }else
-                            {
-                                child[0]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_LEFT];
-                                child[2]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_LEFT];
-                                child[4]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_LEFT];
-                                child[6]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_LEFT];
 
                             }
-
-
-                            this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
-
-                            
-
-                            
-
-                            #ifdef DEBUG_UNZIP_OP_3PT
-                                faceNeighCnum1[0]=1;faceNeighCnum1[1]=3;faceNeighCnum1[2]=5;faceNeighCnum1[3]=7;
-                                faceNeighCnum2[0]=0;faceNeighCnum2[1]=2;faceNeighCnum2[2]=4;faceNeighCnum2[3]=6;
-
-
-
-                                for(unsigned int index=0;index<(NUM_CHILDREN>>1u);index++)
-                                {
-                                    interpDownWind(fd::D1_ORDER_4_DOWNWIND,elem,child[faceNeighCnum1[index]],&(*(lookUpElementVec.begin())),faceNeighCnum2[index],&(*(parentEleInterpIn.begin())),&(*(parentEleInterpOut.begin())),OCT_DIR_LEFT,paddWidth,zippedVec,&(*(interpOrInjectionOut.begin())));
-                                }
-                            #endif
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                    for(unsigned int i=(m_uiElementOrder-paddWidth);i<(m_uiElementOrder+1);i++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i-(m_uiElementOrder-paddWidth))]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c3.stop();
-                            #endif
-
 
                         }
 
                     }
 
-                }
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[0].stop();
+                    #endif
 
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[0].stop();
-                #endif
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[1].start();
+                    #endif
 
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[1].start();
-                #endif
-
-                if((pNodes[elem].maxX()==blkNode.maxX()))
-                {
-                    assert(ei==eleIndexMax);
-                    lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_RIGHT];
-                    if(lookUp!=LOOK_UP_TABLE_DEFAULT)
+                    if((pNodes[elem].maxX()==blkNode.maxX()))
                     {
-                        if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                        assert(ei==eleIndexMax);
+                        lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_RIGHT];
+                        if(lookUp!=LOOK_UP_TABLE_DEFAULT)
                         {
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c1.start();
-                            #endif
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+                            if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                            {
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c1.start();
+                                #endif
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                    for(unsigned int i=0;i<(paddWidth+1);i++)
-                                      unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+((ei+1)*m_uiElementOrder+paddWidth+i)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                        for(unsigned int i=0;i<(paddWidth+1);i++)
+                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+((ei+1)*m_uiElementOrder+paddWidth+i)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c1.stop();
-                            #endif
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c1.stop();
+                                #endif
 
 
-                        }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
+                            }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c2.start();
+                                #endif
+                                assert(pNodes[lookUp].getLevel()+1==regLev);
+                                mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
+                                cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | ((((pNodes[elem].getX()+sz)) >>mid_bit) & 1u));
+                                //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()+sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
+
+                                
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+
+                                #ifdef USE_FD_INTERP_FOR_UNZIP
+                                    const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_RIGHT,child.data(),fid,cid);
+                                    if(st > 0)
+                                    {
+                                        const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
+                                        this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
+                                        for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
+                                        {
+                                            assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_RIGHT]]);
+                                            assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
+
+                                            if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
+                                                continue;
+
+                                            this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
+                                            
+                                            const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
+                                            const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
+                                            const unsigned int regL_fd = blk_fd.getRegularGridLev();
+                                            
+                                            const unsigned int lx_fd = blk_fd.getAllocationSzX();
+                                            const unsigned int ly_fd = blk_fd.getAllocationSzY();
+                                            const unsigned int lz_fd = blk_fd.getAllocationSzZ();
+
+                                            const unsigned int offset_fd = blk_fd.getOffset();
+
+
+                                            
+                                            const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
+                                            const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
+                                            const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
+
+
+                                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                                for(unsigned int i=0;i<(paddWidth+1);i++)
+                                                unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+((ei_fd+1)*m_uiElementOrder+paddWidth+i)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                        }
+
+                                        
+
+
+                                    }
+                                #else
+                                    this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+                                    this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
+                                    assert(paddWidth<(m_uiElementOrder+1));
+                                    for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                        for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                            for(unsigned int i=0;i<(paddWidth+1);i++)
+                                                unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+((ei+1)*m_uiElementOrder+paddWidth+i)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                #endif
+
+
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c2.stop();
+                                #endif
+
+
+                            }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c3.start();
+                                #endif
+                                // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
+                                child[0]=lookUp;
+                                child[2]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_UP];
+                                assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
+                                child[4]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[4]!=LOOK_UP_TABLE_DEFAULT);
+                                child[6]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[6]!=LOOK_UP_TABLE_DEFAULT);
+
+                                if(m_uiElementOrder ==4 && paddWidth==3)
+                                {
+                                    child[1]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                    child[3]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                    child[5]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                    child[7]=m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_RIGHT];
+
+                                }else
+                                {
+                                    child[1]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                    child[3]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                    child[5]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                    child[7]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_RIGHT];
+
+                                }
+
+                                
+
+
+                                this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
+
+                                
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                        for(unsigned int i=0;i<(paddWidth+1);i++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+((ei+1)*m_uiElementOrder+paddWidth+i)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c3.stop();
+                                #endif
+
+
+                            }
+
+                        }
+
+                    }
+
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[1].stop();
+                    #endif
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[2].start();
+                    #endif
+
+                    //--------------------------------------------------------------------------------------------------- Y Direction----------------------------------------------------------------------------------
+                    if((pNodes[elem].minY()==blkNode.minY()))
+                    {
+                        assert(ej==0);
+
+                        lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_DOWN];
+                        if(lookUp!=LOOK_UP_TABLE_DEFAULT)
                         {
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c2.start();
-                            #endif
-                            assert(pNodes[lookUp].getLevel()+1==regLev);
-                            mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
-                            cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | ((((pNodes[elem].getX()+sz)) >>mid_bit) & 1u));
-                            //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()+sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
+                            if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                            {
 
-                            
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c1.start();
+                                #endif
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
+                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
 
-                            #ifdef USE_FD_INTERP_FOR_UNZIP
-                                const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_RIGHT,child.data(),fid,cid);
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c1.stop();
+                                #endif
+
+                            }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
+                            {
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c2.start();
+                                #endif
+                                assert(pNodes[lookUp].getLevel()+1==regLev);
+                                mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
+                                cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | (((((pNodes[elem].getY()-sz)) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
+
+                                //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()-sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
+                                
+
+                                //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"parent to child interpolation executed"<<std::endl;
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+
+                                #ifdef USE_FD_INTERP_FOR_UNZIP
+                                const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_DOWN,child.data(),fid,cid);
                                 if(st > 0)
                                 {
                                     const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
                                     this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
                                     for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
                                     {
-                                        assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_RIGHT]]);
+                                        assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_DOWN]]);
+                                        assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
+
+                                        if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
+                                            continue;
+                                            
+                                        this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
+
+                                        const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
+                                        const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
+                                        const unsigned int regL_fd = blk_fd.getRegularGridLev();
+                                        
+                                        const unsigned int lx_fd = blk_fd.getAllocationSzX();
+                                        const unsigned int ly_fd = blk_fd.getAllocationSzY();
+                                        const unsigned int lz_fd = blk_fd.getAllocationSzZ();
+
+                                        const unsigned int offset_fd = blk_fd.getOffset();
+
+                                        const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
+                                        const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
+                                        const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
+                                        
+                                        for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                            for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                                for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
+                                                    unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                    }
+
+                                    
+
+
+                                }
+                                #else
+                                    this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+                                    this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
+
+                                    for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+
+                                #endif
+
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c2.stop();
+                                #endif
+
+
+                            }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
+                            {
+                                // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c3.start();
+                                #endif
+                                child[2]=lookUp;
+                                child[3]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
+                                child[6]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[6]!=LOOK_UP_TABLE_DEFAULT);
+                                child[7]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[7]!=LOOK_UP_TABLE_DEFAULT);
+
+                                if(m_uiElementOrder ==4 && paddWidth==3)
+                                {
+                                    child[0]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_DOWN];
+                                    child[1]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_DOWN];
+                                    child[4]=m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_DOWN];
+                                    child[5]=m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_DOWN];
+
+
+                                }else
+                                {
+                                    child[0]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_DOWN];
+                                    child[1]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_DOWN];
+                                    child[4]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_DOWN];
+                                    child[5]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_DOWN];
+
+                                }
+
+                                
+                                this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
+
+
+                                //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"child to parent interpolation executed"<<std::endl;
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c3.stop();
+                                #endif
+
+                            }
+
+                        }
+
+                    }
+
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[2].stop();
+                    #endif
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[3].start();
+                    #endif
+                    if((pNodes[elem].maxY()==blkNode.maxY()))
+                    {
+                        assert(ej==(1u<<(regLev-blkNode.getLevel()))-1);
+                        lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_UP];
+                        if(lookUp!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c1.start();
+                                #endif
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int j=0;j<(paddWidth+1);j++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+((ej+1)*m_uiElementOrder+paddWidth+j)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c1.stop();
+                                #endif
+
+
+                            }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c2.start();
+                                #endif
+                                assert(pNodes[lookUp].getLevel()+1==regLev);
+                                mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
+                                cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | (((((pNodes[elem].getY()+sz)) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
+                                //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()+sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
+                                
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+
+                                
+
+                                #ifdef USE_FD_INTERP_FOR_UNZIP
+                                const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_UP,child.data(),fid,cid);
+                                if(st > 0)
+                                {
+                                    const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
+                                    this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
+                                    for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
+                                    {
+                                        assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_UP]]);
                                         assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
 
                                         if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
                                             continue;
 
                                         this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
+
+
+                                        const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
+                                        const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
+                                        const unsigned int regL_fd = blk_fd.getRegularGridLev();
                                         
+                                        const unsigned int lx_fd = blk_fd.getAllocationSzX();
+                                        const unsigned int ly_fd = blk_fd.getAllocationSzY();
+                                        const unsigned int lz_fd = blk_fd.getAllocationSzZ();
+
+                                        const unsigned int offset_fd = blk_fd.getOffset();
+                                        
+                                        const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
+                                        const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
+                                        const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
+                                        
+                                        for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                            for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                                for(unsigned int j=0;j<(paddWidth+1);j++)
+                                                    unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+((ej_fd+1)*m_uiElementOrder+paddWidth+j)*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                    }
+
+                                    
+
+
+                                }
+                                #else
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+                                this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
+
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int j=0;j<(paddWidth+1);j++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+((ej+1)*m_uiElementOrder+paddWidth+j)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #endif
+
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c2.stop();
+                                #endif
+
+
+
+                            }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c3.start();
+                                #endif
+                                // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
+                                child[0]=lookUp;
+                                child[1]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                assert(child[1]!=LOOK_UP_TABLE_DEFAULT);
+                                child[4]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[4]!=LOOK_UP_TABLE_DEFAULT);
+                                child[5]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
+                                assert(child[5]!=LOOK_UP_TABLE_DEFAULT);
+
+                                if(m_uiElementOrder ==4 && paddWidth==3)
+                                {
+                                    child[2]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_UP];
+                                    child[3]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_UP];
+                                    child[6]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_UP];
+                                    child[7]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_UP];
+
+
+                                }else
+                                {
+                                    child[2]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_UP];
+                                    child[3]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_UP];
+                                    child[6]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_UP];
+                                    child[7]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_UP];
+                                }
+
+                                
+
+
+                                this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
+
+                                
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int j=0;j<(paddWidth+1);j++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+((ej+1)*m_uiElementOrder+paddWidth+j)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c3.stop();
+                                #endif
+
+                            }
+
+                        }
+
+                    }
+
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_face[3].stop();
+                    #endif
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_face[4].start();
+                    #endif
+                    //--------------------------------------------------------------------- Z direction padding. -------------------------------------------------------------------------------------------------------
+
+                    if((pNodes[elem].minZ()==blkNode.minZ()))
+                    {
+                        assert(ek==0);
+
+                        lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_BACK];
+                        if(lookUp!=LOOK_UP_TABLE_DEFAULT)
+                        {
+
+                            if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c1.start();
+                                #endif
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c1.stop();
+                                #endif
+
+
+                            }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c2.start();
+                                #endif
+                                assert(pNodes[lookUp].getLevel()+1==regLev);
+                                mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
+                                cnum=( (((((pNodes[elem].getZ()-sz)) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
+                                //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()-sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
+                                
+                                //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"parent to child interpolation executed"<<std::endl;
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+
+                                
+
+                                #ifdef USE_FD_INTERP_FOR_UNZIP
+                                const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_BACK,child.data(),fid,cid);
+                                if(st > 0)
+                                {
+                                    const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
+                                    this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
+                                    for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
+                                    {
+                                        assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_BACK]]);
+                                        assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
+
+                                        if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
+                                            continue;
+                                        
+                                        this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
                                         const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
                                         const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
                                         const unsigned int regL_fd = blk_fd.getRegularGridLev();
@@ -8447,888 +8366,325 @@ namespace ot
                                         const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
                                         const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
                                         const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
+                                        
 
-
-                                        for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
                                         for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                            for(unsigned int i=0;i<(paddWidth+1);i++)
-                                            unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+((ei_fd+1)*m_uiElementOrder+paddWidth+i)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                        for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
+                                            unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
                                     }
 
                                     
 
 
                                 }
-                            #else
+                                #else
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+                                this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
+
+                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #endif
+                                
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c2.stop();
+                                #endif
+
+
+                            }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c3.start();
+                                #endif
+                                // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
+                                child[4]=lookUp;
+                                child[5]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                assert(child[5]!=LOOK_UP_TABLE_DEFAULT);
+                                child[6]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_UP];
+                                assert(child[6]!=LOOK_UP_TABLE_DEFAULT);
+                                child[7]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_UP];
+                                assert(child[7]!=LOOK_UP_TABLE_DEFAULT);
+
+                                if(m_uiElementOrder ==4 && paddWidth==3)
+                                {
+                                    child[0]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_BACK];
+                                    child[1]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_BACK];
+                                    child[2]=m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_BACK];
+                                    child[3]=m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_BACK];
+
+                                }else
+                                {
+                                    child[0]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_BACK];
+                                    child[1]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_BACK];
+                                    child[2]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_BACK];
+                                    child[3]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_BACK];
+                                }
+
+                                
+
+                                this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
+
+
+                                
+
+
+
+                                //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"child to parent interpolation executed"<<std::endl;
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
+                                            unzippedVec[offset+(ek*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c3.stop();
+                                #endif
+
+                            }
+
+                        }
+
+                    }
+
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[4].stop();
+                    #endif
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[5].start();
+                    #endif
+                    
+                    if((pNodes[elem].maxZ()==blkNode.maxZ()))
+                    {
+                        assert(ek==(1u<<(regLev-blkNode.getLevel()))-1);
+                        lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_FRONT];
+                        if(lookUp!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
+                            {
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c1.start();
+                                #endif
+                                assert(paddWidth<(m_uiElementOrder+1));
+                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int k=0;k<(paddWidth+1);k++)
+                                            unzippedVec[offset+((ek+1)*m_uiElementOrder+paddWidth+k)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c1.stop();
+                                #endif
+
+
+                            }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
+                            {
+
+                                assert(pNodes[lookUp].getLevel()+1==regLev);
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c2.start();
+                                #endif
+                                mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
+                                cnum=( (((((pNodes[elem].getZ()+sz)) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
+                                //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()+sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
+
+                                
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.start();
+                                #endif
+
+                                
+
+                                #ifdef USE_FD_INTERP_FOR_UNZIP
+                                const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_FRONT,child.data(),fid,cid);
+                                if(st > 0)
+                                {
+                                    const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
+                                    this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
+                                    for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
+                                    {
+                                        assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_FRONT]]);
+                                        assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
+
+                                        if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
+                                            continue;
+                                        
+                                        this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
+                                        
+                                        const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
+                                        const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
+                                        const unsigned int regL_fd = blk_fd.getRegularGridLev();
+                                        
+                                        const unsigned int lx_fd = blk_fd.getAllocationSzX();
+                                        const unsigned int ly_fd = blk_fd.getAllocationSzY();
+                                        const unsigned int lz_fd = blk_fd.getAllocationSzZ();
+
+                                        const unsigned int offset_fd = blk_fd.getOffset();
+
+                                        const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
+                                        const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
+                                        const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
+
+                                        for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                        for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int k=0;k<(paddWidth+1);k++)
+                                            unzippedVec[offset_fd+((ek_fd+1)*m_uiElementOrder+paddWidth+k)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+
+                                    }
+
+                                    
+                                }
+                                #else
                                 this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
                                 this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
                                 assert(paddWidth<(m_uiElementOrder+1));
-                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                    for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                        for(unsigned int i=0;i<(paddWidth+1);i++)
-                                            unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+((ei+1)*m_uiElementOrder+paddWidth+i)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                            #endif
 
-
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c2.stop();
-                            #endif
-
-
-                        }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c3.start();
-                            #endif
-                            // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
-                            child[0]=lookUp;
-                            child[2]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_UP];
-                            assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
-                            child[4]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[4]!=LOOK_UP_TABLE_DEFAULT);
-                            child[6]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[6]!=LOOK_UP_TABLE_DEFAULT);
-
-                            if(m_uiElementOrder ==4 && paddWidth==3)
-                            {
-                                child[1]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
-                                child[3]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_RIGHT];
-                                child[5]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_RIGHT];
-                                child[7]=m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_RIGHT];
-
-                            }else
-                            {
-                                child[1]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
-                                child[3]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_RIGHT];
-                                child[5]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_RIGHT];
-                                child[7]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_RIGHT];
-
-                            }
-
-                            
-
-
-                            this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
-
-                            #ifdef DEBUG_UNZIP_OP_3PT
-                                faceNeighCnum1[0]=0;faceNeighCnum1[1]=2;faceNeighCnum1[2]=4;faceNeighCnum1[3]=6;
-                                faceNeighCnum2[0]=1;faceNeighCnum2[1]=3;faceNeighCnum2[2]=5;faceNeighCnum2[3]=7;
-
-
-                                for(unsigned int index=0;index<(NUM_CHILDREN>>1u);index++)
-                                {
-                                    interpUpWind(fd::D1_ORDER_4_UPWIND,elem,child[faceNeighCnum1[index]],&(*(lookUpElementVec.begin())),faceNeighCnum2[index],&(*(parentEleInterpIn.begin())),&(*(parentEleInterpOut.begin())),OCT_DIR_RIGHT,paddWidth,zippedVec,&(*(interpOrInjectionOut.begin())));
-                                }
-                            #endif
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
                                 for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                    for(unsigned int i=0;i<(paddWidth+1);i++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+((ei+1)*m_uiElementOrder+paddWidth+i)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
+                                        for(unsigned int k=0;k<(paddWidth+1);k++)
+                                            unzippedVec[offset+((ek+1)*m_uiElementOrder+paddWidth+k)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c3.stop();
-                            #endif
+                                #endif
+
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c2.stop();
+                                #endif
 
 
-                        }
 
-                    }
-
-                }
-
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[1].stop();
-                #endif
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[2].start();
-                #endif
-
-                //--------------------------------------------------------------------------------------------------- Y Direction----------------------------------------------------------------------------------
-                if((pNodes[elem].minY()==blkNode.minY()))
-                {
-                    assert(ej==0);
-
-                    lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_DOWN];
-                    if(lookUp!=LOOK_UP_TABLE_DEFAULT)
-                    {
-
-                        if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c1.start();
-                            #endif
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
-                                       unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c1.stop();
-                            #endif
-
-                        }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
-                        {
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c2.start();
-                            #endif
-                            assert(pNodes[lookUp].getLevel()+1==regLev);
-                            mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
-                            cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | (((((pNodes[elem].getY()-sz)) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
-
-                            //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()-sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
-                            
-
-                            //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"parent to child interpolation executed"<<std::endl;
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-
-                            #ifdef USE_FD_INTERP_FOR_UNZIP
-                            const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_DOWN,child.data(),fid,cid);
-                            if(st > 0)
+                            }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
                             {
-                                const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
-                                this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
-                                for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
-                                {
-                                    assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_DOWN]]);
-                                    assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
-
-                                    if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
-                                        continue;
-                                        
-                                    this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
-
-                                    const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
-                                    const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
-                                    const unsigned int regL_fd = blk_fd.getRegularGridLev();
-                                    
-                                    const unsigned int lx_fd = blk_fd.getAllocationSzX();
-                                    const unsigned int ly_fd = blk_fd.getAllocationSzY();
-                                    const unsigned int lz_fd = blk_fd.getAllocationSzZ();
-
-                                    const unsigned int offset_fd = blk_fd.getOffset();
-
-                                    const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
-                                    
-                                    for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                        for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                            for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
-                                                unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                                }
-
-                                
-
-
-                            }
-                            #else
-                                this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-                                this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
-
-                                for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-
-                            #endif
-
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c2.stop();
-                            #endif
-
-
-                        }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
-                        {
-                            // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c3.start();
-                            #endif
-                            child[2]=lookUp;
-                            child[3]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_RIGHT];
-                            assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
-                            child[6]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[6]!=LOOK_UP_TABLE_DEFAULT);
-                            child[7]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[7]!=LOOK_UP_TABLE_DEFAULT);
-
-                            if(m_uiElementOrder ==4 && paddWidth==3)
-                            {
-                                child[0]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_DOWN];
-                                child[1]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_DOWN];
-                                child[4]=m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_DOWN];
-                                child[5]=m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_DOWN];
-
-
-                            }else
-                            {
-                                child[0]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_DOWN];
-                                child[1]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_DOWN];
-                                child[4]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_DOWN];
-                                child[5]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_DOWN];
-
-                            }
-
-                            
-                            this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
-
-                            #ifdef DEBUG_UNZIP_OP_3PT
-                                faceNeighCnum1[0]=2;faceNeighCnum1[1]=3;faceNeighCnum1[2]=6;faceNeighCnum1[3]=7;
-                                faceNeighCnum2[0]=0;faceNeighCnum2[1]=1;faceNeighCnum2[2]=4;faceNeighCnum2[3]=5;
-
-
-                                for(unsigned int index=0;index<(NUM_CHILDREN>>1u);index++)
-                                {
-                                interpDownWind(fd::D1_ORDER_4_DOWNWIND,elem,child[faceNeighCnum1[index]],&(*(lookUpElementVec.begin())),faceNeighCnum2[index],&(*(parentEleInterpIn.begin())),&(*(parentEleInterpOut.begin())),OCT_DIR_DOWN,paddWidth,zippedVec,&(*(interpOrInjectionOut.begin())));
-                                }
-                            #endif
-
-
-                            //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"child to parent interpolation executed"<<std::endl;
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int j=(m_uiElementOrder-paddWidth);j<(m_uiElementOrder+1);j++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+(ej*m_uiElementOrder+j-(m_uiElementOrder-paddWidth))*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c3.stop();
-                            #endif
-
-                        }
-
-                    }
-
-                }
-
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[2].stop();
-                #endif
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[3].start();
-                #endif
-                if((pNodes[elem].maxY()==blkNode.maxY()))
-                {
-                    assert(ej==(1u<<(regLev-blkNode.getLevel()))-1);
-                    lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_UP];
-                    if(lookUp!=LOOK_UP_TABLE_DEFAULT)
-                    {
-                        if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c1.start();
-                            #endif
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int j=0;j<(paddWidth+1);j++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+((ej+1)*m_uiElementOrder+paddWidth+j)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c1.stop();
-                            #endif
-
-
-                        }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c2.start();
-                            #endif
-                            assert(pNodes[lookUp].getLevel()+1==regLev);
-                            mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
-                            cnum=( ((((pNodes[elem].getZ()) >> mid_bit) & 1u) << 2u) | (((((pNodes[elem].getY()+sz)) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
-                            //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()+sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
-                            
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-
-                            
-
-                            #ifdef USE_FD_INTERP_FOR_UNZIP
-                            const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_UP,child.data(),fid,cid);
-                            if(st > 0)
-                            {
-                                const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
-                                this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
-                                for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
-                                {
-                                    assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_UP]]);
-                                    assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
-
-                                    if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
-                                        continue;
-
-                                    this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
-
-
-                                    const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
-                                    const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
-                                    const unsigned int regL_fd = blk_fd.getRegularGridLev();
-                                    
-                                    const unsigned int lx_fd = blk_fd.getAllocationSzX();
-                                    const unsigned int ly_fd = blk_fd.getAllocationSzY();
-                                    const unsigned int lz_fd = blk_fd.getAllocationSzZ();
-
-                                    const unsigned int offset_fd = blk_fd.getOffset();
-                                    
-                                    const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
-                                    
-                                    for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                        for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                            for(unsigned int j=0;j<(paddWidth+1);j++)
-                                                unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k+paddWidth)*(ly_fd*lx_fd)+((ej_fd+1)*m_uiElementOrder+paddWidth+j)*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                                }
-
-                                
-
-
-                            }
-                            #else
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-                            this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
-
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int j=0;j<(paddWidth+1);j++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+((ej+1)*m_uiElementOrder+paddWidth+j)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #endif
-
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c2.stop();
-                            #endif
-
-
-
-                        }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c3.start();
-                            #endif
-                            // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
-                            child[0]=lookUp;
-                            child[1]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
-                            assert(child[1]!=LOOK_UP_TABLE_DEFAULT);
-                            child[4]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[4]!=LOOK_UP_TABLE_DEFAULT);
-                            child[5]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
-                            assert(child[5]!=LOOK_UP_TABLE_DEFAULT);
-
-                            if(m_uiElementOrder ==4 && paddWidth==3)
-                            {
+                                // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_f_c3.start();
+                                #endif
+                                child[0]=lookUp;
+                                child[1]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
+                                assert(child[1]!=LOOK_UP_TABLE_DEFAULT);
                                 child[2]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_UP];
+                                assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
                                 child[3]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_UP];
-                                child[6]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_UP];
-                                child[7]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_UP];
+                                assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
 
-
-                            }else
-                            {
-                                child[2]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_UP];
-                                child[3]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_UP];
-                                child[6]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_UP];
-                                child[7]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_UP];
-                            }
-
-                            
-
-
-                            this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
-
-                            #ifdef DEBUG_UNZIP_OP_3PT
-                                faceNeighCnum1[0]=0;faceNeighCnum1[1]=1;faceNeighCnum1[2]=4;faceNeighCnum1[3]=5;
-                                faceNeighCnum2[0]=2;faceNeighCnum2[1]=3;faceNeighCnum2[2]=6;faceNeighCnum2[3]=7;
-
-
-                                for(unsigned int index=0;index<(NUM_CHILDREN>>1u);index++)
+                                if(m_uiElementOrder ==4 && paddWidth==3)
                                 {
-                                interpUpWind(fd::D1_ORDER_4_UPWIND,elem,child[faceNeighCnum1[index]],&(*(lookUpElementVec.begin())),faceNeighCnum2[index],&(*(parentEleInterpIn.begin())),&(*(parentEleInterpOut.begin())),OCT_DIR_UP,paddWidth,zippedVec,&(*(interpOrInjectionOut.begin())));
-                                }
-                            #endif
+                                    child[4]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
+                                    child[5]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
+                                    child[6]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
+                                    child[7]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
 
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int k=0;k<(m_uiElementOrder+1);k++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int j=0;j<(paddWidth+1);j++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k+paddWidth)*(ly*lx)+((ej+1)*m_uiElementOrder+paddWidth+j)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c3.stop();
-                            #endif
-
-                        }
-
-                    }
-
-                }
-
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_face[3].stop();
-                #endif
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_face[4].start();
-                #endif
-                //--------------------------------------------------------------------- Z direction padding. -------------------------------------------------------------------------------------------------------
-
-                if((pNodes[elem].minZ()==blkNode.minZ()))
-                {
-                    assert(ek==0);
-
-                    lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_BACK];
-                    if(lookUp!=LOOK_UP_TABLE_DEFAULT)
-                    {
-
-                        if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c1.start();
-                            #endif
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c1.stop();
-                            #endif
-
-
-                        }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c2.start();
-                            #endif
-                            assert(pNodes[lookUp].getLevel()+1==regLev);
-                            mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
-                            cnum=( (((((pNodes[elem].getZ()-sz)) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
-                            //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()-sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
-                            
-                            //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"parent to child interpolation executed"<<std::endl;
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-
-                            
-
-                            #ifdef USE_FD_INTERP_FOR_UNZIP
-                            const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_BACK,child.data(),fid,cid);
-                            if(st > 0)
-                            {
-                                const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
-                                this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
-                                for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
+                                }else
                                 {
-                                    assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_BACK]]);
-                                    assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
+                                    child[4]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
+                                    child[5]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
+                                    child[6]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
+                                    child[7]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
 
-                                    if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
-                                        continue;
-                                    
-                                    this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
-                                    const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
-                                    const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
-                                    const unsigned int regL_fd = blk_fd.getRegularGridLev();
-                                    
-                                    const unsigned int lx_fd = blk_fd.getAllocationSzX();
-                                    const unsigned int ly_fd = blk_fd.getAllocationSzY();
-                                    const unsigned int lz_fd = blk_fd.getAllocationSzZ();
-
-                                    const unsigned int offset_fd = blk_fd.getOffset();
-
-
-                                    
-                                    const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
-                                    
-
-                                    for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                    for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
-                                        unzippedVec[offset_fd+(ek_fd*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
                                 }
+
+                                this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
+
 
                                 
 
-
-                            }
-                            #else
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-                            this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
-
-                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #endif
-                            
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c2.stop();
-                            #endif
-
-
-                        }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c3.start();
-                            #endif
-                            // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
-                            child[4]=lookUp;
-                            child[5]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_RIGHT];
-                            assert(child[5]!=LOOK_UP_TABLE_DEFAULT);
-                            child[6]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_UP];
-                            assert(child[6]!=LOOK_UP_TABLE_DEFAULT);
-                            child[7]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_UP];
-                            assert(child[7]!=LOOK_UP_TABLE_DEFAULT);
-
-                            if(m_uiElementOrder ==4 && paddWidth==3)
-                            {
-                                child[0]=m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_BACK];
-                                child[1]=m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_BACK];
-                                child[2]=m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_BACK];
-                                child[3]=m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_BACK];
-
-                            }else
-                            {
-                                child[0]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[4]*m_uiNumDirections+OCT_DIR_BACK];
-                                child[1]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[5]*m_uiNumDirections+OCT_DIR_BACK];
-                                child[2]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[6]*m_uiNumDirections+OCT_DIR_BACK];
-                                child[3]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[7]*m_uiNumDirections+OCT_DIR_BACK];
-                            }
-
-                            
-
-                            this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
-
-
-                            #ifdef DEBUG_UNZIP_OP_3PT
-                                faceNeighCnum1[0]=4;faceNeighCnum1[1]=5;faceNeighCnum1[2]=6;faceNeighCnum1[3]=7;
-                                faceNeighCnum2[0]=0;faceNeighCnum2[1]=1;faceNeighCnum2[2]=2;faceNeighCnum2[3]=3;
-
-
-                                for(unsigned int index=0;index<(NUM_CHILDREN>>1u);index++)
-                                {
-                                    interpDownWind(fd::D1_ORDER_4_DOWNWIND,elem,child[faceNeighCnum1[index]],&(*(lookUpElementVec.begin())),faceNeighCnum2[index],&(*(parentEleInterpIn.begin())),&(*(parentEleInterpOut.begin())),OCT_DIR_BACK,paddWidth,zippedVec,&(*(interpOrInjectionOut.begin())));
-                                }
-                            #endif
-
-
-
-                            //std::cout<<"m_uiActiveRank : "<<m_uiActiveRank<<"child to parent interpolation executed"<<std::endl;
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
                                 dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=(m_uiElementOrder-paddWidth);k<(m_uiElementOrder+1);k++)
-                                        unzippedVec[offset+(ek*m_uiElementOrder+k-(m_uiElementOrder-paddWidth))*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c3.stop();
-                            #endif
-
-                        }
-
-                    }
-
-                }
-
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[4].stop();
-                #endif
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[5].start();
-                #endif
-                
-                if((pNodes[elem].maxZ()==blkNode.maxZ()))
-                {
-                    assert(ek==(1u<<(regLev-blkNode.getLevel()))-1);
-                    lookUp=m_uiE2EMapping[elem*m_uiNumDirections+OCT_DIR_FRONT];
-                    if(lookUp!=LOOK_UP_TABLE_DEFAULT)
-                    {
-                        if(pNodes[lookUp].getLevel()==pNodes[elem].getLevel())
-                        {
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c1.start();
-                            #endif
-                            assert(paddWidth<(m_uiElementOrder+1));
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=0;k<(paddWidth+1);k++)
-                                        unzippedVec[offset+((ek+1)*m_uiElementOrder+paddWidth+k)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=lookUpElementVec[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c1.stop();
-                            #endif
-
-
-                        }else if(pNodes[lookUp].getLevel()<pNodes[elem].getLevel())
-                        {
-
-                            assert(pNodes[lookUp].getLevel()+1==regLev);
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c2.start();
-                            #endif
-                            mid_bit=m_uiMaxDepth - pNodes[lookUp].getLevel()-1;
-                            cnum=( (((((pNodes[elem].getZ()+sz)) >> mid_bit) & 1u) << 2u) | ((((pNodes[elem].getY()) >> mid_bit) & 1u) << 1u) | (((pNodes[elem].getX()) >>mid_bit) & 1u));
-                            //std::cout<<"elem: "<<elem<<" : "<<m_uiAllElements[elem]<<" lookup: "<<m_uiAllElements[lookUp]<<" child: "<<ot::TreeNode(pNodes[elem].getX()+sz,pNodes[elem].getY(),pNodes[elem].getZ(),pNodes[elem].getLevel(),m_uiDim,m_uiMaxDepth)<<" cnum: "<<cnum<<std::endl;
-
-                            
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-
-                            
-
-                            #ifdef USE_FD_INTERP_FOR_UNZIP
-                            const int st = this->getBlkBdyParentCNums(blk,elem,OCT_DIR_FRONT,child.data(),fid,cid);
-                            if(st > 0)
-                            {
-                                const unsigned int NUM_CHILDREN_BY2 = (NUM_CHILDREN>>1u);
-                                this->getBlkBoundaryParentNodes(zippedVec, lookUpElementVec.data(), interpolationInput.data(), interpOrInjectionOut.data(), lookUp, fid, cid,child.data());
-                                for(unsigned int w =0; w < NUM_CHILDREN_BY2 ; w++)
-                                {
-                                    assert(pNodes[lookUp] == pNodes[m_uiE2EMapping[child[fid[w]]*m_uiNumDirections + OCT_DIR_FRONT]]);
-                                    assert(child[fid[w]] != LOOK_UP_TABLE_DEFAULT);
-
-                                    if(child[fid[w]]<m_uiElementLocalBegin || child[fid[w]]>=m_uiElementLocalEnd)
-                                        continue;
-                                    
-                                    this->parent2ChildInterpolation(lookUpElementVec.data(),interpOrInjectionOut.data(),cid[w],m_uiDim);
-                                    
-                                    const ot::Block blk_fd = m_uiLocalBlockList[m_uiE2BlkMap[(child[fid[w]] - m_uiElementLocalBegin)]];
-                                    const ot::TreeNode blkNode_fd = blk_fd.getBlockNode();
-                                    const unsigned int regL_fd = blk_fd.getRegularGridLev();
-                                    
-                                    const unsigned int lx_fd = blk_fd.getAllocationSzX();
-                                    const unsigned int ly_fd = blk_fd.getAllocationSzY();
-                                    const unsigned int lz_fd = blk_fd.getAllocationSzZ();
-
-                                    const unsigned int offset_fd = blk_fd.getOffset();
-
-                                    const unsigned int ei_fd = (pNodes[child[fid[w]]].getX()-blkNode_fd.getX())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ej_fd = (pNodes[child[fid[w]]].getY()-blkNode_fd.getY())>>(m_uiMaxDepth-regL_fd);
-                                    const unsigned int ek_fd = (pNodes[child[fid[w]]].getZ()-blkNode_fd.getZ())>>(m_uiMaxDepth-regL_fd);
-
-                                    for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
+                                #endif
+                                for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
                                     for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=0;k<(paddWidth+1);k++)
-                                        unzippedVec[offset_fd+((ek_fd+1)*m_uiElementOrder+paddWidth+k)*(ly_fd*lx_fd)+(ej_fd*m_uiElementOrder+j+paddWidth)*(lx_fd)+(ei_fd*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
+                                        for(unsigned int k=0;k<(paddWidth+1);k++)
+                                            unzippedVec[offset+((ek+1)*m_uiElementOrder+paddWidth+k)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
 
-                                }
+                                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                                    dendro::timer::t_unzip_sync_cpy.stop();
+                                    dendro::timer::t_unzip_sync_f_c3.stop();
+                                #endif
 
-                                
-                            }
-                            #else
-                            this->getElementNodalValues(zippedVec,&(*(lookUpElementVec.begin())),lookUp);
-                            this->parent2ChildInterpolation(&(*(lookUpElementVec.begin())),&(*(interpOrInjectionOut.begin())),cnum);
-                            assert(paddWidth<(m_uiElementOrder+1));
-
-                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=0;k<(paddWidth+1);k++)
-                                        unzippedVec[offset+((ek+1)*m_uiElementOrder+paddWidth+k)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #endif
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c2.stop();
-                            #endif
-
-
-
-                        }else if(pNodes[lookUp].getLevel()>pNodes[elem].getLevel())
-                        {
-                            // get the immediate neighbours. These cannot be LOOK_UP_TABLE_DEFAULT.
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_f_c3.start();
-                            #endif
-                            child[0]=lookUp;
-                            child[1]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_RIGHT];
-                            assert(child[1]!=LOOK_UP_TABLE_DEFAULT);
-                            child[2]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_UP];
-                            assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
-                            child[3]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_UP];
-                            assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
-
-                            if(m_uiElementOrder ==4 && paddWidth==3)
-                            {
-                                child[4]=m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
-                                child[5]=m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
-                                child[6]=m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
-                                child[7]=m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
-
-                            }else
-                            {
-                                child[4]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[0]*m_uiNumDirections+OCT_DIR_FRONT];
-                                child[5]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[1]*m_uiNumDirections+OCT_DIR_FRONT];
-                                child[6]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[2]*m_uiNumDirections+OCT_DIR_FRONT];
-                                child[7]=LOOK_UP_TABLE_DEFAULT;//m_uiE2EMapping[child[3]*m_uiNumDirections+OCT_DIR_FRONT];
 
                             }
-
-                            this->child2ParentInjection(zippedVec,interpOrInjectionOut.data(),child.data(),pNodes[lookUp].getLevel());
-
-
-                            #ifdef DEBUG_UNZIP_OP_3PT
-                                faceNeighCnum1[0]=0;faceNeighCnum1[1]=1;faceNeighCnum1[2]=2;faceNeighCnum1[3]=3;
-                                faceNeighCnum2[0]=4;faceNeighCnum2[1]=5;faceNeighCnum2[2]=6;faceNeighCnum2[3]=7;
-
-                                for(unsigned int index=0;index<(NUM_CHILDREN>>1u);index++)
-                                {
-                                interpUpWind(fd::D1_ORDER_4_UPWIND,elem,child[faceNeighCnum1[index]],&(*(lookUpElementVec.begin())),faceNeighCnum2[index],&(*(parentEleInterpIn.begin())),&(*(parentEleInterpOut.begin())),OCT_DIR_FRONT,paddWidth,zippedVec,&(*(interpOrInjectionOut.begin())));
-                                }
-                            #endif
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                            dendro::timer::t_unzip_sync_cpy.start();
-                            #endif
-                            for(unsigned int j=0;j<(m_uiElementOrder+1);j++)
-                                for(unsigned int i=0;i<(m_uiElementOrder+1);i++)
-                                    for(unsigned int k=0;k<(paddWidth+1);k++)
-                                        unzippedVec[offset+((ek+1)*m_uiElementOrder+paddWidth+k)*(ly*lx)+(ej*m_uiElementOrder+j+paddWidth)*(lx)+(ei*m_uiElementOrder+i+paddWidth)]=interpOrInjectionOut[k*(m_uiElementOrder+1)*(m_uiElementOrder+1)+j*(m_uiElementOrder+1)+i];
-
-                            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                                dendro::timer::t_unzip_sync_cpy.stop();
-                                dendro::timer::t_unzip_sync_f_c3.stop();
-                            #endif
-
 
                         }
 
                     }
 
-                }
-
-                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                    dendro::timer::t_unzip_sync_face[5].stop();
-                #endif
-
-
-            }
-
-
-            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                dendro::timer::t_unzip_sync_edge.start();
-            #endif
-                blockDiagonalUnZip(m_uiLocalBlockList[blk],zippedVec,unzippedVec);
-
-            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                dendro::timer::t_unzip_sync_edge.stop();
-            #endif
-
-            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                dendro::timer::t_unzip_sync_vtex.start();
-            #endif
-                blockVertexUnZip(m_uiLocalBlockList[blk],zippedVec,unzippedVec);
-
-            #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
-                dendro::timer::t_unzip_sync_vtex.stop();
-            #endif
-
-        }
-
-        if(m_uiElementOrder ==4 && paddWidth==3)
-        {
-            //std::cout<<"read spt points : "<<m_uiElementOrder<<" pwidth : "<<paddWidth<<std::endl;
-            std::vector<T> recv_buf;
-            recv_buf.resize(m_uiRecvOffsetRePt[m_uiActiveNpes-1] + m_uiRecvCountRePt[m_uiActiveNpes-1]);
-
-            readSpecialPtsEnd(zippedVec,&(*(recv_buf.begin())));
-            int rCount=0;
-            
-            for(unsigned int i=0;i<m_uiUnzip_3pt_keys.size();i++)
-            {
-                const std::vector<unsigned int> * ownerList = m_uiUnzip_3pt_keys[i].getOwnerList();
-                for(unsigned int w=0; w< ownerList->size(); w++)
-                {
-                    
-                    #ifdef DEBUG_UNZIP_OP_3PT
-                        if(fabs(unzippedVec[(*(ownerList))[w]]-recv_buf[rCount])>1e-3)
-                        {
-                            std::cout<<"rank: "<<m_uiActiveRank<<" interp_deriv : "<< unzippedVec[(*(ownerList))[w]]<<" recv: "<<recv_buf[rCount]<<" diff: "<<fabs(unzippedVec[(*(ownerList))[w]]-recv_buf[rCount])<<" unzip index: "<<(*(ownerList))[w]<<std::endl;
-                            //MPI_Abort(m_uiCommActive,0);
-                        }
-                            
+                    #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                        dendro::timer::t_unzip_sync_face[5].stop();
                     #endif
-                    unzippedVec[(*(ownerList))[w]] = recv_buf[rCount];
+
+
                 }
 
-                if(m_uiUnzip_3pt_keys[i].getOwnerList()->size()>0)
-                    rCount++;
 
-                    
+                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                    dendro::timer::t_unzip_sync_edge.start();
+                #endif
+                    blockDiagonalUnZip(m_uiLocalBlockList[blk],zippedVec,unzippedVec);
+
+                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                    dendro::timer::t_unzip_sync_edge.stop();
+                #endif
+
+                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                    dendro::timer::t_unzip_sync_vtex.start();
+                #endif
+                    blockVertexUnZip(m_uiLocalBlockList[blk],zippedVec,unzippedVec);
+
+                #ifdef ENABLE_DENDRO_PROFILE_COUNTERS
+                    dendro::timer::t_unzip_sync_vtex.stop();
+                #endif
+
             }
 
+
+            /*if(m_uiElementOrder ==4 && paddWidth==3)
+            {
+                //std::cout<<"read spt points : "<<m_uiElementOrder<<" pwidth : "<<paddWidth<<std::endl;
+                std::vector<T> recv_buf;
+                recv_buf.resize(m_uiRecvOffsetRePt[m_uiActiveNpes-1] + m_uiRecvCountRePt[m_uiActiveNpes-1]);
+
+                readSpecialPtsEnd(zippedVec,&(*(recv_buf.begin())));
+                int rCount=0;
+                
+                for(unsigned int i=0;i<m_uiUnzip_3pt_keys.size();i++)
+                {
+                    const std::vector<unsigned int> * ownerList = m_uiUnzip_3pt_keys[i].getOwnerList();
+                    for(unsigned int w=0; w< ownerList->size(); w++)
+                    {
+                        
+                        unzippedVec[(*(ownerList))[w]] = recv_buf[rCount];
+                    }
+
+                    if(m_uiUnzip_3pt_keys[i].getOwnerList()->size()>0)
+                        rCount++;
+
+                        
+                }
+
+            }*/
+
+        
         }
+
+
+
+        
+
+       
 
 
 
@@ -9336,7 +8692,7 @@ namespace ot
     }
 
     template <typename T>
-    void Mesh::unzip(const T* zippedVec, T* unzippedVec)
+    void Mesh::unzip(const T* in, T* out, unsigned int dof)
     {
         if( (!m_uiIsActive) || (m_uiLocalBlockList.empty())  ) return;
 
@@ -9347,11 +8703,12 @@ namespace ot
             blkIDs[i] = i ; 
 
         // unzip all the blocks. 
-        this->unzip(zippedVec,unzippedVec,blkIDs.data(),blkIDs.size());
+        this->unzip(in,out,blkIDs.data(),blkIDs.size(),dof);
         
 
     }
 
+    #if 0
     template<typename T>
     void Mesh::readSpecialPtsBegin(const T* in)
     {
@@ -9523,6 +8880,7 @@ namespace ot
 
         return;
     }
+    #endif
 
     template<typename T>
     int Mesh::getFaceNeighborValues(unsigned int eleID, const T* in, T* out, T* coords, unsigned int * neighID, unsigned int face, NeighbourLevel & level) const
@@ -9793,6 +9151,7 @@ namespace ot
         const unsigned int ei=(m_uiAllElements[ele].getX()-blkNode.getX())>>(m_uiMaxDepth-regLev);
         const unsigned int ej=(m_uiAllElements[ele].getY()-blkNode.getY())>>(m_uiMaxDepth-regLev);
         const unsigned int ek=(m_uiAllElements[ele].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLev);
+        const unsigned int eleIDMax = m_uiLocalBlockList[blkID].getElemSz1D();
 
         
 
@@ -9813,6 +9172,79 @@ namespace ot
              for(unsigned int j=jb; j< je; j++)
               for(unsigned int i=ib; i< ie; i++)
                out[(k-kb) * en[1]*en[0] + (j-jb)*en[1] + (i-ib)] = uzipVec[offset + k*ly*lx + j*lx + i];
+
+            
+
+            // copy the unzip element last point to the padding region. 
+            if(m_uiAllElements[ele].minX()==0)
+            {
+                assert(ei==0);
+
+                for(unsigned int k=kb; k< ke; k++)
+                for(unsigned int j=jb; j< je; j++)
+                for(unsigned int i=ib; i< paddWidth; i++)
+                    out[(k-kb) * en[1]*en[0] + (j-jb)*en[1] + (i-ib)] = uzipVec[offset + k*ly*lx + j*lx + paddWidth];
+
+            }
+
+
+            if(m_uiAllElements[ele].minY()==0)
+            {
+                assert(ej==0);
+
+                for(unsigned int k=kb; k< ke; k++)
+                for(unsigned int j=jb; j< paddWidth; j++)
+                for(unsigned int i=ib; i< ie; i++)
+                    out[(k-kb) * en[1]*en[0] + (j-jb)*en[1] + (i-ib)] = uzipVec[offset + k*ly*lx + paddWidth*lx + i];
+
+            }
+
+            if(m_uiAllElements[ele].minZ()==0)
+            {
+                assert(ek==0);
+
+                for(unsigned int k=kb; k< paddWidth; k++)
+                for(unsigned int j=jb; j< je; j++)
+                for(unsigned int i=ib; i< ie; i++)
+                    out[(k-kb) * en[1]*en[0] + (j-jb)*en[1] + (i-ib)] = uzipVec[offset + paddWidth*ly*lx + j*lx + i];
+
+            }
+
+
+            if(m_uiAllElements[ele].maxX()==(1u<<m_uiMaxDepth))
+            {
+                assert(ei==(eleIDMax-1));
+
+                for(unsigned int k=kb; k< ke; k++)
+                for(unsigned int j=jb; j< je; j++)
+                for(unsigned int i=(ie-paddWidth); i< ie; i++)
+                    out[(k-kb) * en[1]*en[0] + (j-jb)*en[1] + (i-ib)] = uzipVec[offset + k*ly*lx + j*lx + (ie-paddWidth-1)];
+
+            }
+
+            if(m_uiAllElements[ele].maxY()==(1u<<m_uiMaxDepth))
+            {
+                assert(ej==(eleIDMax-1));
+
+                for(unsigned int k=kb; k< ke; k++)
+                for(unsigned int j=(je-paddWidth); j< je; j++)
+                for(unsigned int i=ib; i< ie; i++)
+                    out[(k-kb) * en[1]*en[0] + (j-jb)*en[1] + (i-ib)] = uzipVec[offset + k*ly*lx + (je-paddWidth-1)*lx + i];
+
+            }
+
+            if(m_uiAllElements[ele].maxZ()==(1u<<m_uiMaxDepth))
+            {
+                assert(ek==(eleIDMax-1));
+
+                for(unsigned int k=(ke-paddWidth); k< ke; k++)
+                for(unsigned int j=jb; j< je; j++)
+                for(unsigned int i=ib; i< ie; i++)
+                    out[(k-kb) * en[1]*en[0] + (j-jb)*en[1] + (i-ib)] = uzipVec[offset + (ke-paddWidth-1)*ly*lx + j*lx + i];
+
+            }
+
+            
 
         }else
         {
@@ -9908,6 +9340,310 @@ namespace ot
                 
 
         }
+
+    }
+
+
+    template<typename T>
+    void Mesh::unzipDG(const T* in, T* out, const unsigned int *blkIDs, unsigned int numblks,unsigned int dof)
+    {
+        if(!m_uiIsActive)
+            return;
+        
+        const ot::TreeNode* pNodes   =   m_uiAllElements.data();
+        const ot::Block* blkList     =   m_uiLocalBlockList.data();
+        const unsigned int eOrder    =   m_uiElementOrder;
+        const unsigned int nPe       =   m_uiNpE;
+
+        const unsigned int dgSz  =  m_uiAllElements.size() * nPe;
+        const unsigned int cgSz  =  this->getDegOfFreedom();
+        const unsigned int unSz  =  this->getDegOfFreedomUnZip();   
+
+        const unsigned int* e2n  =  this->getE2NMapping().data();
+        const unsigned int* e2e  =  this->getE2EMapping().data();
+
+        const T * dgWVec = in;
+        T * uzWVec = out;
+
+        for(unsigned int bid=0; bid < numblks; bid++)
+        {
+            const unsigned int blk = blkIDs[bid];
+            const unsigned int regLevel  =   blkList[blk].getRegularGridLev();
+            const ot::TreeNode blkNode   =   blkList[blk].getBlockNode();
+            const unsigned int PW        =   blkList[blk].get1DPadWidth();
+
+            const unsigned int lx     =  blkList[blk].getAllocationSzX();
+            const unsigned int ly     =  blkList[blk].getAllocationSzY();
+            const unsigned int lz     =  blkList[blk].getAllocationSzZ();
+            const unsigned int offset =  blkList[blk].getOffset(); 
+
+            const unsigned int bLev  =  pNodes[blkList[blk].getLocalElementBegin()].getLevel();
+            
+            std::vector<unsigned int> eid;
+            this->blkUnzipElementIDs(blk,eid);
+            
+            // now need to copy to the block unzip/ block asyncVector 
+            const double  hx = (1u<<(m_uiMaxDepth-bLev))/(double)eOrder;
+            
+            const double xmin = blkNode.minX() - PW*hx; const double xmax = blkNode.maxX() + PW*hx;
+            const double ymin = blkNode.minY() - PW*hx; const double ymax = blkNode.maxY() + PW*hx;
+            const double zmin = blkNode.minZ() - PW*hx; const double zmax = blkNode.maxZ() + PW*hx;
+
+            std::vector<ot::TreeNode> childOct;
+            childOct.reserve(NUM_CHILDREN);
+
+            std::vector<T> p2cI;
+            p2cI.resize(nPe);
+
+            const double d_compar_tol=1e-6;
+
+            
+
+            for(unsigned int m=0; m < eid.size(); m++)
+            {
+                const unsigned int ele = eid[m];
+                
+                // no interpolation needed just copy. 
+                if(pNodes[ele].getLevel()==bLev)
+                {
+                    const double hh = (1u<<(m_uiMaxDepth - pNodes[ele].getLevel()))/(double) eOrder;
+                    const double invhh = 1.0/hh;
+                    
+                    for(unsigned int k=0; k < eOrder+1; k++)
+                    {
+                        double zz  = pNodes[ele].minZ() + k*hh;
+                        
+                        if(fabs(zz-zmin)<d_compar_tol) zz=zmin;
+                        if(fabs(zz-zmax)<d_compar_tol) zz=zmax;
+
+                        if(zz < zmin || zz > zmax) 
+                            continue;
+                        const unsigned int kkz = std::round((zz-zmin)*invhh);
+                        assert( std::fabs(zz-zmin-kkz*hh) < 1e-6);
+                        assert(kkz >= 0 && kkz < lz);
+
+                        for(unsigned int j=0; j < eOrder+1; j++)
+                        {   
+                            double yy  = pNodes[ele].minY() + j*hh;
+
+                            if(fabs(yy-ymin)<d_compar_tol) yy=ymin;
+                            if(fabs(yy-ymax)<d_compar_tol) yy=ymax;
+
+                            if(yy < ymin || yy > ymax) 
+                                continue;
+                            const unsigned int jjy = std::round((yy-ymin)*invhh);
+                            //std::cout<<"yy: "<<yy<<" (ymin + hh*jjy): "<<(ymin + hh*jjy)<<std::endl;
+                            assert( std::fabs(yy-ymin-jjy*hh) < 1e-6);
+                            assert(jjy>=0 && jjy<ly);
+
+                            for(unsigned int i=0; i < eOrder+1; i++)
+                            {
+                                double xx = pNodes[ele].minX() + i*hh;
+
+                                if(fabs(xx-xmin)<d_compar_tol) xx=xmin;
+                                if(fabs(xx-xmax)<d_compar_tol) xx=xmax;
+                                
+                                if(xx < xmin || xx > xmax) 
+                                    continue;
+                                const unsigned int iix = std::round((xx-xmin)*invhh);
+                                assert( std::fabs(xx-xmin-iix*hh) < 1e-6);
+                                assert(iix>=0 && iix<lx);
+
+                                //std::cout<<"blk: "<<blk<<" copy : (i,j,k): ("<<kkz<<" , "<<jjy<<", "<<iix<<")"<<" of : "<<lx<<std::endl;
+
+                                for(unsigned int v=0; v < dof; v++)
+                                    uzWVec[v*unSz + offset + kkz*lx*ly + jjy*lx + iix] =  dgWVec[v*dgSz + ele*nPe + k*(eOrder+1)*(eOrder+1)+ j*(eOrder+1) + i];
+                                    
+
+                            }
+                        
+                        }
+                    
+                    }
+
+
+                }
+                else if(pNodes[ele].getLevel() > bLev)
+                {
+                    assert((bLev+1) == pNodes[ele].getLevel());
+                    const unsigned int cnum = pNodes[ele].getMortonIndex();
+                    ot::TreeNode tmpParent = pNodes[ele].getParent();
+                    
+                    const double hh = (1u<<(m_uiMaxDepth - pNodes[ele].getLevel()))/(double) eOrder;
+                    const double invhh = 1.0/(2*hh);
+
+                    assert(eOrder>1);
+                    const unsigned int cb =(eOrder%2==0) ? 0 : 1;
+
+                    for(unsigned int k=cb; k < eOrder+1; k+=2)
+                    {
+                        double zz  = (pNodes[ele].minZ() + k*hh);
+                        if(fabs(zz-zmin)<d_compar_tol) zz=zmin;
+                        if(fabs(zz-zmax)<d_compar_tol) zz=zmax;
+
+                        if(zz < zmin || zz > zmax) 
+                            continue;
+                        const unsigned int kkz = std::round((zz-zmin)*invhh);
+                        assert(kkz >= 0 && kkz < lz);
+
+                        for(unsigned int j=cb; j < eOrder+1; j+=2)
+                        {   
+                            double yy  = pNodes[ele].minY() + j*hh;
+                            
+                            if(fabs(yy-ymin)<d_compar_tol) yy=ymin;
+                            if(fabs(yy-ymax)<d_compar_tol) yy=ymax;
+
+                            if(yy < ymin || yy > ymax) 
+                                continue;
+
+                            const unsigned int jjy = std::round((yy-ymin)*invhh);
+                            assert(jjy>=0 && jjy<ly);
+
+                            for(unsigned int i=cb; i < eOrder+1; i+=2)
+                            {
+                                double xx = pNodes[ele].minX() + i*hh;
+
+                                if(fabs(xx-xmin)<d_compar_tol) xx=xmin;
+                                if(fabs(xx-xmax)<d_compar_tol) xx=xmax;
+                                
+                                if(xx < xmin || xx > xmax) 
+                                    continue;
+                                const unsigned int iix = std::round((xx-xmin)*invhh);
+                                assert(iix>=0 && iix<lx);
+
+                                //std::cout<<"blk: "<<blk<<" blk copy : (i,j,k): ("<<iix<<" , "<<jjy<<", "<<kkz<<")"<<" of : "<<lx<<" xx: "<<xx<<" yy: "<<yy<<" zz:"<<zz<<" xmin: "<<xmin<<" ymin: "<<ymin<<" zmin: "<<zmin<<" hh : "<<hh<<" hhx : "<<hx<<std::endl;
+                                for(unsigned int v=0; v < dof; v++)
+                                    uzWVec[v*unSz + offset + kkz*lx*ly + jjy*lx + iix] =  dgWVec[v*dgSz + ele*nPe + k*(eOrder+1)*(eOrder+1)+ j*(eOrder+1) + i];
+                                    
+                                
+
+                            }
+                        
+                        }
+                    
+                    }
+
+
+                
+                }
+                else
+                {
+                    assert((bLev) == (pNodes[ele].getLevel()+1));
+                    childOct.clear();
+                    pNodes[ele].addChildren(childOct); // note this is the ordering of SFC (depends on Hilbert or Morton. )
+
+                    for(unsigned int child = 0; child < NUM_CHILDREN; child++)
+                    {
+
+                        if( (childOct[child].maxX() < xmin || childOct[child].minX() >=xmax)  || (childOct[child].maxY() < ymin || childOct[child].minY() >=ymax) || (childOct[child].maxZ() < zmin || childOct[child].minZ() >=zmax) )
+                            continue;
+
+
+                        //std::cout<<"blk: "<<blk<<" blkNode: "<<blkNode<<" child: "<<child<<" child node "<<childOct[child]<<" parent : "<<pNodes[ele]<<std::endl;
+                        const double hh = (1u<<(m_uiMaxDepth - childOct[child].getLevel()))/(double) eOrder;
+                        const double invhh = 1.0/hh;
+
+                        for(unsigned int v=0; v < dof; v++)
+                        {
+                            const unsigned int cnum = childOct[child].getMortonIndex();
+                            this->parent2ChildInterpolation(&dgWVec[v*dgSz + ele*nPe],p2cI.data(),cnum,m_uiDim);
+
+                            for(unsigned int k=0; k < eOrder+1; k++)
+                            {
+                                double zz  = childOct[child].minZ() + k*hh;
+                                
+                                if(fabs(zz-zmin)<d_compar_tol) zz=zmin;
+                                if(fabs(zz-zmax)<d_compar_tol) zz=zmax;
+                                
+                                if(zz < zmin || zz > zmax) 
+                                    continue;
+                                const unsigned int kkz = std::round((zz-zmin)*invhh);
+                                assert(kkz >= 0 && kkz < lz);
+
+                                for(unsigned int j=0; j < eOrder+1; j++)
+                                {   
+                                    double yy  = childOct[child].minY() + j*hh;
+                                    
+                                    if(fabs(yy-ymin)<d_compar_tol) yy=ymin;
+                                    if(fabs(yy-ymax)<d_compar_tol) yy=ymax;
+                                    
+                                    if(yy < ymin || yy > ymax) 
+                                        continue;
+
+                                    const unsigned int jjy = std::round((yy-ymin)*invhh);
+                                    assert(jjy>=0 && jjy<ly);
+
+                                    for(unsigned int i=0; i < eOrder+1; i++)
+                                    {
+                                        double xx = childOct[child].minX() + i*hh;
+                                        
+                                        if(fabs(xx-xmin)<d_compar_tol) xx=xmin;
+                                        if(fabs(xx-xmax)<d_compar_tol) xx=xmax;
+                                        
+                                        if(xx < xmin || xx > xmax) 
+                                            continue;
+                                        const unsigned int iix = std::round((xx-xmin)*invhh);
+                                        assert(iix>=0 && iix<lx);
+
+                                        uzWVec[v*unSz + offset + kkz*lx*ly + jjy*lx + iix] =  p2cI[k*(eOrder+1)*(eOrder+1)+ j*(eOrder+1) + i];
+
+                                    }
+                                
+                                }
+                            
+                            }
+                            
+                        }
+
+                    }
+
+                }
+
+            }
+            
+
+
+            // internal copy. 
+            for(unsigned int elem = blkList[blk].getLocalElementBegin(); elem < blkList[blk].getLocalElementEnd(); elem++)
+            {
+                const unsigned int ei=(pNodes[elem].getX()-blkNode.getX())>>(m_uiMaxDepth-regLevel);
+                const unsigned int ej=(pNodes[elem].getY()-blkNode.getY())>>(m_uiMaxDepth-regLevel);
+                const unsigned int ek=(pNodes[elem].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLevel);
+
+                const unsigned int emin = 0;
+                const unsigned int emax = (1u<<(regLevel-blkNode.getLevel()))-1;
+
+                // #pragma unroll
+                // for(unsigned int v=0; v < dof; v++)
+                //     std::memcpy(dgWVec + v*dgSz + elem * nPe , dgStages[rk_s-1] + v*dgSz + elem * nPe, sizeof(T)*nPe );
+                
+                for(unsigned int v=0; v < dof; v++)
+                for(unsigned int k=0;k<(eOrder+1);k++)
+                for(unsigned int j=0;j<(eOrder+1);j++)
+                for(unsigned int i=0;i<(eOrder+1);i++)
+                    uzWVec[v*unSz + offset + (ek*eOrder+k+PW)*(ly*lx)+(ej*eOrder+j+PW)*(lx)+(ei*eOrder+i+PW)] = dgWVec[v*dgSz + elem*nPe + k*(eOrder+1)*(eOrder+1)+ j*(eOrder+1) + i];;
+
+            }
+
+
+        }
+        
+
+    }
+
+    template <typename T>
+    void Mesh::unzipDG(const T *in, T *out, unsigned int dof)
+    {
+        if( (!m_uiIsActive) || (m_uiLocalBlockList.empty())  ) return;
+
+        std::vector<unsigned int > blkIDs;
+        blkIDs.resize(m_uiLocalBlockList.size());
+
+        for(unsigned int i=0; i< m_uiLocalBlockList.size(); i++)
+            blkIDs[i] = i ; 
+
+        // unzip all the blocks. 
+        this->unzipDG(in,out,blkIDs.data(),blkIDs.size(),dof);
 
     }
 

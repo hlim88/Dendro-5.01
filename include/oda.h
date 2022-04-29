@@ -333,6 +333,14 @@ namespace ot
         * */
         void getElementalCoords(unsigned int eleID, double* coords) const ;
 
+        
+        void setOctantWeight(unsigned int ele,unsigned int w) { 
+            ot::TreeNode* pNodes = (ot::TreeNode*)m_uiMesh->getAllElements().data();
+            pNodes[ele].setWeight(w);
+            return;
+        }
+
+        unsigned int getOctantWeight(unsigned int ele) const  { return m_uiMesh->getAllElements()[ele].getWeight(); }
 
         /**@brief get a constant pointer for the reference element*/
         inline const RefElement* getReferenceElement()const { return  m_uiMesh->getReferenceElement();}
@@ -634,6 +642,17 @@ namespace ot
         ot::DA* remesh(const DA_FLAGS::Refine * flags, unsigned int sz,unsigned int grainSz=100,double ld_bal=0.3, unsigned int sfK=2, unsigned int (*getWeight)(const ot::TreeNode *)=NULL) const;
 
         /**
+         * @brief 
+         * 
+         * @param[in] grainSz: rougly the number of octants per core you need when you create the new da.
+         * @param[in] ld_tol: load imbalance tolerance.
+         * @param[in] sfK: splitter fix factor. better to be power of two. increase the value to 128 when running on > 64,000 cores
+         * @param getWeight weight function 
+         * @return ot::DA* 
+         */
+        ot::DA* repartition(unsigned int grainSz=100,double ld_bal=0.3, unsigned int sfK=2, unsigned int (*getWeight)(const ot::TreeNode *)=NULL) const;
+
+        /**
          * @brief performs grid transfer operations after the remesh.
          * @param[in] varIn: variable defined by oldDA
          * @param[out] varOut: variable defined by newDA. interpolate varOut from varIn. (Note: varOut allocated inside the function, no need to allocate outside)
@@ -642,7 +661,7 @@ namespace ot
          * @param[in] dof: degrees of freedoms.
          * */
         template<typename T>
-        void intergridTransfer(const T* varIn, T* & varOut, const ot::DA* newDA, bool isElemental=false, bool isGhosted=false, unsigned int dof=1);
+        void intergridTransfer(const T* varIn, T* & varOut, const ot::DA* newDA, bool isElemental=false, bool isGhosted=false, unsigned int dof=1,INTERGRID_TRANSFER_MODE mode = INTERGRID_TRANSFER_MODE::INJECTION);
 
 
 
@@ -811,7 +830,7 @@ namespace ot
          * @param[in] dof: degrees of freedoms.
         */
         template<typename T>
-        void petscIntergridTransfer(const Vec &varIn, Vec &varOut, const ot::DA *newDA, bool isElemental = false,bool isGhosted = false, unsigned int dof = 1);
+        void petscIntergridTransfer(const Vec &varIn, Vec &varOut, const ot::DA *newDA, bool isElemental = false,bool isGhosted = false, unsigned int dof = 1,INTERGRID_TRANSFER_MODE mode = INTERGRID_TRANSFER_MODE::INJECTION);
 
         /**
          * @brief: Destroy petsc vector

@@ -43,6 +43,7 @@
 
 #include "wavelet.h"
 #include "dendroProfileParams.h" // only need to profile unzip_asyn for bssn. remove this header file later.
+#include "point.h"
 
 extern double t_e2e; // e2e map generation time
 extern double t_e2n; // e2n map generation time
@@ -55,6 +56,7 @@ extern double t_sm_g[3];
 extern double t_blk_g[3];
 
 #include "dendroProfileParams.h"
+#include "waveletRefEl.h"
 
 /**
  * How the oct flags are used in the mesh generation part.
@@ -110,39 +112,59 @@ enum NeighbourLevel
 namespace ot
 {
 
-/**@brief type of the scatter map, based on numerical computation method*/
-enum SM_TYPE
-{
-    FDM = 0, // Finite Difference Method
-    FEM_CG,  // Continous Galerkin  methods
-    FEM_DG,   // Discontinous Galerkin methods
-    E2E_ONLY // only builds the e2e maps. 
-};
+    /**@brief type of the scatter map, based on numerical computation method*/
+    enum SM_TYPE
+    {
+        FDM = 0, // Finite Difference Method
+        FEM_CG,  // Continous Galerkin  methods
+        FEM_DG,   // Discontinous Galerkin methods
+        E2E_ONLY // only builds the e2e maps. 
+    };
 
-enum EType
-{
-    INDEPENDENT, // all the elemental nodal values,  are local.
-    W_DEPENDENT, // element is writable but has ghost nodal values as well. (note that the writable would be Independent U W_dependent)
-    UNKWON
-};
+    enum EType
+    {
+        INDEPENDENT, // all the elemental nodal values,  are local.
+        W_DEPENDENT, // element is writable but has ghost nodal values as well. (note that the writable would be Independent U W_dependent)
+        UNKWON
+    };
 
-/**@brief ghost write modes. */
-enum GWMode
-{
-    OVERWRITE, // over write the ghost write, 
-    ACCUMILATE, // accumilate the ghost write
+    /**@brief ghost write modes. */
+    enum GWMode
+    {
+        OVERWRITE, // over write the ghost write, 
+        ACCUMILATE, // accumilate the ghost write
 
-};
+    };
 
-namespace WaveletDA
-{
-enum LoopType
-{
-    ALL,
-    INDEPENDENT,
-    DEPENDENT
-};
-}
+    namespace WaveletDA
+    {
+        enum LoopType
+        {
+            ALL,
+            INDEPENDENT,
+            DEPENDENT
+        };
+    }
+
+    /**
+     * @brief intergrid transfer mode. 
+     * We assume we have refinement and coarsen or no change during the intergird transfer.
+     * 
+     * INJECTION : when coarsening finer grid point injected to the coarser grids.  (this does not guranteed to preserve integrals across paren and child)
+     * P2CT : when coarsening, use parent to child transpose (child nodes computed contributed back to the parent node. ) This will preserve integrals iff, the child node value coarser to the 
+     * value interpolated from the parent. 
+     * CELLVEC_CPY : cell vec copy without any interpolation. 
+     */
+    enum INTERGRID_TRANSFER_MODE{INJECTION=0, P2CT, CELLVEC_CPY};
+
+    /**
+     * @brief vector types supported by the mesh class. 
+     * CG_NODAL  : Nodal CG vector.   
+     * DG_NODAL  : Nodal DG vector. 
+     * ELEMENTAL : Elemental Vector. 
+     */
+    enum VEC_TYPE{CG_NODAL, DG_NODAL, ELEMENTAL};
+
 
 } // namespace ot
 
@@ -527,7 +549,31 @@ private:
     /**@brief: coarset block level allowed. (this is used in perform block set up) */
     unsigned int m_uiCoarsetBlkLev=0;
 
-   
+    /**@brief: domain min point*/
+    Point m_uiDMinPt=Point(0,0,0);
+
+    /**@brief: domain max point. */
+    Point m_uiDMaxPt=Point((1u<<m_uiMaxDepth), (1u<<m_uiMaxDepth), (1u<<m_uiMaxDepth));
+
+    /**@brief: send counts in elements, for inter-grid transfer*/
+    std::vector<unsigned int> m_uiIGTSendC;
+
+    /**@brief: recv counts in elements, for inter-grid transfer*/
+    std::vector<unsigned int> m_uiIGTRecvC;
+
+    /**@brief: send offsets in elements, for inter-grid transfer*/
+    std::vector<unsigned int> m_uiIGTSendOfst;
+
+    /**@brief: recv offsets in elements, for inter-grid transfer*/
+    std::vector<unsigned int> m_uiIGTRecvOfst;
+    
+    /**@brief: Mesh 2 partitioned with M1 splitters (Needed for IGT)*/
+    std::vector<ot::TreeNode> m_uiM2Prime; 
+
+    /**@brief: true if IGT data strucutures are setup. false otherwise*/
+    bool m_uiIsIGTSetup = false;
+
+
 
 private:
     /**@brief build E2N map for FEM computation*/
@@ -780,40 +826,7 @@ private:
 
     inline void directionToIJK(unsigned int direction, std::vector<unsigned int> &ii_x, std::vector<unsigned int> &jj_y, std::vector<unsigned int> &kk_z);
 
-    /**
-     * @brief: Specific to GR code. Interpolation function written to interpolate the 3rd points for 4th order element.
-     * @param [in] upWind: advection up wind stencil coefficients
-     * @param [in] element : unzip element ID
-     * @param [in] lookUp: face lookup ID
-     * @param [in] vecLookUp:  allocated vector to lookup Nodal values.
-     * @param [in] cnum: injection element cnum
-     * @param [in] parentInterpIn: parent values.
-     * @param [in] parentInterpOut: vector to perform parent to child interpolation
-     * @param [in] padDir : direction of the padding.
-     * @param [in] padWidth: width of the padding.
-     * @param [in] zippedVec: zipped vector
-     * @param [out] out : child to parent injection filled with the correct value.
-     * */
-    template <typename T>
-    inline void interpUpWind(const double *upWind, const unsigned int element, const unsigned int lookup, T *vecLookUp, const unsigned int cnum, const T *parentInterpIn, T *parentInterpOut, const unsigned int padDir, const unsigned int padWidth, const T *zippedVec, T *out);
-
-    /**
-     * @brief: Specific to GR code. Interpolation function written to interpolate the 3rd points for 4th order element.
-     * @param [in] upWind: advection up wind stencil coefficients
-     * @param [in] element : unzip element ID
-     * @param [in] lookUp: face lookup ID
-     * @param [in] vecLookUp:  allocated vector to lookup Nodal values.
-     * @param [in] cnum: injection element cnum
-     * @param [in] parentInterpIn: parent values.
-     * @param [in] parentInterpOut: vector to perform parent to child interpolation
-     * @param [in] padDir : direction of the padding.
-     * @param [in] padWidth: width of the padding.
-     * @param [in] zippedVec: zipped vector
-     * @param [out] out : child to parent injection filled with the correct value.
-     * */
-    template <typename T>
-    inline void interpDownWind(const double *downWind, const unsigned int element, const unsigned int lookup, T *vecLookUp, const unsigned int cnum, const T *parentInterpIn, T *parentInterpOut, const unsigned int padDir, const unsigned int padWidth, const T *zippedVec, T *out);
-
+    
     /**@brief: Performs block padding along the diagonal direction.
      * @param[in] blk: block to perform diagonal direction padding.
      * @param[in] zippedVec: zipped vector
@@ -1002,6 +1015,7 @@ private:
     template<typename T>
     void getBlkBoundaryParentNodes(const T* zipVec, T* out, T* w1, T* w2, unsigned int lookUp, const unsigned int * fid, const unsigned int* cid,const unsigned int * child);
 
+    #if 0
     //---Note: These functions are specifically written for find missing 3rd block unzip points for the GR application
 
     /**
@@ -1020,6 +1034,7 @@ private:
 
     template <typename T>
     void readSpecialPtsEnd(const T *in, T* out);
+    #endif
 
     // --- 3rd point exchange function end.
 
@@ -1042,7 +1057,7 @@ public:
      * @param[in] ld_tol: load imbalance tolerance for comm expansion and shrinking
      * @param[in] sf_k: splitter fix _k value. (Needed by SFC_partitioinng for large p>=10,000)
      * */
-    Mesh(std::vector<ot::TreeNode> &in, unsigned int k_s, unsigned int pOrder, MPI_Comm comm, bool pBlockSetup = true, SM_TYPE smType = SM_TYPE::FDM, unsigned int grainSz = DENDRO_DEFAULT_GRAIN_SZ, double ld_tol = DENDRO_DEFAULT_LB_TOL, unsigned int sf_k = DENDRO_DEFAULT_SF_K, unsigned int (*getWeight)(const ot::TreeNode *)=NULL , unsigned int coarsetBLkLev = 0);
+    Mesh(std::vector<ot::TreeNode> &in, unsigned int k_s, unsigned int pOrder, MPI_Comm comm, bool pBlockSetup = true, SM_TYPE smType = SM_TYPE::FDM, unsigned int grainSz = DENDRO_DEFAULT_GRAIN_SZ, double ld_tol = DENDRO_DEFAULT_LB_TOL, unsigned int sf_k = DENDRO_DEFAULT_SF_K, unsigned int (*getWeight)(const ot::TreeNode *)=NULL, unsigned int* blk_tags=NULL, unsigned int blk_tags_sz=0);
 
     /**@brief destructor for mesh (releases the allocated variables in the class. )*/
     ~Mesh();
@@ -1051,7 +1066,7 @@ public:
      * @brief Perform the blocks initialization so that we can apply the stencil for the grid as a sequnce of finite number of regular grids.
      * note that this should be called after performing all E2N and E2N mapping.
      * */
-    void performBlocksSetup();
+    void performBlocksSetup(unsigned int cLev, unsigned int* tag, unsigned int tsz);
 
     /**
      * @brief computes the face to element map.
@@ -1109,11 +1124,14 @@ public:
     /**@brief return the location of post node end*/
     inline unsigned int getNodePostGhostEnd() const { return m_uiNodePostGhostEnd; }
 
-    /**@brief returns the dof for a partition*/
+    /**@brief returns the dof for a partition (grid points) */
     inline unsigned int getDegOfFreedom() const { return m_uiNumActualNodes; }
 
-    /**@brief returns the dof for a partition*/
+    /**@brief returns the dof for a partition (grid points) */
     inline unsigned int getDegOfFreedomUnZip() const { return m_uiUnZippedVecSz; }
+
+    /**@brief returns the dof DG for a partition. (grid points) */
+    inline unsigned int getDegOfFreedomDG() const { return m_uiNumTotalElements*m_uiNpE; }
 
     /**@brief returns the pointer to All elements array. */
     inline const std::vector<ot::TreeNode> &getAllElements() const { return m_uiAllElements; }
@@ -1175,10 +1193,10 @@ public:
     inline const RefElement *getReferenceElement() const { return &m_uiRefEl; }
 
     /**@brief returns the send proc list size*/
-    inline const unsigned int getSendProcListSize() const { return m_uiSendProcList.size(); }
+    inline unsigned int getSendProcListSize() const { return m_uiSendProcList.size(); }
 
     /**@brief returns the recv proc list size*/
-    inline const unsigned int getRecvProcListSize() const { return m_uiRecvProcList.size(); }
+    inline unsigned int getRecvProcListSize() const { return m_uiRecvProcList.size(); }
 
     /**@brief returns the nodal send counts*/
     inline const std::vector<unsigned int> &getNodalSendCounts() const { return m_uiSendNodeCount; }
@@ -1228,6 +1246,14 @@ public:
     /**@breif: returns the scatter map for the recv element */
     inline const std::vector<unsigned int>& getRecvElementSM() const {return m_uiGhostElementRound1Index;}
 
+    /**@brief: set the min and max bounds to the domain. */
+    void setDomainBounds(Point dmin, Point dmax) { m_uiDMinPt = Point(dmin.x(),dmin.y(),dmin.z()); m_uiDMaxPt = Point(dmax.x(),dmax.y(),dmax.z()); }
+
+    /**@brief: get the domain min point. */
+    inline Point getDomainMinPt() const {return m_uiDMinPt;}
+
+    /**@brief: get the domain max point. */
+    inline Point getDomainMaxPt() const {return m_uiDMaxPt;}
 
     /** @brief: Decompose the DG index to element id and it's i,j,k values.*/
     inline void dg2eijk(unsigned int dg_index, unsigned int &e, unsigned int &i, unsigned int &j, unsigned int &k) const
@@ -1260,6 +1286,13 @@ public:
 
     /**@brief waiting for all the mesh instances both active and inactive. This should not be called if not needed. this is a BARRIER. */
     inline void waitAll() const { MPI_Barrier(m_uiCommGlobal); }
+
+    /**@brief waiting for all the mesh instances both active. This should not be called if not needed. this is a BARRIER. */
+    inline void waitActive() const {MPI_Barrier(m_uiCommActive);}
+
+    /**@brief: Destroy an allocated vector using the createVectorXX */
+    template<typename T>
+    inline void destroyVector(T*& vec) const { delete [] vec; vec=NULL; }; 
 
     /**@brief set refinement flags for the octree.
      * This is non const function
@@ -1561,7 +1594,7 @@ public:
            * @param[out]: vector allocated the memory for unzipped version.
          * */
     template <typename T>
-    T *createUnZippedVector() const;
+    T *createUnZippedVector(unsigned int dof=1) const;
 
     /**@brief allocate memory for variable array based on the adaptive mesh.
           * @param[in] uvec: allocate memory for uvec (unzipped version)
@@ -1575,7 +1608,7 @@ public:
           * @param[in] initValue: initialize the vector to the given value.
           * */
     template <typename T>
-    T *createUnZippedVector(const T initValue) const;
+    T *createUnZippedVector(const T initValue,unsigned int dof=1) const;
 
 
     /**
@@ -1589,7 +1622,7 @@ public:
      * @return T* 
      */
     template <typename T>
-    void CG2DGVec(T* cg_vec, T*& dg_vec, bool isAllocated, bool gsynced, unsigned int dof=1) const;
+    void CG2DGVec(T* cg_vec, T*& dg_vec, bool isAllocated, bool gsynced, unsigned int dof=1);
 
 
     /**
@@ -1656,24 +1689,46 @@ public:
     /**
      * @author Milinda Fernando
      * @brief Creates the decomposition of adaptive octree variables into blocklist variables that we computed.
-     * @param [in] zippedVec adaptive representation of the variable array. (created by createVec function)
-     * @param [out] unzippedVec decomposed representation of the adaptive array.
+     * @param [in] in : adaptive representation of the variable array. (created by createVec function)
+     * @param [out] out: decomposed representation of the adaptive array.
      * @note this routine assumes that for both arrays memory has been allocated. Routine is responsible only to fill up the unzipped entries.
      * */
     template <typename T>
-    void unzip(const T *zippedVec, T *unzippedVec);
+    void unzip(const T *in, T *out, unsigned int dof=1);
 
     /**
      * @brief performs unzip operation for a given block id. 
      * 
      * @tparam T type of the vector. 
-     * @param zippedVec : zipped vector
-     * @param unzippedVec : unzipped vector. 
+     * @param in : zipped vector
+     * @param out : unzipped vector. 
      * @param blk :pointer to list of block ids, for the unzip. 
      * @param numblks: number of block ids specified. 
      */
     template<typename T>
-    void unzip(const T* zippedVec, T* unzippedVec, const unsigned int *blkIDs, unsigned int numblks);
+    void unzip(const T* in, T* out, const unsigned int *blkIDs, unsigned int numblks,unsigned int dof=1);
+
+
+    /**
+     * @brief performs unzip operation for a given block id. 
+     * 
+     * @tparam T type of the vector. 
+     * @param in : DG vector
+     * @param out : unzipped vector. 
+     * @param blk :pointer to list of block ids, for the unzip. 
+     * @param numblks: number of block ids specified. 
+     */
+    template<typename T>
+    void unzipDG(const T* in, T* out, const unsigned int *blkIDs, unsigned int numblks,unsigned int dof=1);
+
+    /**
+     * @brief Creates the decomposition of adaptive octree variables into blocklist variables that we computed.
+     * @param [in] in : adaptive representation of the variable array. (created by createVec function)
+     * @param [out] out: decomposed representation of the adaptive array.
+     * @note this routine assumes that for both arrays memory has been allocated. Routine is responsible only to fill up the unzipped entries.
+     * */
+    template <typename T>
+    void unzipDG(const T *in, T *out, unsigned int dof=1);
     
 
     /**@author Milinda Fernando
@@ -1879,7 +1934,25 @@ public:
     * */
 
     template <typename T>
-    bool isReMeshUnzip(const T **unzippedVec, const unsigned int *varIds, const unsigned int numVars, std::function<double(double, double, double)> wavelet_tol, double amr_coarse_fac = DENDRO_AMR_COARSEN_FAC, double coarsen_hx = DENDRO_REMESH_UNZIP_SCALE_FAC);
+    bool isReMeshUnzip(const T **unzippedVec, const unsigned int *varIds, const unsigned int numVars, std::function<double(double, double, double,double*)> wavelet_tol, double amr_coarse_fac = DENDRO_AMR_COARSEN_FAC, double coarsen_hx = DENDRO_REMESH_UNZIP_SCALE_FAC);
+
+    /**
+     * @brief 
+     * 
+     * @tparam T 
+     * @param blkID 
+     * @param unzippedVec 
+     * @param varIds 
+     * @param numVars 
+     * @param wavelet_tol 
+     * @param amr_coarse_fac 
+     * @param coarsen_hx 
+     * @return true 
+     * @return false 
+     */
+    template <typename T>
+    bool isReMeshBlk(unsigned int blkID, const T **unzippedVec, const unsigned int *varIds, const unsigned int numVars, std::function<double(double, double, double)> wavelet_tol, double amr_coarse_fac = DENDRO_AMR_COARSEN_FAC, double coarsen_hx = DENDRO_REMESH_UNZIP_SCALE_FAC);
+
 
     /**
      * @brief: Remesh the mesh with the new computed elements.
@@ -1890,48 +1963,85 @@ public:
      * @param[in] sfK: spliiter fix parameter (need to specify larger value when run in super large scale)
      * @param[in] getWeight: function pointer which returns a uint weight values for an given octant
      * */
-    ot::Mesh *ReMesh(unsigned int grainSz = DENDRO_DEFAULT_GRAIN_SZ, double ld_tol = DENDRO_DEFAULT_LB_TOL, unsigned int sfK = DENDRO_DEFAULT_SF_K,unsigned int (*getWeight)(const ot::TreeNode *)=NULL);
+    ot::Mesh *ReMesh(unsigned int grainSz = DENDRO_DEFAULT_GRAIN_SZ, double ld_tol = DENDRO_DEFAULT_LB_TOL, unsigned int sfK = DENDRO_DEFAULT_SF_K,unsigned int (*getWeight)(const ot::TreeNode *)=NULL,unsigned int* blk_tags=NULL,unsigned int blk_tag_sz=0);
+
 
     /**
-     * @brief transfer a variable vector form old grid to new grid.
+     * @brief: Computes the all to all v communication parameters interms of element counts. Let M1 be the current mesh, M2 be the new mesh (pMesh), then we compute
+     * M2' auxiliary mesh, where, M2' is partitioned w.r.t splitters, of the M1. Computed communication parameters, tells us how to perform data transfers from, 
+     * M2' to M2. Also note that the allocated send/recv counts parameters should be in global counts. 
+     * @param pMesh : new mesh M2. 
+     */
+    void interGridTransferSendRecvCompute(const ot::Mesh *pMesh);
+
+    /**
+     * @brief transfer a variable vector form old grid to new grid. Assumes the ghost is synchronized in the old vector
      * @param[in] vec: variable vector needs to be transfered.
      * @param[out] vec: transfered varaible vector
      * @param[in] pMesh: Mesh that we need to transfer the old varaible.
      * */
     template <typename T>
-    void interGridTransfer(std::vector<T> &vec, const ot::Mesh *pMesh);
+    void interGridTransfer(std::vector<T> &vec, const ot::Mesh *pMesh, INTERGRID_TRANSFER_MODE mode = INTERGRID_TRANSFER_MODE::INJECTION);
 
     /**
-     * @brief transfer a variable vector form old grid to new grid.
+     * @brief transfer a variable vector form old grid to new grid. Assumes the ghost is synchronized in the old vector
      * @param[in] vec: variable vector needs to be transfered.
      * @param[out] vec: transfered varaible vector
      * @param[in] pMesh: Mesh that we need to transfer the old varaible.
+     * @param mode : intergrid transfer mode. 
+     * @param dof : number of dof. 
      * */
     template <typename T>
-    void interGridTransfer(T *&vec, const ot::Mesh *pMesh);
+    void interGridTransfer(T *&vec, const ot::Mesh *pMesh, INTERGRID_TRANSFER_MODE mode = INTERGRID_TRANSFER_MODE::INJECTION,unsigned int dof=1);
     
     /**
-     * @brief Performs intergrid transfer without deallocating the existing vector. 
-     * 
+     * @brief Performs intergrid transfer without deallocating the existing vector. Assumes the ghost is synchronized in the old vector
      * @tparam T : data type of the vector. 
      * @param vec : input vector (vector corresponding to the old mesh)
      * @param vecOut : output vector (new vector consresponding to the new vector)
      * @param pMesh : pointer to the new mesh object. 
      * @param isAlloc : True if out vector is allocated with ghost, false otherwise. 
+     * @param mode: mode of intergrid transfer defined by INTERGRID_TRANSFER_MODE
+     * @param dof : number of dof. 
      */
     template <typename T>
-    void interGridTransfer(T* vec, T* vecOut, const ot::Mesh* pMesh ,bool isAlloc=false);
+    void interGridTransfer(T* vecIn, T* vecOut, const ot::Mesh* pMesh , INTERGRID_TRANSFER_MODE mode = INTERGRID_TRANSFER_MODE::INJECTION, unsigned int dof=1);
 
     /**
-     * @brief performs the intergrid transfer operation using the unzip representation. Compared to elemental 
-     * intergrid transfer this uses information from neighbouring elements while the transfer occurs. 
-     * @tparam T : data type of the vectors
-     * @param unzip : unizp representation of the vectors. 
-     * @param vec : zip representation of the transfered vectors. 
-     * @param pMesh : new mesh.
+     * @brief Intergrid transfer for the 2D vector. 
+     * @tparam T 
+     * @param vec : input vector (allocated in the current mesh)
+     * @param vecOut : output vector (allocated in the new mesh)
+     * @param dof : size of different variables. 
+     * @param pMesh : new mesh
+     * @param mode : intergrid transfer mode. 
      */
     template<typename T>
-    void interGridTransferUnzip(T*& unzip, T*& vec, const ot::Mesh *pMesh);
+    void intergridTransfer(T** vecIn, T** vecOut, unsigned int dof, const ot::Mesh* pMesh, INTERGRID_TRANSFER_MODE mode = INTERGRID_TRANSFER_MODE::INJECTION);
+
+
+    /**
+     * @brief: intre-grid transfer for DG vector. 
+     * currently only inmplemented for the strong form, intergrid transfers, (i.e. child to parent happens with injection, not p2c^T)
+     * @tparam T vector type. 
+     * @param vec : Input vector. 
+     * @param vecOut : Output vector
+     * @param pMesh : pointer to the new mesh object
+     * @param isAlloc : True if out vector is allocated with ghost, false otherwise. 
+     */
+    template <typename T>
+    void interGridTransfer_DG(T* vecIn, T* vecOut, const ot::Mesh* pMesh, unsigned int dof=1);
+
+    /**
+     * @brief performs intergrid transfer for a cell vector. 
+     * @tparam T type of the vector. 
+     * @param vec : input cell vector. 
+     * @param vecOut : allocated new cell vector. 
+     * @param pMesh : new mesh. 
+     */
+    template<typename T>
+    void interGridTransferCellVec(T* vecIn, T* vecOut, const ot::Mesh* pMesh,unsigned int dof=1, INTERGRID_TRANSFER_MODE mode=INTERGRID_TRANSFER_MODE::CELLVEC_CPY);
+    
 
     /**
     *@brief : Returns the nodal values of a given element for a given variable vector.
@@ -2013,6 +2123,51 @@ public:
      * @param child : neighbor ids (array of size 4). 
      */
     void getFinerFaceNeighbors(unsigned int ele, unsigned int dir, unsigned int* child) const;
+
+    /**
+     * @brief Set the Mesh Refinement flags, for the local portion of the mesh. Note that coarsening happens if all the children are 
+     * have the same parent and all the children should be in the same processor as local elements.   
+     * In this method, mesh class ignore the wavelet refinement, and trust the user, and select the user specified refinement flags. 
+     * To perform Intergrid-transfers and other operations it is important to decide, refine and coarsening based on some proper,
+     * basis error capture crieteria, (look at the RefEl Class, to see how Dendro uses the basis representation)
+     
+     * @param refine_flags : refinement flags, OCT_SPLIT, OCT_COARSE, OCT_NO_CHANGE
+     * return true if the local partition is chnaged. 
+     * 
+     */
+    bool setMeshRefinementFlags(const std::vector<unsigned int>& refine_flags);
+
+    /**
+     * @brief Perform linear transformation from octree coordinate to domain coordinates
+     * @param oct_pt : Octree point
+     * @param domain_pt : doamin point
+     */
+    void octCoordToDomainCoord(const Point& oct_pt, Point& domain_pt) const ;
+    
+    /**
+     * @brief Perform linear coord. transformation from domain points to octree coords. 
+     * @param domain_pt : domain point. 
+     * @param oct_pt : octree point. 
+     */
+    void domainCoordToOctCoord(const Point& domain_pt, Point& oct_pt) const ;
+
+    /**
+     * @brief computes tree node owner processor
+     * @param pNodes List of pNodes. 
+     * @param n : number of pNodes. 
+     * @param ownerranks Owner rank size allocated (n)
+     */
+    void computeTreeNodeOwnerProc(const ot::TreeNode * pNodes, unsigned int n, int* ownerranks) const;
+
+    /**
+     * @brief computes the element ids of padding elements in all directions for a given block id. 
+     * 
+     * @param blk block local id
+     * @param eid : vector of element ids. 
+     */
+    void blkUnzipElementIDs(unsigned int blk, std::vector<unsigned int>&eid) const ;
+
+
 
 };
 

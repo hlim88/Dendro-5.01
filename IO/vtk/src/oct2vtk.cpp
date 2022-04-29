@@ -30,7 +30,7 @@ namespace io
                 return ;
             }
 
-           const std::vector<ot::TreeNode> pElements = pMesh->getAllElements();
+           const std::vector<ot::TreeNode>& pElements = pMesh->getAllElements();
 
            write_vtu_header();
            fprintf(fp," DATASET UNSTRUCTURED_GRID\n");
@@ -96,7 +96,7 @@ namespace io
 
 
 
-        void mesh2vtu(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames,const double **pointData)
+        void mesh2vtu(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames,const double **pointData,bool isDGPData)
         {
 
 
@@ -107,6 +107,9 @@ namespace io
 
             unsigned int retval;
 
+            Point dmin = pMesh->getDomainMinPt();
+            Point dmax = pMesh->getDomainMaxPt();
+            const double invRg = 1.0/( (double) (1u<<m_uiMaxDepth));
 
             char fname[FNAME_LENGTH];
             char str[2048];
@@ -118,8 +121,8 @@ namespace io
                 return ;
             }
 
-            const std::vector<ot::TreeNode> pElements = pMesh->getAllElements();
-            const std::vector<unsigned int> e2N       = pMesh->getE2NMapping();
+            const std::vector<ot::TreeNode>& pElements = pMesh->getAllElements();
+            const std::vector<unsigned int>& e2N       = pMesh->getE2NMapping();
 
             unsigned   int dim       = m_uiDim;
             DendroIntL num_vertices  = pMesh->getNumLocalMeshElements()*pMesh->getNumNodesPerElement();
@@ -178,9 +181,9 @@ namespace io
                         for (unsigned int i = 0; i < (eleOrder + 1); i++) {
 
 
-                            fprintf(fp, "          %d %d %d\n", (pElements[ele].getX() + i * (sz / eleOrder)),
-                                    (pElements[ele].getY() + j * (sz / eleOrder)),
-                                    (pElements[ele].getZ() + k * (sz / eleOrder)));
+                            fprintf(fp, "          %d %d %d\n", VTU_OCT_X_GRID_X(pElements[ele].getX() + i * (sz / eleOrder)),
+                                    VTU_OCT_Y_GRID_Y(pElements[ele].getY() + j * (sz / eleOrder)),
+                                    VTU_OCT_Z_GRID_Z(pElements[ele].getZ() + k * (sz / eleOrder)));
 
                         }
             }
@@ -193,9 +196,9 @@ namespace io
                 for (unsigned int k = 0; k < (eleOrder + 1); k++)
                     for (unsigned int j = 0; j < (eleOrder + 1); j++)
                         for (unsigned int i = 0; i < (eleOrder + 1); i++) {
-                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 0] = (pElements[ele].getX()+i*(sz/eleOrder));
-                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 1] = (pElements[ele].getY()+j*(sz/eleOrder));
-                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 2] = (pElements[ele].getZ()+k*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 0] = VTU_OCT_X_GRID_X(pElements[ele].getX()+i*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 1] = VTU_OCT_Y_GRID_Y(pElements[ele].getY()+j*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 2] = VTU_OCT_Z_GRID_Z(pElements[ele].getZ()+k*(sz/eleOrder));
                         }
             }
 
@@ -415,7 +418,7 @@ namespace io
                   #ifdef DENDRO_VTU_ASCII
                     fprintf(fp,"         ");
                     for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
-                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il);
+                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il,isDGPData);
                         for(unsigned int node=0;node<nPe;node++)
                             fprintf(fp,"%f ",nodalVal[node]);
                     }
@@ -423,7 +426,7 @@ namespace io
                   #else
 
                   for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
-                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il);
+                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il,isDGPData);
                         for(unsigned int node=0;node<nPe;node++)
                             nodalVal_binary[(il-pMesh->getElementLocalBegin())*nPe+node] = nodalVal[node];
                     }
@@ -564,13 +567,17 @@ namespace io
 
 
 
-        void mesh2vtuCoarse(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData)
+        void mesh2vtuCoarse(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData, bool isDGPData)
         {
 
             if(!(pMesh->isActive())) return ;
 
             unsigned int rank = pMesh->getMPIRank();
             unsigned int npes = pMesh->getMPICommSize();
+
+            Point dmin = pMesh->getDomainMinPt();
+            Point dmax = pMesh->getDomainMaxPt();
+            const double invRg = 1.0/( (double) (1u<<m_uiMaxDepth));
 
             int retval;
 
@@ -584,8 +591,8 @@ namespace io
                 return ;
             }
 
-            const std::vector<ot::TreeNode> pElements = pMesh->getAllElements();
-            const std::vector<unsigned int> e2N       = pMesh->getE2NMapping();
+            const std::vector<ot::TreeNode>& pElements = pMesh->getAllElements();
+            const std::vector<unsigned int>& e2N       = pMesh->getE2NMapping();
 
             unsigned   int dim       = m_uiDim;
             DendroIntL num_vertices  = pMesh->getNumLocalMeshElements()*NUM_CHILDREN;
@@ -648,9 +655,9 @@ namespace io
                         for (unsigned int i = 0; i < (eleOrder + 1); i+=eleOrder) {
 
 
-                            fprintf(fp, "          %d %d %d\n", (pElements[ele].getX() + i * (sz / eleOrder)),
-                                    (pElements[ele].getY() + j * (sz / eleOrder)),
-                                    (pElements[ele].getZ() + k * (sz / eleOrder)));
+                            fprintf(fp, "          %d %d %d\n", VTU_OCT_X_GRID_X(pElements[ele].getX() + i * (sz / eleOrder)),
+                                    VTU_OCT_Y_GRID_Y(pElements[ele].getY() + j * (sz / eleOrder)),
+                                    VTU_OCT_Z_GRID_Z(pElements[ele].getZ() + k * (sz / eleOrder)));
 
                         }
             }
@@ -663,9 +670,9 @@ namespace io
                 for (unsigned int k = 0; k < (eleOrder + 1); k+=eleOrder)
                     for (unsigned int j = 0; j < (eleOrder + 1); j+=eleOrder)
                         for (unsigned int i = 0; i < (eleOrder + 1); i+=eleOrder) {
-                            coord_data[((ele-pMesh->getElementLocalBegin())*NUM_CHILDREN+(k/eleOrder)*ny*nx+(j/eleOrder)*nx+(i/eleOrder))*m_uiDim + 0] = (pElements[ele].getX()+i*(sz/eleOrder));
-                            coord_data[((ele-pMesh->getElementLocalBegin())*NUM_CHILDREN+(k/eleOrder)*ny*nx+(j/eleOrder)*nx+(i/eleOrder))*m_uiDim + 1] = (pElements[ele].getY()+j*(sz/eleOrder));
-                            coord_data[((ele-pMesh->getElementLocalBegin())*NUM_CHILDREN+(k/eleOrder)*ny*nx+(j/eleOrder)*nx+(i/eleOrder))*m_uiDim + 2] = (pElements[ele].getZ()+k*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*NUM_CHILDREN+(k/eleOrder)*ny*nx+(j/eleOrder)*nx+(i/eleOrder))*m_uiDim + 0] = VTU_OCT_X_GRID_X(pElements[ele].getX()+i*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*NUM_CHILDREN+(k/eleOrder)*ny*nx+(j/eleOrder)*nx+(i/eleOrder))*m_uiDim + 1] = VTU_OCT_Y_GRID_Y(pElements[ele].getY()+j*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*NUM_CHILDREN+(k/eleOrder)*ny*nx+(j/eleOrder)*nx+(i/eleOrder))*m_uiDim + 2] = VTU_OCT_Z_GRID_Z(pElements[ele].getZ()+k*(sz/eleOrder));
                         }
             }
 
@@ -888,7 +895,7 @@ namespace io
                     #ifdef DENDRO_VTU_ASCII
                     fprintf(fp,"         ");
                     for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
-                        pMesh->getElementNodalValues(tmp_var, &(*(nodalVal.begin())), il);
+                        pMesh->getElementNodalValues(tmp_var, &(*(nodalVal.begin())), il,isDGPData);
                         for (unsigned int k = 0; k < (eleOrder + 1); k += eleOrder)
                             for (unsigned int j = 0; j < (eleOrder + 1); j += eleOrder)
                                 for (unsigned int i = 0; i < (eleOrder + 1); i += eleOrder)
@@ -900,7 +907,7 @@ namespace io
 
 
                     for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
-                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il);
+                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il,isDGPData);
                         for (unsigned int k = 0; k < (eleOrder + 1); k += eleOrder)
                             for (unsigned int j = 0; j < (eleOrder + 1); j += eleOrder)
                                 for (unsigned int i = 0; i < (eleOrder + 1); i += eleOrder)
@@ -1040,13 +1047,17 @@ namespace io
         }
 
 
-        void mesh2vtuFine(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData)
+        void mesh2vtuFine(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData, unsigned int nCellData, const char** cellDNames, const double** cellData, bool isDGPdata)
         {
 
             if(!(pMesh->isActive())) return ;
 
             unsigned int rank = pMesh->getMPIRank();
             unsigned int npes = pMesh->getMPICommSize();
+
+            Point dmin = pMesh->getDomainMinPt();
+            Point dmax = pMesh->getDomainMaxPt();
+            const double invRg = 1.0/( (double) (1u<<m_uiMaxDepth));
 
             int retval;
 
@@ -1060,8 +1071,8 @@ namespace io
                 return ;
             }
 
-            const std::vector<ot::TreeNode> pElements = pMesh->getAllElements();
-            const std::vector<unsigned int> e2N       = pMesh->getE2NMapping();
+            const std::vector<ot::TreeNode>& pElements = pMesh->getAllElements();
+            const std::vector<unsigned int>& e2N       = pMesh->getE2NMapping();
 
             // note this works only for the 3D grids.
             const unsigned int dim        = m_uiDim;
@@ -1121,9 +1132,9 @@ namespace io
                         for (unsigned int i = 0; i < (eleOrder + 1); i++) {
 
 
-                            fprintf(fp, "          %d %d %d\n", (pElements[ele].getX() + i * (sz / eleOrder)),
-                                    (pElements[ele].getY() + j * (sz / eleOrder)),
-                                    (pElements[ele].getZ() + k * (sz / eleOrder)));
+                            fprintf(fp, "          %d %d %d\n", VTU_OCT_X_GRID_X(pElements[ele].getX() + i * (sz / eleOrder)),
+                                    VTU_OCT_Y_GRID_Y(pElements[ele].getY() + j * (sz / eleOrder)),
+                                    VTU_OCT_Z_GRID_Z(pElements[ele].getZ() + k * (sz / eleOrder)));
 
                         }
             }
@@ -1136,9 +1147,9 @@ namespace io
                 for (unsigned int k = 0; k < (eleOrder + 1); k++)
                     for (unsigned int j = 0; j < (eleOrder + 1); j++)
                         for (unsigned int i = 0; i < (eleOrder + 1); i++) {
-                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 0] = (pElements[ele].getX()+i*(sz/eleOrder));
-                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 1] = (pElements[ele].getY()+j*(sz/eleOrder));
-                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 2] = (pElements[ele].getZ()+k*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 0] = VTU_OCT_X_GRID_X(pElements[ele].getX()+i*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 1] = VTU_OCT_Y_GRID_Y(pElements[ele].getY()+j*(sz/eleOrder));
+                            coord_data[((ele-pMesh->getElementLocalBegin())*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 2] = VTU_OCT_Z_GRID_Z(pElements[ele].getZ()+k*(sz/eleOrder));
                         }
             }
 
@@ -1290,6 +1301,14 @@ namespace io
             // writing cell data
             fprintf(fp,"      <CellData>\n");
 
+            #ifndef DENDRO_VTU_ASCII
+                unsigned int * cell_tmp = new unsigned int [num_cells];
+                double * cell_dtmp =NULL;
+                
+                if(nCellData>0 && cellData!=NULL) 
+                    cell_dtmp=new double[num_cells];
+            #endif
+
             #ifdef DENDRO_VTU_ASCII
             fprintf(fp,"        <DataArray type=\"%s\" Name=\"mpi_rank\"" " format=\"%s\">\n",DENDRO_NODE_VAR_INT,DENDRO_FORMAT_ASCII);
             fprintf (fp,"         ");
@@ -1300,17 +1319,16 @@ namespace io
             #else
             fprintf(fp,"        <DataArray type=\"%s\" Name=\"mpi_rank\"" " format=\"%s\">\n",DENDRO_NODE_VAR_INT,DENDRO_FORMAT_BINARY);
 
-            unsigned int * loc_rank = new unsigned int [num_cells];
+            
             for (unsigned int il = 0; il < num_cells; ++il)
-                loc_rank[il] = rank;
+                cell_tmp[il] = rank;
 
-            retval = vtk_write_binary (fp, (char *) loc_rank, sizeof (*loc_rank)*num_cells);
+            retval = vtk_write_binary (fp, (char *) cell_tmp, sizeof (*cell_tmp)*num_cells);
             if (retval) {
 
                 std:: cout<<rank<<": [VTU Error]: "<<"base64 encode element rank data failed"<<std:: endl;
                 fclose(fp);
             }
-            delete [] loc_rank;
             #endif
             fprintf(fp,"\n");
             fprintf(fp,"        </DataArray>\n");
@@ -1321,29 +1339,75 @@ namespace io
             fprintf(fp,"         ");
             for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
                for(unsigned int w=0;w<ePe;w++)
-                  fprintf(fp,"%d ",(pElements[il].getLevel() + (eleOrder>>1u)));
+                  fprintf(fp,"%d ",(pElements[il].getLevel()));
             }
 
             fprintf(fp,"\n");
             #else
             fprintf(fp,"        <DataArray type=\"%s\" Name=\"cell_level\"" " format=\"%s\">\n",DENDRO_NODE_VAR_INT,DENDRO_FORMAT_BINARY);
-            unsigned int * loc_level = new unsigned int [num_cells];
             for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
                 for(unsigned int w=0;w<ePe;w++)
-                    loc_level[(il-pMesh->getElementLocalBegin())*ePe+w] = pElements[il].getLevel();
+                    cell_tmp[(il-pMesh->getElementLocalBegin())*ePe+w] = pElements[il].getLevel();
             }
 
-            retval = vtk_write_binary (fp, (char *) loc_level, sizeof (*loc_level)*num_cells);
+            retval = vtk_write_binary (fp, (char *) cell_tmp, sizeof (*cell_tmp)*num_cells);
             if (retval) {
 
                 std:: cout<<rank<<": [VTU Error]: "<<"base64 encode element level data failed"<<std:: endl;
                 fclose(fp);
             }
-            delete [] loc_level;
             #endif
 
             fprintf(fp,"\n");
             fprintf(fp,"        </DataArray>\n");
+
+            if(nCellData > 0 && cellData!=NULL) 
+            {
+
+                for(unsigned int v=0; v < nCellData; v++)
+                {
+
+                    #ifdef DENDRO_VTU_ASCII
+                        fprintf(fp,"        <DataArray type=\"%s\" Name=\"%s\"" " format=\"%s\">\n",DENDRO_NODE_VAR_DOUBLE, cellDNames[v], DENDRO_FORMAT_ASCII);
+                        fprintf(fp,"         ");
+                        for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
+                        for(unsigned int w=0;w<ePe;w++)
+                            fprintf(fp,"%f ", cellData[v][il] );
+                        }
+
+                        fprintf(fp,"\n");
+                    #else
+                        fprintf(fp,"        <DataArray type=\"%s\" Name=\"%s\"" " format=\"%s\">\n",DENDRO_NODE_VAR_DOUBLE,cellDNames[v],DENDRO_FORMAT_BINARY);
+
+                        for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
+                            for(unsigned int w=0;w<ePe;w++)    
+                             cell_dtmp[(il-pMesh->getElementLocalBegin())*ePe+w] = cellData[v][il];
+                        }
+
+                        retval = vtk_write_binary (fp, (char *) (cell_dtmp), sizeof (*cell_dtmp)*num_cells);
+                        if (retval) {
+                            std:: cout<<rank<<": [VTU Error]: "<<"base64 encode element level data failed"<<std:: endl;
+                            fclose(fp);
+                        }
+
+                    #endif
+
+                    fprintf(fp,"\n");
+                    fprintf(fp,"        </DataArray>\n");
+
+                }
+
+            }
+
+
+            #ifndef DENDRO_VTU_ASCII
+                delete [] cell_tmp;
+                
+                if(nCellData>0 && cellData!=NULL) 
+                    delete [] cell_dtmp;
+            #endif
+
+            
             fprintf(fp,"      </CellData>\n");
 
 
@@ -1373,7 +1437,7 @@ namespace io
                     #ifdef DENDRO_VTU_ASCII
                     fprintf(fp,"         ");
                     for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
-                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il);
+                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il,isDGPdata);
                         for(unsigned int node=0;node<nPe;node++)
                             fprintf(fp,"%f ",nodalVal[node]);
                     }
@@ -1383,7 +1447,7 @@ namespace io
 
 
                     for (unsigned int il = pMesh->getElementLocalBegin(); il < pMesh->getElementLocalEnd(); ++il) {
-                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il);
+                        pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il,isDGPdata);
                         for(unsigned int node=0;node<nPe;node++)
                             nodalVal_binary[(il-pMesh->getElementLocalBegin())*nPe+node] = nodalVal[node];
                     }
@@ -1476,6 +1540,20 @@ namespace io
                 fprintf(fp,"        <PDataArray type=\"%s\" Name=\"cell_level\"" " format=\"%s\"/>\n",DENDRO_NODE_VAR_INT,DENDRO_FORMAT_BINARY);
                 #endif
 
+                if(nCellData>0 && cellData!=NULL)
+                {
+                    
+                    for(unsigned int v=0; v < nCellData; v++)
+                    {
+                        #ifdef DENDRO_VTU_ASCII
+                            fprintf(fp,"        <PDataArray type=\"%s\" Name=\"%s\"" " format=\"%s\"/>\n",DENDRO_NODE_VAR_DOUBLE,cellDNames[v],DENDRO_FORMAT_ASCII);
+                        #else
+                            fprintf(fp,"        <PDataArray type=\"%s\" Name=\"%s\"" " format=\"%s\"/>\n",DENDRO_NODE_VAR_DOUBLE,cellDNames[v],DENDRO_FORMAT_BINARY);
+                        #endif
+                    }
+
+                }
+
                 fprintf(fp,"    </PCellData>\n");
 
 
@@ -1498,6 +1576,10 @@ namespace io
                     fprintf(fp,"      </PPointData>\n");
 
                 }
+
+                
+
+
                 std::string vtuName = getFileName(std::string(fPrefix));
                 for(unsigned int proc=0;proc<npes;proc++)
                 {
@@ -1870,13 +1952,17 @@ namespace io
         }
 
 
-        void mesh2vtu_slice(const ot::Mesh *pMesh, unsigned int s_val[], unsigned int s_normal[], const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData)
+        void mesh2vtu_slice(const ot::Mesh *pMesh, unsigned int s_val[], unsigned int s_normal[], const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData,bool isDGPData)
         {
              if(!(pMesh->isActive())) return ;
 
             unsigned int rank = pMesh->getMPIRank();
             unsigned int npes = pMesh->getMPICommSize();
             MPI_Comm activeComm = pMesh->getMPICommunicator();
+
+            Point dmin = pMesh->getDomainMinPt();
+            Point dmax = pMesh->getDomainMaxPt();
+            const double invRg = 1.0/( (double) (1u<<m_uiMaxDepth));
 
             int retval;
 
@@ -1902,8 +1988,8 @@ namespace io
                     return ;
                 }
 
-                const std::vector<ot::TreeNode> pElements = pMesh->getAllElements();
-                const std::vector<unsigned int> e2N       = pMesh->getE2NMapping();
+                const std::vector<ot::TreeNode>& pElements = pMesh->getAllElements();
+                const std::vector<unsigned int>& e2N       = pMesh->getE2NMapping();
 
                 // note this works only for the 3D grids.
                 const unsigned int dim        = m_uiDim;
@@ -1968,9 +2054,9 @@ namespace io
                             for (unsigned int i = 0; i < (eleOrder + 1); i++) {
 
 
-                                fprintf(fp, "          %d %d %d\n", (pElements[ele].getX() + i * (sz / eleOrder)),
-                                        (pElements[ele].getY() + j * (sz / eleOrder)),
-                                        (pElements[ele].getZ() + k * (sz / eleOrder)));
+                                fprintf(fp, "          %d %d %d\n", VTU_OCT_X_GRID_X(pElements[ele].getX() + i * (sz / eleOrder)),
+                                        VTU_OCT_Y_GRID_Y(pElements[ele].getY() + j * (sz / eleOrder)),
+                                        VTU_OCT_Z_GRID_Z(pElements[ele].getZ() + k * (sz / eleOrder)));
 
                             }
                 }
@@ -1984,9 +2070,9 @@ namespace io
                     for (unsigned int k = 0; k < (eleOrder + 1); k++)
                         for (unsigned int j = 0; j < (eleOrder + 1); j++)
                             for (unsigned int i = 0; i < (eleOrder + 1); i++) {
-                                coord_data[((s)*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 0] = (pElements[ele].getX()+i*(sz/eleOrder));
-                                coord_data[((s)*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 1] = (pElements[ele].getY()+j*(sz/eleOrder));
-                                coord_data[((s)*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 2] = (pElements[ele].getZ()+k*(sz/eleOrder));
+                                coord_data[((s)*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 0] = VTU_OCT_X_GRID_X(pElements[ele].getX()+i*(sz/eleOrder));
+                                coord_data[((s)*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 1] = VTU_OCT_Y_GRID_Y(pElements[ele].getY()+j*(sz/eleOrder));
+                                coord_data[((s)*nPe+k*(eleOrder+1)*(eleOrder+1)+j*(eleOrder+1)+i)*m_uiDim + 2] = VTU_OCT_Z_GRID_Z(pElements[ele].getZ()+k*(sz/eleOrder));
                             }
                 }
 
@@ -2221,7 +2307,7 @@ namespace io
                         fprintf(fp,"         ");
                         for(unsigned int s = 0 ; s < sids.size(); s++) {
                             const unsigned int il = sids[s];
-                            pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il);
+                            pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il,isDGPData);
                             for(unsigned int node=0;node<nPe;node++)
                                 fprintf(fp,"%f ",nodalVal[node]);
                         }
@@ -2232,7 +2318,7 @@ namespace io
 
                         for(unsigned int s = 0 ; s < sids.size(); s++) {
                             const unsigned int il = sids[s];
-                            pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il);
+                            pMesh->getElementNodalValues(tmp_var,&(*(nodalVal.begin())),il,isDGPData);
                             for(unsigned int node=0;node<nPe;node++)
                                 nodalVal_binary[(s)*nPe+node] = nodalVal[node];
                         }

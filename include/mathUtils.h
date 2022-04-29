@@ -207,8 +207,9 @@ T subt(const T* v1, const T*v2,const unsigned int n, T* out);
 template<typename T>
 void kron(const T* M1, const T* M2, T* out, unsigned int r1,unsigned int c1, unsigned int r2, unsigned int c2);
 
-
-
+/**@brief: min mean max of a scalar value. */
+template<typename T>
+void min_mean_max(T* stat, T* stat_g, MPI_Comm comm);
 
 
 

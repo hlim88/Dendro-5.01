@@ -39,6 +39,12 @@
 #include "meshUtils.h"
 #include <vector>
 
+
+// macros for coord. transformations. 
+#define VTU_OCT_X_GRID_X(xx) (dmin.x() + ((xx)*(dmax.x() - dmin.x()) * invRg))
+#define VTU_OCT_Y_GRID_Y(yy) (dmin.y() + ((yy)*(dmax.y() - dmin.y()) * invRg))
+#define VTU_OCT_Z_GRID_Z(zz) (dmin.z() + ((zz)*(dmax.z() - dmin.z()) * invRg))
+
 namespace io
 {
     namespace vtk
@@ -46,6 +52,7 @@ namespace io
 
         static FILE *fp = NULL;
 
+        /**@brief: writes vtu header. */
         static void write_vtu_header(void)
         {
             fprintf(fp, "# vtk DataFile Version 2.0\n");
@@ -59,7 +66,7 @@ namespace io
 
         }
 
-
+        /** @brief writes the compressed vtu file. */
         static int vtk_write_compressed (FILE * vtkfile, char *numeric_data,size_t byte_length)
         {
             int                 retval, fseek1, fseek2;
@@ -166,7 +173,7 @@ namespace io
             return 0;
         }
 
-
+        /**@brief writes vtu binary data*/
         static int vtk_write_binary (FILE * vtkfile, char *numeric_data, size_t byte_length)
         {
 
@@ -224,7 +231,7 @@ namespace io
 
         }
 
-
+        /**@brief: get the file name.*/
         static std::string getFileName(const std::string& s) {
 
             char sep = '/';
@@ -240,8 +247,6 @@ namespace io
 
             return(s);
         }
-
-
 
         /**
          *@breif Writes the given mesh to a binary vtk (legacy format) file.
@@ -261,7 +266,7 @@ namespace io
         * @param [in] varNames: list of variable names
         * @param [in] vars: double ** pointer to the varaibles.
         * */
-        void mesh2vtu(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData);
+        void mesh2vtu(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData,bool isDGPData=false);
 
 
         /**
@@ -281,7 +286,7 @@ namespace io
         * @param [in] varNames: list of variable names
         * @param [in] vars: double ** pointer to the varaibles.
         * */
-        void mesh2vtuCoarse(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData);
+        void mesh2vtuCoarse(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData,bool isDGPData=false);
 
         /**
         *@breif Writes the given mesh to a binary vtu (in xml format) file (Note that this will write only the coarse octree. ).
@@ -291,10 +296,24 @@ namespace io
         * @param [in] varNames: list of variable names
         * @param [in] vars: double ** pointer to the varaibles.
         * */
-        void mesh2vtuFine(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData);
+        void mesh2vtuFine(const ot::Mesh *pMesh, const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData, unsigned int nCellData=0, const char** cellDNames=NULL, const double** cellData=NULL, bool isDGPData=false);
 
 
-        void mesh2vtu_slice(const ot::Mesh *pMesh, unsigned int s_val[], unsigned int s_normal[], const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData);
+        /**
+         * @brief Writes the given mesh to a binary vtu (in xml format) file (Note that this will write only the coarse octree. ). (Only the slice of it. )
+         * 
+         * @param pMesh :input mesh
+         * @param s_val : point in the slice
+         * @param s_normal : normal vector to the slice. 
+         * @param fPrefix : file prefrix
+         * @param numFieldData : number of field data. 
+         * @param filedDataNames : field data names. 
+         * @param filedData : pointer to the field data
+         * @param numPointdata : number of point data. 
+         * @param pointDataNames : point data names. 
+         * @param pointData : pointer to the point data. 
+         */
+        void mesh2vtu_slice(const ot::Mesh *pMesh, unsigned int s_val[], unsigned int s_normal[], const char *fPrefix,unsigned int numFieldData,const char** filedDataNames,const double * filedData,unsigned int numPointdata, const char **pointDataNames, const double **pointData,bool isDGPData=false);
         
         
         /**
@@ -307,7 +326,6 @@ namespace io
          * @param [in] fileName: output file name
          *
          */
-        
         void waveletsToVTU(ot::Mesh* mesh,const double ** zippedVec, const double **unzippedVec,const unsigned int * varIds,const unsigned int numVars,const char* fileName);
         
 

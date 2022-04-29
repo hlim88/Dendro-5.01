@@ -193,8 +193,8 @@ namespace ot {
             double t_blk_begin = MPI_Wtime();
             if(m_uiIsBlockSetup)
             {
-                performBlocksSetup();
-                computeSMSpecialPts();
+                performBlocksSetup(m_uiCoarsetBlkLev,NULL,0);
+                //computeSMSpecialPts();
             }
                 
             double t_blk_end = MPI_Wtime();
@@ -280,14 +280,14 @@ namespace ot {
     }
 
 
-    Mesh::Mesh(std::vector<ot::TreeNode> &in, unsigned int k_s, unsigned int pOrder,MPI_Comm comm,bool pBlockSetup, SM_TYPE smType, unsigned int grainSz,double ld_tol,unsigned int sf_k,unsigned int (*getWeight)(const ot::TreeNode *), unsigned int coarsetBlkLev)
+    Mesh::Mesh(std::vector<ot::TreeNode> &in, unsigned int k_s, unsigned int pOrder,MPI_Comm comm,bool pBlockSetup, SM_TYPE smType, unsigned int grainSz,double ld_tol,unsigned int sf_k,unsigned int (*getWeight)(const ot::TreeNode *), unsigned int* blk_tags, unsigned int blk_tags_sz)
     {
 
         m_uiCommGlobal=comm;
         m_uiIsBlockSetup=pBlockSetup;
         m_uiScatterMapType= smType;
         m_uiIsF2ESetup=false;
-        m_uiCoarsetBlkLev = coarsetBlkLev;
+        m_uiCoarsetBlkLev = 0;
         MPI_Comm_rank(m_uiCommGlobal,&m_uiGlobalRank);
         MPI_Comm_size(m_uiCommGlobal,&m_uiGlobalNpes);
 
@@ -455,8 +455,8 @@ namespace ot {
 
             if(m_uiIsBlockSetup)
             {
-                performBlocksSetup();
-                computeSMSpecialPts();
+                performBlocksSetup(m_uiCoarsetBlkLev,blk_tags,blk_tags_sz);
+                //computeSMSpecialPts();
             }
                 
 
@@ -2297,6 +2297,12 @@ namespace ot {
         omp_par::scan(m_uiSendEleCount.data() , m_uiSendEleOffset.data() , npes);
         omp_par::scan(m_uiRecvEleCount.data() , m_uiRecvEleOffset.data() , npes);
 
+
+        for(unsigned int p=0; p < npes ; p ++)
+            m_uiSendOctOffsetRound1[p] = m_uiSendEleOffset[p];
+        
+
+
         // for(unsigned int p=0;p<npes;p++)
         // {
         // std::cout<<" proc: "<<m_uiActiveRank<<" to "<<p<<" sendOctR1 : "<<m_uiSendEleCount[p] <<" offset send : "<<m_uiSendEleOffset[p]<<std::endl;
@@ -2351,12 +2357,16 @@ namespace ot {
                     if((elementLookup!=LOOK_UP_TABLE_DEFAULT) && (m_uiAllElements[elementLookup].getLevel()<=m_uiAllElements[(m_uiScatterMapElementRound1[ele]+m_uiElementLocalBegin)].getLevel())) {
                         setHintUint = tmpSendEleIdR2[p].emplace(elementLookup);
                         // this part of the ghost elements added to make the Scatter map consitant for FEM computations. (these are not used for FDM computations) 03/27/2019 -milinda. 
-                        for(unsigned int dir2=0;dir2<m_uiNumDirections;dir2++)
+                        /*for(unsigned int dir2=0;dir2<m_uiNumDirections;dir2++)
                         {
                             lookUp=m_uiE2EMapping[elementLookup*m_uiNumDirections+dir2];
                             if((lookUp!=LOOK_UP_TABLE_DEFAULT) && (m_uiAllElements[lookUp].getLevel()<=m_uiAllElements[(m_uiScatterMapElementRound1[ele]+m_uiElementLocalBegin)].getLevel()))
                                 setHintUint = tmpSendEleIdR2[p].emplace(lookUp);
-                        }
+                        }*/
+                        //(Milinda)27/05/20: I realized this was a wrong fix to the correct the SM in FEM computations, this descrease the mesh generation performance a lot since we increase the pre and post ghost
+                        // elements an inactive ghost nodes, I realized this running perfromace for mesh generations in Frontera, the fix made for this was write to ghost nodes and accumilate from ghost but I think I forgot to remove
+                        // above code portion after FEM SM fix. 
+
                     }
 
                 }
@@ -8627,15 +8637,18 @@ namespace ot {
     }
 
 
-    void Mesh::performBlocksSetup()
+    void Mesh::performBlocksSetup(unsigned int cLev, unsigned int* tag, unsigned int tsz)
     {
+        m_uiIsBlockSetup=true;
+        m_uiCoarsetBlkLev=cLev;
+        m_uiLocalBlockList.clear();
 
         // should not be called if the mesh is not active
         if(!m_uiIsActive) return;
 
         // assumes that E2E and E2N mapping is done and m_uiAllElements should be sorted otherwise this will chnage the order of elements in m_uiAllElements.
         assert(seq::test::isUniqueAndSorted(m_uiAllElements));
-        octree2BlockDecomposition(m_uiAllElements,m_uiLocalBlockList,m_uiMaxDepth,m_uiDmin,m_uiDmax,m_uiElementLocalBegin,m_uiElementLocalEnd,m_uiElementOrder, m_uiCoarsetBlkLev);
+        octree2BlockDecomposition(m_uiAllElements,m_uiLocalBlockList,m_uiMaxDepth,m_uiDmin,m_uiDmax,m_uiElementLocalBegin,m_uiElementLocalEnd,m_uiElementOrder, m_uiCoarsetBlkLev, tag, tsz);
         assert(ot::test::isBlockListValid(m_uiAllElements,m_uiLocalBlockList,m_uiDmin,m_uiDmax,m_uiElementLocalBegin,m_uiElementLocalEnd));
 
         std::vector<DendroIntL> blkSz;
@@ -9443,7 +9456,7 @@ namespace ot {
     }
 
 
-    ot::Mesh* Mesh::ReMesh(unsigned int grainSz,double ld_tol,unsigned int sfK, unsigned int (*getWeight)(const ot::TreeNode *))
+    ot::Mesh* Mesh::ReMesh(unsigned int grainSz,double ld_tol,unsigned int sfK, unsigned int (*getWeight)(const ot::TreeNode *), unsigned int* blk_tags, unsigned int blk_tag_sz)
     {
 
         std::vector<ot::TreeNode> balOct1; //new balanced octree.
@@ -9714,7 +9727,8 @@ namespace ot {
 
         }
 
-        ot::Mesh * pMesh = new ot::Mesh(balOct1,1,m_uiElementOrder,m_uiCommGlobal,m_uiIsBlockSetup,m_uiScatterMapType,grainSz,ld_tol,sfK,getWeight,m_uiCoarsetBlkLev);
+        ot::Mesh * pMesh = new ot::Mesh(balOct1,1,m_uiElementOrder,m_uiCommGlobal,m_uiIsBlockSetup,m_uiScatterMapType,grainSz,ld_tol,sfK,getWeight,blk_tags,blk_tag_sz);
+        pMesh->setDomainBounds(m_uiDMinPt, m_uiDMaxPt);
         return pMesh;
 
 
@@ -11424,7 +11438,7 @@ namespace ot {
 
     }
 
-
+    #if 0
     void Mesh::computeSMSpecialPts()
     {
          // Note: this function is specifically written to find the last point for 4th order elements in finite differencing. 
@@ -12065,7 +12079,7 @@ namespace ot {
                      
                      
     } 
-
+    #endif
 
     int Mesh::getBlkBdyParentCNums(unsigned int blkId, unsigned int eleId, unsigned int dir, unsigned int* child, unsigned int* fid, unsigned int* cid)
     {
@@ -12200,28 +12214,30 @@ namespace ot {
 
     void Mesh::computeMinMaxLevel(unsigned int &lmin,unsigned int &lmax) const
     {
-        if(!m_uiIsActive)
+        if(m_uiIsActive)
         {
-            lmin =0;
-            lmax =0;
-            return;
+            unsigned int lmin_l = m_uiAllElements[m_uiElementLocalBegin].getLevel();
+            unsigned int lmax_l = m_uiAllElements[m_uiElementLocalBegin].getLevel();
+            for(unsigned int e = m_uiElementLocalBegin +1; e < m_uiElementLocalEnd; e++ )
+            {
+                if(m_uiAllElements[e].getLevel() < lmin_l)
+                lmin_l = m_uiAllElements[e].getLevel();
+
+                if(m_uiAllElements[e].getLevel() > lmax_l)
+                lmax_l = m_uiAllElements[e].getLevel();
+
+            }
+
+            par::Mpi_Reduce(&lmin_l,&lmin,1,MPI_MIN,0,m_uiCommActive);
+            par::Mpi_Reduce(&lmax_l,&lmax,1,MPI_MAX,0,m_uiCommActive);
+
         }
+        
 
-        unsigned int lmin_l = m_uiAllElements[m_uiElementLocalBegin].getLevel();
-        unsigned int lmax_l = m_uiAllElements[m_uiElementLocalBegin].getLevel();
-        for(unsigned int e = m_uiElementLocalBegin +1; e < m_uiElementLocalEnd; e++ )
-        {
-            if(m_uiAllElements[e].getLevel() < lmin_l)
-             lmin_l = m_uiAllElements[e].getLevel();
+        par::Mpi_Bcast(&lmin,1,0,m_uiCommGlobal);
+        par::Mpi_Bcast(&lmax,1,0,m_uiCommGlobal);
 
-            if(m_uiAllElements[e].getLevel() > lmax_l)
-             lmax_l = m_uiAllElements[e].getLevel();
-
-        }
-
-
-        par::Mpi_Allreduce(&lmin_l,&lmin,1,MPI_MIN,m_uiCommActive);
-        par::Mpi_Allreduce(&lmax_l,&lmax,1,MPI_MAX,m_uiCommActive);
+        return;
 
     }
 
@@ -12262,6 +12278,12 @@ namespace ot {
                 assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
                 child[3]=e2e[child[1]*NUM_FACES+OCT_DIR_FRONT];
                 assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
+                
+                assert(ele == e2e[child[0]*NUM_FACES + OCT_DIR_RIGHT]);
+                assert(ele == e2e[child[1]*NUM_FACES + OCT_DIR_RIGHT]);
+                assert(ele == e2e[child[2]*NUM_FACES + OCT_DIR_RIGHT]);
+                assert(ele == e2e[child[3]*NUM_FACES + OCT_DIR_RIGHT]);
+
                 break;
 
             case OCT_DIR_RIGHT:
@@ -12272,6 +12294,12 @@ namespace ot {
                 assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
                 child[3]=e2e[child[1]*NUM_FACES+OCT_DIR_FRONT];
                 assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
+
+                assert(ele == e2e[child[0]*NUM_FACES + OCT_DIR_LEFT]);
+                assert(ele == e2e[child[1]*NUM_FACES + OCT_DIR_LEFT]);
+                assert(ele == e2e[child[2]*NUM_FACES + OCT_DIR_LEFT]);
+                assert(ele == e2e[child[3]*NUM_FACES + OCT_DIR_LEFT]);
+
                 break;
 
             case OCT_DIR_DOWN:
@@ -12284,6 +12312,11 @@ namespace ot {
                 child[3]=e2e[child[1]*NUM_FACES+OCT_DIR_FRONT];
                 assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
 
+                assert(ele == e2e[child[0]*NUM_FACES + OCT_DIR_UP]);
+                assert(ele == e2e[child[1]*NUM_FACES + OCT_DIR_UP]);
+                assert(ele == e2e[child[2]*NUM_FACES + OCT_DIR_UP]);
+                assert(ele == e2e[child[3]*NUM_FACES + OCT_DIR_UP]);
+
                 break;
 
             case OCT_DIR_UP:
@@ -12294,6 +12327,12 @@ namespace ot {
                 assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
                 child[3]=e2e[child[1]*NUM_FACES+OCT_DIR_FRONT];
                 assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
+
+                assert(ele == e2e[child[0]*NUM_FACES + OCT_DIR_DOWN]);
+                assert(ele == e2e[child[1]*NUM_FACES + OCT_DIR_DOWN]);
+                assert(ele == e2e[child[2]*NUM_FACES + OCT_DIR_DOWN]);
+                assert(ele == e2e[child[3]*NUM_FACES + OCT_DIR_DOWN]);
+
                 break;
 
             case OCT_DIR_BACK:
@@ -12305,6 +12344,11 @@ namespace ot {
                 child[3]=e2e[child[1]*NUM_FACES+OCT_DIR_UP];
                 assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
 
+                assert(ele == e2e[child[0]*NUM_FACES + OCT_DIR_FRONT]);
+                assert(ele == e2e[child[1]*NUM_FACES + OCT_DIR_FRONT]);
+                assert(ele == e2e[child[2]*NUM_FACES + OCT_DIR_FRONT]);
+                assert(ele == e2e[child[3]*NUM_FACES + OCT_DIR_FRONT]);
+                
                 break;
 
             case OCT_DIR_FRONT:
@@ -12315,6 +12359,13 @@ namespace ot {
                 assert(child[2]!=LOOK_UP_TABLE_DEFAULT);
                 child[3]=e2e[child[1]*NUM_FACES+OCT_DIR_UP];
                 assert(child[3]!=LOOK_UP_TABLE_DEFAULT);
+
+                assert(ele == e2e[child[0]*NUM_FACES + OCT_DIR_BACK]);
+                assert(ele == e2e[child[1]*NUM_FACES + OCT_DIR_BACK]);
+                assert(ele == e2e[child[2]*NUM_FACES + OCT_DIR_BACK]);
+                assert(ele == e2e[child[3]*NUM_FACES + OCT_DIR_BACK]);
+
+
                 break;
         
             default:
@@ -12323,6 +12374,710 @@ namespace ot {
 
 
             
+
+    }
+
+
+    void Mesh::interGridTransferSendRecvCompute(const ot::Mesh *pMesh)
+    {
+
+        if(m_uiIsIGTSetup)
+            return;
+
+        MPI_Comm comm=m_uiCommGlobal;
+        int rank,npes;
+
+        MPI_Comm_rank(comm,&rank);
+        MPI_Comm_size(comm,&npes);
+
+        m_uiIGTSendC.clear();
+        m_uiIGTRecvC.clear();
+        m_uiIGTSendOfst.clear();
+        m_uiIGTRecvOfst.clear();
+        m_uiM2Prime.clear();
+
+        m_uiIGTSendC.resize(npes,0);
+        m_uiIGTRecvC.resize(npes,0);
+        m_uiIGTSendOfst.resize(npes,0);
+        m_uiIGTRecvOfst.resize(npes,0);
+
+
+        
+
+        if(m_uiIsActive)
+        {
+            MPI_Comm comm1=m_uiCommActive;
+            const int rank1=m_uiActiveRank;
+            const int npes1=m_uiActiveNpes;
+
+            //1. compute the number of m2 octants (based of m1 splitters)
+            unsigned int m2primeCount=0;
+            for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
+            {
+                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
+                    m2primeCount+=NUM_CHILDREN;
+                else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
+                {
+                    assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
+                    m2primeCount+=1;
+                    ele+=(NUM_CHILDREN-1);
+                }else
+                {
+                    assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
+                    m2primeCount+=1;
+                }
+
+            }
+
+            const unsigned int numM2PrimeElems=m2primeCount;
+            m_uiM2Prime.clear();
+            m_uiM2Prime.reserve(numM2PrimeElems);
+
+            m2primeCount=0;
+            for(unsigned int ele=m_uiElementLocalBegin;ele<m_uiElementLocalEnd;ele++)
+            {
+                if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_SPLIT)
+                {
+                    m_uiAllElements[ele].addChildren(m_uiM2Prime);
+                    m2primeCount+=NUM_CHILDREN;
+
+                }else if((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_COARSE)
+                {
+                    assert(m_uiAllElements[ele].getParent()==m_uiAllElements[ele+NUM_CHILDREN-1].getParent());
+                    m_uiM2Prime.push_back(m_uiAllElements[ele].getParent());
+                    
+                    ele+=(NUM_CHILDREN-1);
+                    m2primeCount+=1;
+                }else
+                {
+                    assert((m_uiAllElements[ele].getFlag()>>NUM_LEVEL_BITS)==OCT_NO_CHANGE);
+                    m_uiM2Prime.push_back(m_uiAllElements[ele]);
+                    m2primeCount+=1;
+
+                }
+            
+            }
+
+            assert(seq::test::isUniqueAndSorted(m_uiM2Prime));
+
+            if(npes==1) // m2_prime is equivalent to m2, hence no need to compute the send/ recv counts. 
+            {   
+                for(unsigned int p=0;p<npes;p++)
+                {
+                    m_uiIGTSendC[p]=0;
+                    m_uiIGTRecvC[p]=0;
+                    m_uiIGTSendOfst[p]=0;
+                    m_uiIGTRecvOfst[p]=0;
+                }
+                m_uiIsIGTSetup = true;
+                return;
+
+            }   
+
+
+            int npes2=0;
+            int rank2=0;
+            std::vector<ot::TreeNode> m2_splitters;
+            //note : assumes that global rank 0 is going to be active always. 
+            if(pMesh->isActive())
+            {
+                npes2=pMesh->getMPICommSize();
+                rank2=pMesh->getMPIRank();
+                const std::vector<ot::TreeNode>& m2_splitters_root=pMesh->getSplitterElements();
+                m2_splitters.resize(2*npes2);
+                for(unsigned int w=0;w<m2_splitters_root.size();w++)
+                    m2_splitters[w]=m2_splitters_root[w];
+            } 
+            
+            par::Mpi_Bcast(&npes2,1,0,comm1);
+            par::Mpi_Bcast(&rank2,1,0,comm1);
+            m2_splitters.resize(2*npes2);
+            par::Mpi_Bcast(&(*(m2_splitters.begin())),2*npes2,0,comm1);
+            assert(seq::test::isUniqueAndSorted(m2_splitters));
+           
+           
+            std::vector<ot::SearchKey> m2primeSK;
+            m2primeSK.resize(m_uiM2Prime.size());
+
+            for(unsigned int e=0;e<m_uiM2Prime.size();e++)
+            {
+                m2primeSK[e]=ot::SearchKey(m_uiM2Prime[e]);
+                m2primeSK[e].addOwner(rank1); // note that this is the rank in comm1. 
+            }
+
+
+            std::vector<ot::Key> m2_splitterKeys;
+            m2_splitterKeys.resize(2*npes2);
+
+            for(unsigned int p=0;p<npes2;p++)
+            {
+                m2_splitterKeys[2*p]=ot::Key(m2_splitters[2*p]);
+                m2_splitterKeys[2*p].addOwner(p);
+
+                m2_splitterKeys[2*p+1]=ot::Key(m2_splitters[2*p+1]);
+                m2_splitterKeys[2*p+1].addOwner(p);
+
+                m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p]));
+                m2primeSK.push_back(ot::SearchKey(m2_splitters[2*p+1]));
+            }
+
+            ot::SearchKey rootSK(m_uiDim,m_uiMaxDepth);
+            std::vector<ot::SearchKey> tmpNodes;
+
+            SFC::seqSort::SFC_treeSort(&(*(m2primeSK.begin())),m2primeSK.size(),tmpNodes,tmpNodes,tmpNodes,m_uiMaxDepth,m_uiMaxDepth,rootSK,ROOT_ROTATION,1,TS_SORT_ONLY);
+
+            unsigned int skip=0;
+            ot::SearchKey tmpSK;
+            std::vector<ot::SearchKey> tmpSKVec;
+
+            for(unsigned int e=0;e<(m2primeSK.size());e++)
+            {
+                tmpSK=m2primeSK[e];
+                skip=1;
+                while(((e+skip)<m2primeSK.size()) && (m2primeSK[e]==m2primeSK[e+skip]))
+                {
+                    if(m2primeSK[e+skip].getOwner()>=0){
+                        tmpSK.addOwner(m2primeSK[e+skip].getOwner());
+                    }
+                    skip++;
+                }
+
+                tmpSKVec.push_back(tmpSK);
+                e+=(skip-1);
+
+            }
+
+            std::swap(m2primeSK,tmpSKVec);
+            tmpSKVec.clear();
+
+            assert(seq::test::isUniqueAndSorted(m2primeSK));
+            assert(seq::test::isUniqueAndSorted(m2_splitterKeys));
+
+            ot::Key rootKey(0,0,0,0,m_uiDim,m_uiMaxDepth);
+            SFC::seqSearch::SFC_treeSearch(&(*(m2_splitterKeys.begin())),&(*(m2primeSK.begin())),0,m2_splitterKeys.size(),0,m2primeSK.size(),m_uiMaxDepth,m_uiMaxDepth,ROOT_ROTATION);
+
+
+
+            unsigned int sBegin,sEnd,selectedRank;
+            for(unsigned int p=0;p<npes2;p++)
+            {
+                assert(m2_splitterKeys[2*p].getFlag() & OCT_FOUND);
+                assert(m2_splitterKeys[2*p+1].getFlag() & OCT_FOUND);
+
+                sBegin=m2_splitterKeys[2*p].getSearchResult();
+                sEnd=m2_splitterKeys[2*p+1].getSearchResult();
+                assert(sBegin<sEnd);
+                selectedRank=rankSelectRule(m_uiGlobalNpes,m_uiGlobalRank,npes2,p);
+                m_uiIGTSendC[selectedRank]=sEnd-sBegin-1;
+
+                if(m2primeSK[sBegin].getOwner()>=0) m_uiIGTSendC[selectedRank]++;
+                if(m2primeSK[sEnd].getOwner()>=0) m_uiIGTSendC[selectedRank]++;
+
+            }
+
+            // we don't need below for intergrid transfer, but these can be help full for debugging.
+            m2primeSK.clear();
+
+            
+        }
+
+
+        par::Mpi_Alltoall(m_uiIGTSendC.data(),m_uiIGTRecvC.data(),1,comm);
+
+        m_uiIGTSendOfst[0]=0;
+        m_uiIGTRecvOfst[0]=0;
+
+        omp_par::scan(m_uiIGTSendC.data(), m_uiIGTSendOfst.data(),npes);
+        omp_par::scan(m_uiIGTRecvC.data(), m_uiIGTRecvOfst.data(),npes);
+
+        const unsigned int total_recv_elements = m_uiIGTRecvOfst[npes-1] + m_uiIGTRecvC[npes-1];
+
+        if(total_recv_elements != pMesh->getNumLocalMeshElements())
+        {
+            std::cout<<"rank: "<<rank<<" [Inter-grid Transfer error ]: Recvn M2' elements: "<<total_recv_elements<<" m2 num local elements "<<pMesh->getNumLocalMeshElements()<<std::endl;
+            MPI_Abort(comm,0);
+        }
+
+
+        m_uiIsIGTSetup = true;
+        return;
+
+    }
+
+    bool Mesh::setMeshRefinementFlags(const std::vector<unsigned int>& refine_flags)
+    {
+
+        // explicitly set the refinement flags, 
+        assert(refine_flags.size() == m_uiNumLocalElements);
+
+        // set all the elements to no change. 
+        for(unsigned int ele=m_uiElementLocalBegin; ele < m_uiElementLocalEnd; ele++)
+            m_uiAllElements[ele].setFlag(((OCT_NO_CHANGE<<NUM_LEVEL_BITS)|m_uiAllElements[ele].getLevel()));
+
+        bool isMeshChangeLocal=false;
+
+
+        for(unsigned int ele = m_uiElementLocalBegin; ele < m_uiElementLocalEnd; ele++)
+        {
+            const unsigned int rid = ele - m_uiElementLocalBegin;
+            
+            if(refine_flags[rid] == OCT_COARSE)
+            {
+                bool isCoarse = true;
+                if( ((ele + NUM_CHILDREN-1) < m_uiElementLocalEnd) && m_uiAllElements[ele+NUM_CHILDREN-1].getParent()==m_uiAllElements[ele].getParent() )
+                { // all the 8 children are in the same level, 
+
+
+                    if(m_uiAllElements[ele].getLevel()==0) // current element is the root cannnot coarsen anymore. 
+                        isCoarse =false;
+
+                    for(unsigned int child=0; child < NUM_CHILDREN; child++)
+                    {   // to check if all the children agrees to coarsen. 
+
+                        if(refine_flags[rid+child] != OCT_COARSE)
+                        {
+                            isCoarse = false;
+                            break;
+                        }
+
+                    }
+
+                }else
+                {   // all the 8 children are not in the same level. 
+                    isCoarse=false;
+                }
+
+                if(isCoarse)
+                {
+                    assert(((ele + NUM_CHILDREN-1) < m_uiElementLocalEnd) && m_uiAllElements[ele+NUM_CHILDREN-1].getParent()==m_uiAllElements[ele].getParent());
+                    
+                    for(unsigned int child=0; child < NUM_CHILDREN; child++)
+                        m_uiAllElements[ele+child].setFlag(((OCT_COARSE<<NUM_LEVEL_BITS)|m_uiAllElements[ele+child].getLevel()));
+
+                    isMeshChangeLocal=true;
+                    ele+= (NUM_CHILDREN-1);
+
+                }else
+                {
+                    m_uiAllElements[ele].setFlag(((OCT_NO_CHANGE<<NUM_LEVEL_BITS)|m_uiAllElements[ele].getLevel()));
+                }
+                
+
+                
+            }else if(refine_flags[rid] ==OCT_SPLIT)
+            {
+
+                if( (m_uiAllElements[ele].getLevel()+MAXDEAPTH_LEVEL_DIFF+1) < m_uiMaxDepth )
+                {
+                    m_uiAllElements[ele].setFlag(((OCT_SPLIT<<NUM_LEVEL_BITS)|m_uiAllElements[ele].getLevel()));
+                    isMeshChangeLocal=true;
+                }
+                else
+                    m_uiAllElements[ele].setFlag(((OCT_NO_CHANGE<<NUM_LEVEL_BITS)|m_uiAllElements[ele].getLevel()));
+                
+
+            }else
+            {
+                assert(refine_flags[rid]==OCT_NO_CHANGE);
+                m_uiAllElements[ele].setFlag(((OCT_NO_CHANGE<<NUM_LEVEL_BITS)|m_uiAllElements[ele].getLevel()));
+
+            }
+
+
+        }
+
+        return isMeshChangeLocal;
+
+
+
+    }
+
+
+    void Mesh::octCoordToDomainCoord(const Point& oct_pt, Point& domain_pt) const 
+    {
+        const double RgX = (m_uiDMaxPt.x() - m_uiDMinPt.x());
+        const double RgY = (m_uiDMaxPt.y() - m_uiDMinPt.y());
+        const double RgZ = (m_uiDMaxPt.z() - m_uiDMinPt.z());
+
+        const double octRg = (1u<<(m_uiMaxDepth));
+        
+        double x = (((oct_pt.x() -0)*RgX)/octRg) + m_uiDMinPt.x();
+        double y = (((oct_pt.y() -0)*RgY)/octRg) + m_uiDMinPt.y();
+        double z = (((oct_pt.z() -0)*RgZ)/octRg) + m_uiDMinPt.z();
+
+        domain_pt = Point(x,y,z);
+        return;
+
+
+        
+    }
+
+    void Mesh::domainCoordToOctCoord(const Point& domain_pt, Point& oct_pt) const
+    {
+
+        const double RgX = (m_uiDMaxPt.x() - m_uiDMinPt.x());
+        const double RgY = (m_uiDMaxPt.y() - m_uiDMinPt.y());
+        const double RgZ = (m_uiDMaxPt.z() - m_uiDMinPt.z());
+
+        const double octRg = (1u<<(m_uiMaxDepth));
+        
+        double x = (((domain_pt.x() -m_uiDMinPt.x())*octRg)/RgX) ;
+        double y = (((domain_pt.y() -m_uiDMinPt.y())*octRg)/RgY) ;
+        double z = (((domain_pt.z() -m_uiDMinPt.z())*octRg)/RgZ) ;
+
+        oct_pt = Point(x,y,z);
+        return;
+
+    }
+
+    void Mesh::computeTreeNodeOwnerProc(const ot::TreeNode * pNodes, unsigned int n, int* ownerranks) const
+    {
+        
+        if(m_uiIsActive)
+        {
+            std::vector<ot::SearchKey> keys;
+            keys.resize(n);
+
+            for(unsigned int i=0;i<n;i++)
+            {
+                keys[i] = ot::SearchKey( pNodes[i] );
+                keys[i].addOwner(i);
+                ownerranks[i]=-1;
+            }
+
+            const unsigned int npes = this->getMPICommSize();
+
+            const std::vector<ot::TreeNode>& sElements = this->getSplitterElements();
+            for(unsigned int p=0; p< npes ;p++)
+            {
+                keys.push_back(ot::SearchKey(sElements[2*p]));
+                keys.back().addOwner(-1);
+            }
+
+            std::vector<ot::SearchKey> tmp;
+            ot::SearchKey root(ot::TreeNode(0,0,0,0,m_uiDim,m_uiMaxDepth));
+            SFC::seqSort::SFC_treeSort(&(*(keys.begin())),keys.size(),tmp,tmp,tmp,m_uiMaxDepth,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_SORT_ONLY);
+
+            std::vector<ot::Key> key_merged;
+            mergeKeys(keys,key_merged);
+
+            std::vector<ot::Key> sEleKeys;
+            sEleKeys.resize(npes);
+            for(unsigned int p = 0; p < npes ;p++)
+            {
+                sEleKeys[p]=Key(sElements[2*p]);
+            }
+                
+            SFC::seqSearch::SFC_treeSearch(&(*(sEleKeys.begin())),&(*(key_merged.begin())),0,sEleKeys.size(),0,key_merged.size(),m_uiMaxDepth,m_uiMaxDepth,ROOT_ROTATION);
+            unsigned int sBegin=0;
+            unsigned int sEnd;
+
+            for(unsigned int p=0;p<npes;p++)
+            {
+
+                assert((sEleKeys[p].getFlag() & OCT_FOUND));
+                assert(key_merged[sEleKeys[p].getSearchResult()]==sEleKeys[p]);
+                sBegin=sEleKeys[p].getSearchResult();
+                (p<(npes-1))? sEnd=sEleKeys[p+1].getSearchResult()+1: sEnd=key_merged.size();
+                
+                for(unsigned int k=sBegin;k<sEnd;k++)
+                {
+                    for (unsigned int w = 0; w < key_merged[k].getOwnerList()->size(); w++)
+                    {
+                        const unsigned kowner = (*(key_merged[k].getOwnerList()))[w];
+                        if(kowner >= 0)
+                        {
+                            ownerranks[kowner] =p;
+                        }
+                    }
+                }
+
+            }
+
+        }
+
+        return ;
+        
+    }
+
+    void Mesh::blkUnzipElementIDs(unsigned int blk, std::vector<unsigned int>&eid) const 
+    {
+        eid.clear();
+        if(this->isActive())
+        {
+            const ot::TreeNode * pNodes= m_uiAllElements.data();
+
+            const unsigned int nodeLocalBegin = this->getNodeLocalBegin();
+            const unsigned int nodeLocalEnd = this->getNodeLocalEnd();
+
+            const unsigned int* e2n_cg = &(*(this->getE2NMapping().begin()));
+            const unsigned int* e2e = &(*(this->getE2EMapping().begin()));
+
+            const std::vector<ot::Block>& blkList = this->getLocalBlockList();
+            const unsigned int nPe = this->getNumNodesPerElement();
+
+            unsigned int lookup,node_cg;
+            unsigned int child[NUM_CHILDREN];
+
+            if(blk> blkList.size()) 
+                return;
+
+            const unsigned int pWidth = blkList[blk].get1DPadWidth();
+            const ot::TreeNode blkNode = blkList[blk].getBlockNode();
+            const unsigned int regLevel = blkList[blk].getRegularGridLev();
+            
+            eid.clear();
+            unsigned int fchild[4];
+
+            for(unsigned int elem = blkList[blk].getLocalElementBegin(); elem < blkList[blk].getLocalElementEnd(); elem++)
+            {
+                const unsigned int ei=(pNodes[elem].getX()-blkNode.getX())>>(m_uiMaxDepth-regLevel);
+                const unsigned int ej=(pNodes[elem].getY()-blkNode.getY())>>(m_uiMaxDepth-regLevel);
+                const unsigned int ek=(pNodes[elem].getZ()-blkNode.getZ())>>(m_uiMaxDepth-regLevel);
+
+                const unsigned int emin = 0;
+                const unsigned int emax = (1u<<(regLevel-blkNode.getLevel()))-1;
+
+                if(pWidth > 0)
+                {   
+                    // we need to look for the boundary neigbours only when the padding width is > 0 . 
+                    if(ei==emin)
+                    { 
+                        // OCT_DIR_LEFT
+                        const unsigned int dir = OCT_DIR_LEFT;
+                        lookup = e2e[elem*NUM_FACES + dir];
+                        if(lookup!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookup].getLevel() > regLevel )
+                            {  
+                                
+                                this->getFinerFaceNeighbors(elem, dir, fchild);
+                                eid.push_back(fchild[0]);
+                                eid.push_back(fchild[1]);
+                                eid.push_back(fchild[2]);
+                                eid.push_back(fchild[3]);
+
+
+                            }else
+                            {   
+                                // neighbour octant is same lev or coarser
+                                assert(pNodes[lookup].getLevel() <= regLevel );
+                                eid.push_back(lookup);
+
+                            }
+
+                        }
+                    }
+
+                    if(ei==emax)
+                    { 
+                        // OCT_DIR_RIGHT
+                        const unsigned int dir = OCT_DIR_RIGHT;
+                        lookup = e2e[elem*NUM_FACES + dir];
+                        
+                        if(lookup!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookup].getLevel() > regLevel )
+                            {  
+                                
+                                this->getFinerFaceNeighbors(elem, dir, fchild);
+                                eid.push_back(fchild[0]);
+                                eid.push_back(fchild[1]);
+                                eid.push_back(fchild[2]);
+                                eid.push_back(fchild[3]);
+
+
+                            }else
+                            {   
+                                // neighbour octant is same lev or coarser
+                                assert(pNodes[lookup].getLevel() <= regLevel );
+                                eid.push_back(lookup);
+
+                            }
+
+                        }
+
+                    }
+
+                    if(ej==emin)
+                    {   
+                        // OCT_DIR_DOWN
+                        const unsigned int dir = OCT_DIR_DOWN;
+                        lookup = e2e[elem*NUM_FACES + dir];
+                        
+                        if(lookup!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookup].getLevel() > regLevel )
+                            {  
+                                
+                                this->getFinerFaceNeighbors(elem, dir, fchild);
+                                eid.push_back(fchild[0]);
+                                eid.push_back(fchild[1]);
+                                eid.push_back(fchild[2]);
+                                eid.push_back(fchild[3]);
+
+
+                            }else
+                            {   
+                                // neighbour octant is same lev or coarser
+                                assert(pNodes[lookup].getLevel() <= regLevel );
+                                eid.push_back(lookup);
+
+                            }
+
+                        }
+
+                    }
+
+                    if(ej==emax)
+                    {   
+                        
+                        // OCT_DIR_UP
+                        const unsigned int dir = OCT_DIR_UP;
+                        lookup = e2e[elem*NUM_FACES + dir];
+                        if(lookup!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookup].getLevel() > regLevel )
+                            {  
+                                
+                                this->getFinerFaceNeighbors(elem, dir, fchild);
+                                eid.push_back(fchild[0]);
+                                eid.push_back(fchild[1]);
+                                eid.push_back(fchild[2]);
+                                eid.push_back(fchild[3]);
+
+
+                            }else
+                            {   
+                                // neighbour octant is same lev or coarser
+                                assert(pNodes[lookup].getLevel() <= regLevel );
+                                eid.push_back(lookup);
+
+                            }
+
+                        }
+
+                    }
+
+
+                    if(ek==emin)
+                    {   
+                        // OCT_DIR_BACK
+                        const unsigned int dir = OCT_DIR_BACK;
+                        lookup = e2e[elem*NUM_FACES + dir];
+                        if(lookup!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookup].getLevel() > regLevel )
+                            {  
+                                
+                                this->getFinerFaceNeighbors(elem, dir, fchild);
+                                eid.push_back(fchild[0]);
+                                eid.push_back(fchild[1]);
+                                eid.push_back(fchild[2]);
+                                eid.push_back(fchild[3]);
+
+
+                            }else
+                            {   
+                                // neighbour octant is same lev or coarser
+                                assert(pNodes[lookup].getLevel() <= regLevel );
+                                eid.push_back(lookup);
+
+                            }
+
+                        }
+
+                    }
+
+                    if(ek==emax)
+                    {
+                        // OCT_DIR_FRONT
+                        const unsigned int dir = OCT_DIR_FRONT;
+                        lookup = e2e[elem*NUM_FACES + dir];
+                        if(lookup!=LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(pNodes[lookup].getLevel() > regLevel )
+                            {  
+                                
+                                this->getFinerFaceNeighbors(elem, dir, fchild);
+                                eid.push_back(fchild[0]);
+                                eid.push_back(fchild[1]);
+                                eid.push_back(fchild[2]);
+                                eid.push_back(fchild[3]);
+
+
+                            }else
+                            {   
+                                // neighbour octant is same lev or coarser
+                                assert(pNodes[lookup].getLevel() <= regLevel );
+                                eid.push_back(lookup);
+
+                            }
+
+                        }   
+                        
+                    }
+                
+                }
+
+            }
+
+            
+            // now look for edge neighbors and vertex neighbors of the block, this is only needed when the padding width is >0
+            if(pWidth>0)
+            {
+                const std::vector<unsigned int> blk2Edge_map = blkList[blk].getBlk2DiagMap_vec();
+                const std::vector<unsigned int> blk2Vert_map = blkList[blk].getBlk2VertexMap_vec();
+                const unsigned int blk_ele_1D = blkList[blk].getElemSz1D();
+
+                for(unsigned int edir =0; edir < NUM_EDGES; edir++)
+                {
+
+                    for(unsigned int k=0; k< blk_ele_1D; k++)
+                    {
+
+                        if(blk2Edge_map[edir*(2*blk_ele_1D) + 2*k] != LOOK_UP_TABLE_DEFAULT)
+                        {
+                            if(blk2Edge_map[edir*(2*blk_ele_1D) + 2*k+0] == blk2Edge_map[edir*(2*blk_ele_1D) + 2*k+1])
+                            {
+                                lookup = blk2Edge_map[edir*(2*blk_ele_1D) + 2*k+0];
+                                eid.push_back(lookup);
+
+                                
+                            }else
+                            {
+                                lookup = blk2Edge_map[edir*(2*blk_ele_1D) + 2*k+0];
+                                eid.push_back(lookup);
+                                
+                                lookup = blk2Edge_map[edir*(2*blk_ele_1D) + 2*k+1];
+                                eid.push_back(lookup);
+
+                            }
+                        }
+                        
+                    }
+
+                }
+
+                
+                for(unsigned int k=0; k < blk2Vert_map.size(); k++)
+                {
+                    lookup = blk2Vert_map[k];
+
+                    if(lookup!=LOOK_UP_TABLE_DEFAULT)
+                        eid.push_back(lookup);
+
+                }
+
+            
+            }
+
+            std::sort(eid.begin(),eid.end());
+            eid.erase(std::unique(eid.begin(),eid.end()),eid.end());
+        
+        }
+
+        return;
 
     }
 
