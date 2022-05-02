@@ -5,6 +5,7 @@
 using namespace std;
 using namespace bssn;
 
+//#define QUADGRAV_EVOL
 
 void bssnRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks)
 {
@@ -112,6 +113,32 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
     const double *B1 = &uZipVars[VAR::U_B1][offset];
     const double *B2 = &uZipVars[VAR::U_B2][offset];
 
+    #ifdef QUADGRAV_EVOL
+    //Addiational varibles from quadratic counter parts
+    // Evolution from Ricci scalar
+    const double *Rsc = &uZipVars[VAR::U_RSC][offset];
+    const double *Rsch = &uZipVars[VAR::U_RSCH][offset];
+    // Evolution from Ricci tensor
+    const double *Atr = &uZipVars[VAR::U_ATR][offset];
+    const double *Aij0 = &uZipVars[VAR::U_SYMAIJ0][offset];
+    const double *Aij1 = &uZipVars[VAR::U_SYMAIJ1][offset];
+    const double *Aij2 = &uZipVars[VAR::U_SYMAIJ2][offset];
+    const double *Aij3 = &uZipVars[VAR::U_SYMAIJ3][offset];
+    const double *Aij4 = &uZipVars[VAR::U_SYMAIJ4][offset];
+    const double *Aij5 = &uZipVars[VAR::U_SYMAIJ5][offset];
+    const double *Btr = &uZipVars[VAR::U_BTR][offset];
+    const double *Bij0 = &uZipVars[VAR::U_SYMBIJ0][offset];
+    const double *Bij1 = &uZipVars[VAR::U_SYMBIJ1][offset];
+    const double *Bij2 = &uZipVars[VAR::U_SYMBIJ2][offset];
+    const double *Bij3 = &uZipVars[VAR::U_SYMBIJ3][offset];
+    const double *Bij4 = &uZipVars[VAR::U_SYMBIJ4][offset];
+    const double *Bij5 = &uZipVars[VAR::U_SYMBIJ5][offset];
+    // Evoliution from constraint
+    const double *Ci0 = &uZipVars[VAR::U_CI0][offset];
+    const double *Ci1 = &uZipVars[VAR::U_CI1][offset];
+    const double *Ci2 = &uZipVars[VAR::U_CI2][offset];
+    #endif
+    
     double *a_rhs = &unzipVarsRHS[VAR::U_ALPHA][offset];
     double *chi_rhs = &unzipVarsRHS[VAR::U_CHI][offset];
     double *K_rhs = &unzipVarsRHS[VAR::U_K][offset];
@@ -137,6 +164,28 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
     double *B_rhs1 = &unzipVarsRHS[VAR::U_B1][offset];
     double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
 
+    #ifdef QUADGRAV_EVOL
+    double *Rsc_rhs = &unzipVarsRHS[VAR::U_RSC][offset];
+    double *Rsch_rhs = &unzipVarsRHS[VAR::U_RSCH][offset];
+    double *Atr_rhs = &unzipVarsRHS[VAR::U_ATR][offset];
+    double *Aij_rhs00 = &unzipVarsRHS[VAR::U_SYMAIJ0][offset];
+    double *Aij_rhs01 = &unzipVarsRHS[VAR::U_SYMAIJ1][offset];
+    double *Aij_rhs02 = &unzipVarsRHS[VAR::U_SYMAIJ2][offset];
+    double *Aij_rhs11 = &unzipVarsRHS[VAR::U_SYMAIJ3][offset];
+    double *Aij_rhs12 = &unzipVarsRHS[VAR::U_SYMAIJ4][offset];
+    double *Aij_rhs22 = &unzipVarsRHS[VAR::U_SYMAIJ5][offset];
+    double *Btr_rhs = &unzipVarsRHS[VAR::U_BTR][offset];
+    double *Bij_rhs00 = &unzipVarsRHS[VAR::U_SYMBIJ0][offset];
+    double *Bij_rhs01 = &unzipVarsRHS[VAR::U_SYMBIJ1][offset];
+    double *Bij_rhs02 = &unzipVarsRHS[VAR::U_SYMBIJ2][offset];
+    double *Bij_rhs11 = &unzipVarsRHS[VAR::U_SYMBIJ3][offset];
+    double *Bij_rhs12 = &unzipVarsRHS[VAR::U_SYMBIJ4][offset];
+    double *Bij_rhs22 = &unzipVarsRHS[VAR::U_SYMBIJ5][offset];
+    double *Ci_rhs0 = &unzipVarsRHS[VAR::U_CI0][offset];
+    double *Ci_rhs1 = &unzipVarsRHS[VAR::U_CI1][offset];
+    double *Ci_rhs2 = &unzipVarsRHS[VAR::U_CI2][offset];
+    #endif
+    
     mem::memory_pool<double>* __mem_pool = &BSSN_MEM_POOL;
 
     const unsigned int nx = sz[0];
@@ -424,6 +473,32 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     const double *B1 = &uZipVars[VAR::U_B1][offset];
     const double *B2 = &uZipVars[VAR::U_B2][offset];
 
+    #ifdef QUADGRAV_EVOL
+    //Addiational varibles from quadratic counter parts
+    // Evolution from Ricci scalar
+    const double *Rsc = &uZipVars[VAR::U_RSC][offset];
+    const double *Rsch = &uZipVars[VAR::U_RSCH][offset];
+    // Evolution from Ricci tensor
+    const double *Atr = &uZipVars[VAR::U_ATR][offset];
+    const double *Aij0 = &uZipVars[VAR::U_SYMAIJ0][offset];
+    const double *Aij1 = &uZipVars[VAR::U_SYMAIJ1][offset];
+    const double *Aij2 = &uZipVars[VAR::U_SYMAIJ2][offset];
+    const double *Aij3 = &uZipVars[VAR::U_SYMAIJ3][offset];
+    const double *Aij4 = &uZipVars[VAR::U_SYMAIJ4][offset];
+    const double *Aij5 = &uZipVars[VAR::U_SYMAIJ5][offset];
+    const double *Btr = &uZipVars[VAR::U_BTR][offset];
+    const double *Bij0 = &uZipVars[VAR::U_SYMBIJ0][offset];
+    const double *Bij1 = &uZipVars[VAR::U_SYMBIJ1][offset];
+    const double *Bij2 = &uZipVars[VAR::U_SYMBIJ2][offset];
+    const double *Bij3 = &uZipVars[VAR::U_SYMBIJ3][offset];
+    const double *Bij4 = &uZipVars[VAR::U_SYMBIJ4][offset];
+    const double *Bij5 = &uZipVars[VAR::U_SYMBIJ5][offset];
+    // Evoliution from constraint
+    const double *Ci0 = &uZipVars[VAR::U_CI0][offset];
+    const double *Ci1 = &uZipVars[VAR::U_CI1][offset];
+    const double *Ci2 = &uZipVars[VAR::U_CI2][offset];
+    #endif
+    
     double *a_rhs = &unzipVarsRHS[VAR::U_ALPHA][offset];
     double *chi_rhs = &unzipVarsRHS[VAR::U_CHI][offset];
     double *K_rhs = &unzipVarsRHS[VAR::U_K][offset];
@@ -449,6 +524,28 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     double *B_rhs1 = &unzipVarsRHS[VAR::U_B1][offset];
     double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
 
+    #ifdef QUADGRAV_EVOL
+    double *Rsc_rhs = &unzipVarsRHS[VAR::U_RSC][offset];
+    double *Rsch_rhs = &unzipVarsRHS[VAR::U_RSCH][offset];
+    double *Atr_rhs = &unzipVarsRHS[VAR::U_ATR][offset];
+    double *Aij_rhs00 = &unzipVarsRHS[VAR::U_SYMAIJ0][offset];
+    double *Aij_rhs01 = &unzipVarsRHS[VAR::U_SYMAIJ1][offset];
+    double *Aij_rhs02 = &unzipVarsRHS[VAR::U_SYMAIJ2][offset];
+    double *Aij_rhs11 = &unzipVarsRHS[VAR::U_SYMAIJ3][offset];
+    double *Aij_rhs12 = &unzipVarsRHS[VAR::U_SYMAIJ4][offset];
+    double *Aij_rhs22 = &unzipVarsRHS[VAR::U_SYMAIJ5][offset];
+    double *Btr_rhs = &unzipVarsRHS[VAR::U_BTR][offset];
+    double *Bij_rhs00 = &unzipVarsRHS[VAR::U_SYMBIJ0][offset];
+    double *Bij_rhs01 = &unzipVarsRHS[VAR::U_SYMBIJ1][offset];
+    double *Bij_rhs02 = &unzipVarsRHS[VAR::U_SYMBIJ2][offset];
+    double *Bij_rhs11 = &unzipVarsRHS[VAR::U_SYMBIJ3][offset];
+    double *Bij_rhs12 = &unzipVarsRHS[VAR::U_SYMBIJ4][offset];
+    double *Bij_rhs22 = &unzipVarsRHS[VAR::U_SYMBIJ5][offset];
+    double *Ci_rhs0 = &unzipVarsRHS[VAR::U_CI0][offset];
+    double *Ci_rhs1 = &unzipVarsRHS[VAR::U_CI1][offset];
+    double *Ci_rhs2 = &unzipVarsRHS[VAR::U_CI2][offset];
+    #endif
+    
     const unsigned int nx = sz[0];
     const unsigned int ny = sz[1];
     const unsigned int nz = sz[2];
