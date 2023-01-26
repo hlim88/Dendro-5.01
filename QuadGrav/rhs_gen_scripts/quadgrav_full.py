@@ -209,12 +209,13 @@ DjdRsci= Matrix([d2(i,j,Rsc) + sum([dendro.C3[k,j,i]*dRsc[k] for k in dendro.e_i
 DiKij = Matrix([sum([d(i,At[i,j]) + (d(i,K)*gs[i,j] + K*(d(i,gt[i,j])/chi - d(i,chi)*gt[i,j]/(chi*chi)))/3 + sum([dendro.C3[i,i,l]*Kij[l,j] + dendro.C3[j,i,l]*Kij[i,l] for l in dendro.e_i]) for i in dendro.e_i]) for j in dendro.e_i])
 
 Btr_rhs1 = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) 
-Btr_rhs2 = a*(dendro.laplacian(Atr,chi) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr) 
-Btr_rhs3 = a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) 
-Btr_rhs4 = a/3*(qg_mass2_sq/qg_mass0_sq + 1)*(Rsc*Atr - 2*K*Rsch + dendro.laplacian(Rsc,chi) - 3/4*qg_mass0_sq*Rsc) 
-Btr_rhs5 = 4*a*(sum([Ci_U[j]*(DiKij[j] - d(j,K)) for j in dendro.e_i])) 
-Btr_rhs6 = 2*a*(sum([(Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i])) for i,j in dendro.e_ij]))
-Btr_rhs = Btr_rhs1 - Btr_rhs2 - Btr_rhs3 - Btr_rhs4 + Btr_rhs5 + Btr_rhs6
+Btr_rhs2 = - a*(dendro.laplacian(Atr,chi) + sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) - qg_mass2_sq*Atr - K*Btr - Rsch*Atr/3) 
+Btr_rhs3 = 3*a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i])) 
+Btr_rhs4 = a/3*(qg_mass2_sq/qg_mass0_sq + 1)*Rsc*Atr  
+Btr_rhs5 = -a/3*(qg_mass2_sq/qg_mass0_sq - 1)*(- 2*K*Rsch + dendro.laplacian(Rsc,chi) - 3/4*qg_mass0_sq*Rsc) 
+Btr_rhs6 = 4*a*(sum([Ci_U[j]*(DiKij[j] - d(j,K)) for j in dendro.e_i])) 
+Btr_rhs7 = -2*a*(sum([(Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i])) for i,j in dendro.e_ij]))
+Btr_rhs = Btr_rhs1 + Btr_rhs2 + Btr_rhs3 - Btr_rhs4 + Btr_rhs5 + Btr_rhs6 + Btr_rhs7
 
 # Eqn.36
 
