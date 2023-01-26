@@ -174,32 +174,35 @@ n_vec = Matrix([[1/a, -b[0]/a, -b[1]/a, -b[2]/a]])
 # Define acceleration (n^c \del_c n_a) HL : this is equal to 1/a*D_i a
 a_acc = Matrix([d(i,a) for i in dendro.e_i])/a
 
+
+#Jan.26.2023 Eqn numbers are based on current draft 
+
 # Ricci scalar, R
-# Eqn.23
+# Eqn.24
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
 # Aux Ricci scalar, R^
-# Eqn.24
+# Eqn.25
 Rsch_rhs = dendro.lie(b, Rsch) - a*(dendro.laplacian(Rsc,chi) + sum([a_acc[i]*d(i,Rsc) for i in dendro.e_i]) - \
                                     K*Rsch - qg_mass0_sq*Rsc) #- 2*0*a*(rho_qg - S)
 
 # Ricci tensor
 # From R_ab
-# Eqn.38
+# Eqn.31
 Atr_rhs = dendro.lie(b, Atr) + a*(2*sum([a_acc[i]*Ci[i] for i in dendro.e_i]) - Btr) 
 
-# Eqn.39
+# Eqn.32
 # Precomputataion of covariant derviative
 Djni= Matrix([d(j,b[i])/a - b[i]*d(i,a)/(a*a) + sum([dendro.C3[k,j,i]*n_vec[k] for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
 Dinj= Matrix([d(i,b[j])/a - b[j]*d(j,a)/(a*a) + sum([dendro.C3[k,i,j]*n_vec[k] for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
 
 Aij_rhs1 = Matrix([sum([b[l]*d(l,Aij[i,j]) for l in dendro.e_i]) for i,j in dendro.e_ij]) 
-Aij_rhs2 = 2*a/2*Atr*((Djni+Dinj)/2 - Kij)
+Aij_rhs2 = 2*a/3*Atr*((Djni+Dinj)/2 + Kij)
 Aij_rhs3 = 2*a*Matrix([sum([a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+Atr*(gs[k,i]*n_vec[j]/3+gs[k,j]*n_vec[i]/3)+(gs[k,i]*Ci[j]+gs[k,j]*Ci[i])/2)for k in dendro.e_i]) for i,j in dendro.e_ij]) 
-Aij_rhs = a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) - Bij) + Aij_rhs1.reshape(3,3) + Aij_rhs2 + Aij_rhs3.reshape(3,3)
+Aij_rhs = - a*(2/3*gt*sum([a_acc[k]*Ci[k] for k in dendro.e_i]) + Bij) + Aij_rhs1.reshape(3,3) + Aij_rhs2 + Aij_rhs3.reshape(3,3)
 
 # From V_ab
-# Eqn.42
+# Eqn.35
 # Precomputation of covariant derivative 
 dRsc = Matrix([d(i,Rsc) for i in dendro.e_i])
 DjdRsci= Matrix([d2(i,j,Rsc) + sum([dendro.C3[k,j,i]*dRsc[k] for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
@@ -213,7 +216,7 @@ Btr_rhs5 = 4*a*(sum([Ci_U[j]*(DiKij[j] - d(j,K)) for j in dendro.e_i]))
 Btr_rhs6 = 2*a*(sum([(Aij_UU[i,j] + Atr*igs[i,j]/3)*(Rt[i,j]+K*Kij[i,j] - sum([Kki[k,i]*Kij[k,j] for k in dendro.e_i])) for i,j in dendro.e_ij]))
 Btr_rhs = Btr_rhs1 - Btr_rhs2 - Btr_rhs3 - Btr_rhs4 + Btr_rhs5 + Btr_rhs6
 
-# Eqn.43
+# Eqn.36
 
 # Some precomputation
 a_acc_UP = Matrix([sum([a_acc[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
@@ -241,8 +244,7 @@ Bij_rhs = Bij_rhs1 + Bij_rhs2 + Bij_rhs3 - Bij_rhs4 + Bij_rhs5 + Bij_rhs6 + Bij_
 
 #Bij_rhs = -2*Btr*Kij/3 
 
-#Eqn.41
-# HL : Lie derivative is broken??
+#Eqn.34
 Ci_rhs1 = Matrix([sum([b[j]*ad(j,Ci[i]) - Ci[j]*d(j,b[i]) + weight*Ci[i]*d(j,b[j])  for j in dendro.e_i]) for i in dendro.e_i])
 Ci_rhs2 = Matrix([sum([a_acc[k]*(Aij[k,i] + gs[i,k]*Atr/3) + n_vec[i]*a_acc[k]*Ci[k] for k in dendro.e_i]) for i in dendro.e_i])
 Ci_rhs = Ci_rhs1 + Ci_rhs2 - Ei
