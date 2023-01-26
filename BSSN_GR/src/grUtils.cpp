@@ -1467,6 +1467,70 @@ double interpolation4( double xx[], double yy[], int np, double xb,
     }
 
 
+    void TeukolskyWaveData(const double xx1,const double yy1,const double zz1, double *var)
+    {
+
+        const double xx=GRIDX_TO_X(xx1);
+        const double yy=GRIDY_TO_Y(yy1);
+        const double zz=GRIDZ_TO_Z(zz1);
+
+        // parameters for the BH (mass, location, spin parameter)
+        double M = BH1.getBHMass();
+        double bh1x = BH1.getBHCoordX();
+        double bh1y = BH1.getBHCoordY();
+        double bh1z = BH1.getBHCoordZ();
+        double spin1 = BH1.getBHSpin();
+
+        // coordinates relative to the center of the BH
+        double x = xx - bh1x;
+        double y = yy - bh1y;
+        double z = zz - bh1z;
+
+        //locating as a radial form
+        double r = sqrt(x*x + y*y + z*z);
+
+	    // Wave amplitude parameter
+	    double AmpTW = 0.001;
+
+	    double gtd[3][3], Atd[3][3];
+	    double alpha, Gamt[3];
+	    double Chi, TrK, Betau[3];
+
+        #include "tw_vars.cpp"
+        #include "twinit.cpp"
+ 	
+        var[VAR::U_ALPHA] = alpha;
+        var[VAR::U_CHI] = Chi;
+        var[VAR::U_K] = TrK;
+
+        var[VAR::U_BETA0] = Betau[0];
+        var[VAR::U_BETA1] = Betau[1];
+        var[VAR::U_BETA2] = Betau[2];
+
+	    var[VAR::U_GT0] = Gamt[0];
+	    var[VAR::U_GT1] = Gamt[1];
+	    var[VAR::U_GT2] = Gamt[2];
+
+        var[VAR::U_B0] = 0.0;
+        var[VAR::U_B1] = 0.0;
+        var[VAR::U_B2] = 0.0;
+	
+	    var[VAR::U_SYMGT0] = gtd[0][0];
+	    var[VAR::U_SYMGT1] = gtd[0][1];
+	    var[VAR::U_SYMGT2] = gtd[0][2];
+	    var[VAR::U_SYMGT3] = gtd[1][1];
+	    var[VAR::U_SYMGT4] = gtd[1][2];
+	    var[VAR::U_SYMGT5] = gtd[2][2];
+
+	    var[VAR::U_SYMAT0] = Atd[0][0];
+	    var[VAR::U_SYMAT1] = Atd[0][1];
+	    var[VAR::U_SYMAT2] = Atd[0][2];
+	    var[VAR::U_SYMAT3] = Atd[1][1];
+	    var[VAR::U_SYMAT4] = Atd[1][2];
+	    var[VAR::U_SYMAT5] = Atd[2][2];
+
+        //std::cout<<"TW init data: (x,y,z) = ( "<<x<<", "<<y<<", "<<z<<"), alpha = "<<alpha<<std::endl;
+    }
 
     void noiseData(const double xx1,const double yy1,const double zz1, double *var)
     {

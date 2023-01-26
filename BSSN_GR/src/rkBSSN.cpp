@@ -254,9 +254,12 @@ void RK_BSSN::applyInitialConditions(DendroScalar** zipIn)
                             bssn::KerrSchildData((double)x,(double)y,(double)z,var);
                         }
                         else if (bssn::BSSN_ID_TYPE == 3) {
-                            bssn::noiseData((double)x,(double)y,(double)z,var);
+                            bssn::TeukolskyWaveData((double)x,(double)y,(double)z,var);
                         }
                         else if (bssn::BSSN_ID_TYPE == 4) {
+                            bssn::noiseData((double)x,(double)y,(double)z,var);
+                        }
+                        else if (bssn::BSSN_ID_TYPE == 5) {
                             bssn::fake_initial_data((double)x,(double)y,(double)z,var);
                         }
                         else {
