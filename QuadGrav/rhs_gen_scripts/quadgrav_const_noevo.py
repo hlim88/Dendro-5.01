@@ -208,9 +208,13 @@ Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 #==========================================================================================
 Rsch_rhs = (
 	dendro.lie(b, Rsch) 
-	- a*(dendro.laplacian(Rsc,chi) 
-	+ sum([a_acc[i]*d(i,Rsc) for i in dendro.e_i]) 
-	- K*Rsch - qg_mass0_sq*Rsc)
+	- a*(
+		dendro.laplacian(Rsc,chi) 
+		+ sum([a_acc[i]*d(i,Rsc) 
+		for i in dendro.e_i
+		]) 
+		- K*Rsch - qg_mass0_sq*Rsc
+	)
 	#- 2*0*a*(rho_qg - S)
 )
 
@@ -265,7 +269,7 @@ Aij_rhs1 = Matrix([
 ])
 # RHS: line 1: term 1
 Aij_rhs2 = 2*a/3*Atr*((Djni+Dinj)/2 + Kij)
-# RHS: line 1: term 2 (corrected an ERROR: 20-Feb-23)
+# RHS: line 1: term 2
 Aij_rhs3 = a*Matrix([
 	sum([
 		a_acc[k]*(
@@ -399,7 +403,6 @@ Btr_rhs7 = -2*a*(
 	])
 )
 # RHS: line 2: term 3
-#(corrected an ERROR: 20-Feb-23: entire term was missing)
 Btr_rhs8 = -2*a*(
 	sum([
 		(
@@ -413,7 +416,6 @@ Btr_rhs8 = -2*a*(
 	])
 )
 # RHS: line 2: term 4
-#(corrected an ERROR: 20-Feb-23: entire term was missing)
 Btr_rhs9 = -4*a*(
 	sum([
      sum([
