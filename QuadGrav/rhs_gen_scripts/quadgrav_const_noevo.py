@@ -637,7 +637,7 @@ Bij_rhs = (
 #Ci_rhs = [item for sublist in Ci_rhs.tolist() for item in sublist]
 
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
-
+ok
 #TODO : Additional constraints, C_k, E_k go here if we want to evolve and monitor
 
 #_I = gt*igt
