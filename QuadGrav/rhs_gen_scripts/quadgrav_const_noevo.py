@@ -62,6 +62,7 @@ Btr = dendro.scalar("Btr", "[pp]")
 Bij  = dendro.sym_3x3("Bij", "[pp]")
 
 # Additional constraint as evolutions vars
+# NOTE : We are not evolving constraints. 
 Ci = dendro.vec3("Ci","[pp]")
 #Ei = dendro.vec3("Ei","[pp]")
 
@@ -131,13 +132,27 @@ gs = gt/chi
 igs = igt/chi
 
 # Define additional constraints
-# NOTE : Ci is considered as evolution variable but Ei is treated algebraically
 # Some precomputation/definition
 Aij_UU = dendro.up_up(Aij)*(chi*chi)
 AiUjD = dendro.up_down(Aij)*chi
-Ci_U = Matrix([sum([Ci[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
+
 Kij = At + 1/3*gt*K
 Kki = dendro.up_down(Kij)*chi
+
+# Ci is a momentume constraint
+'''
+Ci = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
+              sum(dendro.C2[m,k,i]*At[j,m] for m in dendro.e_i)) \
+                  for j,k in dendro.e_ij]) for i in dendro.e_i]) - \
+      Matrix([sum([Gt[j]*At[i,j] for j in dendro.e_i]) for i in dendro.e_i]) -\
+      Rational(3,2)*Matrix([ \
+            sum([igt[j,k]*At[k,i]*d(j,chi)/chi for j,k in dendro.e_ij])  \
+            for i in dendro.e_i]) -\
+      Rational(2,3)*Matrix([d(i,K) for i in dendro.e_i])
+Ci = [item for sublist in Ci.tolist() for item in sublist]
+'''
+
+Ci_U = Matrix([sum([Ci[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
 
 # Ei is determined by the spatial projection of RHS of Eqn.47
 diAiUjD = Matrix([sum([d(i, gt[i,k])*Aij[k,j] + igt[i,k]*d(i,Aij[k,j])  for i, k in dendro.e_ij]) for j in dendro.e_i])
@@ -325,8 +340,8 @@ DiKij = Matrix([
 
 a_acc_UP = Matrix([sum([a_acc[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
 
-DkCj = Matrix([d(k,Ci[j]) + sum([dendro.C3[k,j,l]*Ci[l] for l in dendro.e_i]) for j,k in dendro.e_ij])
-DkCi = Matrix([d(k,Ci[i]) + sum([dendro.C3[k,i,l]*Ci[l] for l in dendro.e_i]) for i,k in dendro.e_ij])
+DkCj = Matrix([d(k,Ci[j]) + sum([dendro.C3[k,j,l]*Ci[l] for l in dendro.e_i]) for j,k in dendro.e_ij]).reshape(3,3)
+DkCi = Matrix([d(k,Ci[i]) + sum([dendro.C3[k,i,l]*Ci[l] for l in dendro.e_i]) for i,k in dendro.e_ij]).reshape(3,3)
 
 DkKjk = Matrix([sum([ d(k,At[j,k]) + d(k,K)*gs[j,k] + K*(d(k,gt[j,k])/chi -d(k,chi)*gt[j,k]/(chi*chi))/3 - sum([dendro.C3[j,k,l]*Kij[l,j] + dendro.C3[k,j,l]*Kij[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for j in dendro.e_i])
 DkKik = Matrix([sum([ d(k,At[i,k]) + d(k,K)*gs[i,k] + K*(d(k,gt[i,k])/chi -d(k,chi)*gt[i,k]/(chi*chi))/3 - sum([dendro.C3[i,k,l]*Kij[l,i] + dendro.C3[k,i,l]*Kij[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
@@ -401,11 +416,14 @@ Btr_rhs8 = -2*a*(
 #(corrected an ERROR: 20-Feb-23: entire term was missing)
 Btr_rhs9 = -4*a*(
 	sum([
-		(
-			Kij[k,j]*DkCj[k,j]
-		) 
-		for k,j in dendro.e_ij
-	])
+     sum([
+		  ( 
+		 	  Kij[k,j]*DkCj[k,j]
+		  )  
+		   for k in dendro.e_i
+	     ])
+         for j in dendro.e_i
+        ])
 )
 
 # combine RHS
@@ -503,29 +521,27 @@ Bij_rhs7 = Matrix([
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
 # RHS: line 2: term 3 
-#(corrected an ERROR: 20-Feb-23: typo missing +; *a was missing)
 Bij_rhs8 = a*Matrix([
 	-(
 		Ci[i]*DkKjk[j] 
 		+ Ci[j]*DkKjk[i] 
 		+ sum([
-			Ci[i]*a_acc_UP[k]*K[k,j]
-			+ Ci[j]*a_acc_UP[k]*K[k,i] 
+			Ci[i]*a_acc_UP[k]*Kij[k,j]
+			+ Ci[j]*a_acc_UP[k]*Kij[k,i] 
 			for k in dendro.e_i
 		])
 	) 
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
 # RHS: line 2: term 4
-#(corrected an ERROR: 20-Feb-23: *a was missing)
 Bij_rhs9 = -2*a*Matrix([
 	sum([
-		K[k,i]*DkCj[k,j] 
-		+ K[k,j]*DkCi[k,i] 
+		Kij[k,i]*DkCj[k,j] 
+		+ Kij[k,j]*DkCj[k,i] 
 		for k in dendro.e_i
 	])
 	for i,j in dendro.e_ij
-])
+]).reshape(3,3)
 # RHS: line 3: term 2
 Bij_rhs10 = Matrix([
 	a/2*gs[i,j]*(
@@ -580,8 +596,6 @@ Bij_rhs13 = -Matrix([
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
 # RHS: line 4: term 2
-# (corrected an ERROR: 20-Feb-23: global minus sign)
-# (CHECK AGAIN)
 Bij_rhs14 = Matrix([
 	4*a*sum([
 		Ci_U[k]*(
@@ -615,10 +629,10 @@ Bij_rhs = (
 # Eqn.39 in draft
 # not actually needed (could be solved by constraint)
 #==========================================================================================
-Ci_rhs1 = Matrix([sum([b[j]*ad(j,Ci[i]) - Ci[j]*d(j,b[i]) + weight*Ci[i]*d(j,b[j])  for j in dendro.e_i]) for i in dendro.e_i])
-Ci_rhs2 = Matrix([sum([a_acc[k]*(Aij[k,i] + gs[i,k]*Atr/3) + n_vec[i]*a_acc[k]*Ci[k] for k in dendro.e_i]) for i in dendro.e_i])
-Ci_rhs = Ci_rhs1 + Ci_rhs2 - Ei
-Ci_rhs = [item for sublist in Ci_rhs.tolist() for item in sublist]
+#Ci_rhs1 = Matrix([sum([b[j]*ad(j,Ci[i]) - Ci[j]*d(j,b[i]) + weight*Ci[i]*d(j,b[j])  for j in dendro.e_i]) for i in dendro.e_i])
+#Ci_rhs2 = Matrix([sum([a_acc[k]*(Aij[k,i] + gs[i,k]*Atr/3) + n_vec[i]*a_acc[k]*Ci[k] for k in dendro.e_i]) for i in dendro.e_i])
+#Ci_rhs = Ci_rhs1 + Ci_rhs2 - Ei
+#Ci_rhs = [item for sublist in Ci_rhs.tolist() for item in sublist]
 
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
 
@@ -647,8 +661,8 @@ Ci_rhs = [item for sublist in Ci_rhs.tolist() for item in sublist]
 # generate code
 ###################################################################
 
-outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Atr_rhs, Aij_rhs, Btr_rhs, Bij_rhs, Ci_rhs]
-vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs', 'Rsch_rhs', 'Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Bij_rhs', 'Ci_rhs']
+outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs, Rsc_rhs, Rsch_rhs, Atr_rhs, Aij_rhs, Btr_rhs, Bij_rhs]
+vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs', 'Rsc_rhs', 'Rsch_rhs', 'Atr_rhs', 'Aij_rhs', 'Btr_rhs', 'Bij_rhs']
 #outs = [Ci_rhs]
 #vnames = ['Ci_rhs']
 #dendro.generate_debug(outs, vnames)
