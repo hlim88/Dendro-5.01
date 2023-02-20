@@ -1,0 +1,92 @@
+PROPOSED CHANGES:
+
+1)========================================
+
+In line 201 it should read
+
+Aij_rhs3 = a*Matrix([sum([a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+Atr*(gs[k,i]*n_vec[j]/3+gs[k,j]*n_vec[i]/3)+(gs[k,i]*Ci[j]+gs[k,j]*Ci[i]))for k in dendro.e_i]) for i,j in dendro.e_ij])
+
+instead of
+
+Aij_rhs3 = 2*a*Matrix([sum([a_acc[k]*(Aij[k,i]*n_vec[j]+Aij[k,j]*n_vec[i]+Atr*(gs[k,i]*n_vec[j]/3+gs[k,j]*n_vec[i]/3)+(gs[k,i]*Ci[j]+gs[k,j]*Ci[i])/2)for k in dendro.e_i]) for i,j in dendro.e_ij])
+
+
+
+2)=======================================
+
+In line 213 it should read
+
+Btr_rhs3 = 3*a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - 2*sum([Ci[i]*Ci_U[i] for i in dendro.e_i]))
+
+instead of
+
+Btr_rhs3 = 3*a/2*(sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) + Atr*Atr - sum([Ci[i]*Ci_U[i] for i in dendro.e_i]))
+
+
+3)=======================================
+
+In line 216 it should read
+
+Btr_rhs6 = 4*a*(sum([Ci_U[j]*(d(j,K) - DiKij[j]) for j in dendro.e_i])) 
+
+instead of
+
+Btr_rhs6 = 4*a*(sum([Ci_U[j]*(DiKij[j] - d(j,K)) for j in dendro.e_i])) 
+
+
+4)=======================================
+
+Cyan marked terms in Eq (36) not yet implemented
+
+
+5)=======================================
+
+In line 232 it should read
+
+Bij_rhs2 = 2/3*a*Btr*((Dinj + Djni)/2 + Kij) 
+
+instead of
+
+Bij_rhs2 = 2/3*a*Btr*((Dinj + Djni)/2 - Kij) 
+
+
+6)=======================================
+
+In line 238 Bij_rhs8 is probably an old residual and can be removed
+
+
+7)=======================================
+
+In line 243 Bij_rhs13 is confusingly implemented. If DkKij carries indices, one version and changing indices should suffice (and be less confusing ;) ).
+
+
+8)=======================================
+
+The third and fourth term in line 2 of the RHS of Eq. (37) (that is the one for Bij) are missing.
+
+
+
+
+
+
+
+
+QUESTIONS:
+
+1)========================================
+
+Why do we need the distinction between Ci() and Ci_U() but not for Kij?
+(A, B, Aij, Bij, Ci, Ei should all be spatial anyways.) 
+
+
+
+
+
+
+
+
+
+
+
+
+
