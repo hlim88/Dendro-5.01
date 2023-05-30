@@ -19,6 +19,7 @@ a_const = symbols('a_const')
 b_const = symbols('b_const')
 qg_mass0_sq = symbols('qg_mass0_sq')
 qg_mass2_sq = symbols('qg_mass0_sq')
+M_pl_sq = symbols('M_pl_sq')
 
 PI = 3.14159265358979323846
 kappa = 1/(16*PI)
