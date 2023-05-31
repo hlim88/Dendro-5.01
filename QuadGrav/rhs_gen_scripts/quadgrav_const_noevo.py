@@ -1,5 +1,5 @@
 ####################################################################
-# May.2020
+# May.2023
 # Quad grav rhs generator new version
 #####################################################################
 
@@ -192,20 +192,20 @@ a_acc = Matrix([d(i,a) for i in dendro.e_i])/a
 
 #==========================================================================================
 #==========================================================================================
-# 20-Feb-23: Eq numbers are based on this version of the draft
+# 31-May-23: Eq numbers are based on this version of the draft
 #==========================================================================================
 #==========================================================================================
 
 
 #==========================================================================================
 # R-equation (from R equation)
-# Eqn.24 in draft
+# Eqn.25 in draft
 #==========================================================================================
 Rsc_rhs = dendro.lie(b, Rsc) - a*Rsch
 
 #==========================================================================================
 # aux R-equation (from R equation)
-# Eqn.25 in draft
+# Eqn.26 in draft
 #==========================================================================================
 Rsch_rhs = (
 	dendro.lie(b, Rsch) 
@@ -216,12 +216,12 @@ Rsch_rhs = (
 		]) 
 		- K*Rsch - qg_mass0_sq*Rsc
 	)
-	#- 2*0*a*(rho_qg - S)
+	#- (qg_mass0_sq/Mpl2)*(S-rho)
 )
 
 #==========================================================================================
 # A-trace-equation (from trace-projection of R_ab equation)
-# Eqn.34 in draft
+# Eqn.35 in draft
 #==========================================================================================
 Atr_rhs = (
 	dendro.lie(b, Atr) 
@@ -233,7 +233,7 @@ Atr_rhs = (
 
 #==========================================================================================
 # Aij-equation (from traceless-projection of R_ab equation)
-# Eqn.35 in draft
+# Eqn.36 in draft
 #==========================================================================================
 
 # Precomputataion of covariant derviative
@@ -291,7 +291,7 @@ Aij_rhs3 = a*Matrix([
 	]) 
 	for i,j in dendro.e_ij
 ])
-# combine RHS (includes RHS: line 1: term 3)
+# combine RHS (includes RHS: line 1: term 3 and 4)
 Aij_rhs = (
 	- a*(
 		2/3*gt*sum([
@@ -307,7 +307,7 @@ Aij_rhs = (
 
 #==========================================================================================
 # B-trace-equation (from trace-projection of V_ab equation)
-# Eqn.36 in draft
+# Eqn.37 in draft
 #==========================================================================================
 
 #pre-computation
@@ -353,30 +353,31 @@ DkKik = Matrix([sum([ d(k,At[i,k]) + d(k,K)*gs[i,k] + K*(d(k,gt[i,k])/chi -d(k,c
 
 # from LHS and RHS: line 1: term 1
 Btr_rhs1 = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) 
-# RHS: line 1: term 2 & 3
-# also RHS: line 2: term 1
+# RHS: line 1: term 3, 4, 5
+#(line 1: term 2 is a matter term and not included here)
 Btr_rhs2 = - a*(
 	dendro.laplacian(Atr,chi) 
-	+ sum([a_acc[i]*d(i,Atr) for i in dendro.e_i]) 
+	+ sum([a_acc[i]*d(i,Atr) for i in dendro.e_i])
+	- K*Btr  
 	- qg_mass2_sq*Atr 
-	- K*Btr 
-	- Rsch*Atr/3
+	+ Rsch*Atr/6
 )
-# RHS: line 2: term 2
-Btr_rhs3 = 3*a/2*(
+# RHS: line 3: term 1
+Btr_rhs3 = 3/2*a*(
 	sum([Aij[i,j]*Aij_UU[i,j] for i,j in dendro.e_ij]) 
-	+ Atr*Atr 
+	+ 4/3*Atr*Atr 
 	- 2*sum([Ci[i]*Ci_U[i] for i in dendro.e_i])
 )
-# RHS: line 4: term 1
+# RHS: line 2: term 1
 Btr_rhs4 = a/3*(qg_mass2_sq/qg_mass0_sq + 1)*Rsc*Atr
-# RHS: line 4: term 2
+# RHS: line 2: term 2
 Btr_rhs5 = -a/3*(qg_mass2_sq/qg_mass0_sq - 1)*(
 	- 2*K*Rsch 
 	+ dendro.laplacian(Rsc,chi) 
 	- 3/4*qg_mass0_sq*Rsc
+	# matter term not added yet
 )
-# RHS: line 3: term 2
+# RHS: line 4: term 2
 Btr_rhs6 = 4*a*(
 	sum([
 		Ci_U[j]*(
@@ -386,7 +387,7 @@ Btr_rhs6 = 4*a*(
 		for j in dendro.e_i
 	])
 )
-# RHS: line 3: term 1
+# RHS: line 4: term 1
 Btr_rhs7 = -2*a*(
 	sum([
 		(
@@ -403,7 +404,7 @@ Btr_rhs7 = -2*a*(
 		for i,j in dendro.e_ij
 	])
 )
-# RHS: line 2: term 3
+# RHS: line 3: term 2
 Btr_rhs8 = -2*a*(
 	sum([
 		(
@@ -416,7 +417,7 @@ Btr_rhs8 = -2*a*(
 		for i in dendro.e_i
 	])
 )
-# RHS: line 2: term 4
+# RHS: line 3: term 3
 Btr_rhs9 = -4*a*(
 	sum([
      sum([
@@ -428,14 +429,16 @@ Btr_rhs9 = -4*a*(
          for j in dendro.e_i
         ])
 )
+# RHS: line 5 TODO: NEW TERMS TO BE ADDED
+Btr_rhs10 = 0
 
 # combine RHS
-Btr_rhs = Btr_rhs1 + Btr_rhs2 + Btr_rhs3 + Btr_rhs4 + Btr_rhs5 + Btr_rhs6 + Btr_rhs7 + Btr_rhs8 + Btr_rhs9
+Btr_rhs = Btr_rhs1 + Btr_rhs2 + Btr_rhs3 + Btr_rhs4 + Btr_rhs5 + Btr_rhs6 + Btr_rhs7 + Btr_rhs8 + Btr_rhs9 + Btr_rhs10
 
 
 #==========================================================================================
 # Bij-equation (from traceless-projection of R_ab equation)
-# Eqn.37 in draft
+# Eqn.38 in draft
 #==========================================================================================
 
 
@@ -486,11 +489,13 @@ Bij_rhs3 = Matrix([
 		for k in dendro.e_i
 	])
 	for i,j in dendro.e_ij
-]).reshape(3,3) 
+]).reshape(3,3)
+# (line 1: term 3 is a matter term and not included yet)
 # RHS: line 1: term 4
+# TODO: CHECK WHETHER "-a*" SHOULD BE HERE
 Bij_rhs4 = -a*gs*Btr_rhs/3
-# RHS: line 2: term 1: 1st part
-# also RHS:line 3: term 1: 1st part
+# RHS: line 2: term 1 (1st part)
+# also RHS: line 2: term 3 (1st part)
 Bij_rhs5 = (
 	-Matrix([
 		a*(
@@ -515,6 +520,7 @@ Bij_rhs6 = -Matrix([
 ]).reshape(3,3)
 # RHS: line 2: term 2
 # also RHS: line 1: term 3 (matter term)
+# TODO: THE Sij_qg SHOULD PROBABLY NOT BE THERE SINCE IT IS ACTUAL MATTER AND NOT FIDUCIAL MATTER
 Bij_rhs7 = Matrix([
 	a*K*(
 		Bij[i,j] 
@@ -523,7 +529,7 @@ Bij_rhs7 = Matrix([
 	+ 2*a*Sij_qg[i,j]
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 2: term 3 
+# RHS: line 4: term 2 
 Bij_rhs8 = a*Matrix([
 	-(
 		Ci[i]*DkKjk[j] 
@@ -536,7 +542,7 @@ Bij_rhs8 = a*Matrix([
 	) 
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 2: term 4
+# RHS: line 4: term 3
 Bij_rhs9 = -2*a*Matrix([
 	sum([
 		Kij[k,i]*DkCj[k,j] 
@@ -545,10 +551,10 @@ Bij_rhs9 = -2*a*Matrix([
 	])
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 3: term 2
+# RHS: line 4: term 1
 Bij_rhs10 = Matrix([
 	a/2*gs[i,j]*(
-		Atr*Atr/3
+		4/3*Atr*Atr
 		+ sum([
 			sum([
 				Aij_UU[k,l]*Aij[k,l] 
@@ -560,7 +566,7 @@ Bij_rhs10 = Matrix([
 	) 
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 5: term 1
+# RHS: line 3: term 1
 Bij_rhs11 = Matrix([
 	a/3*(
 		qg_mass2_sq/qg_mass0_sq + 1
@@ -572,7 +578,7 @@ Bij_rhs11 = Matrix([
 	)
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 5: term 2
+# RHS: line 3: term 2
 Bij_rhs12 = -Matrix([
 	a/3*(
 		qg_mass2_sq/qg_mass0_sq - 1
@@ -583,7 +589,7 @@ Bij_rhs12 = -Matrix([
 	) 
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 4: term 1
+# RHS: line 5: term 1
 Bij_rhs13 = -Matrix([
 	2*a*sum([
 		(
@@ -598,7 +604,7 @@ Bij_rhs13 = -Matrix([
 	]) 
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 4: term 2
+# RHS: line 5: term 2
 Bij_rhs14 = Matrix([
 	4*a*sum([
 		Ci_U[k]*(
@@ -610,7 +616,7 @@ Bij_rhs14 = Matrix([
 	]) 
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
-# RHS: line 3: term 1 (part 2)
+# RHS: line 2: term 3 (2nd part)
 Bij_rhs15 = -Matrix([
 	Rsc*(
 		Aij[i,j] 
@@ -618,13 +624,15 @@ Bij_rhs15 = -Matrix([
 	)/6 
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
+# RHS: line 6 TODO: NEW TERMS TO BE ADDED
+Bij_rhs16 = 0
 
 # collect RHS terms
 Bij_rhs = (
 	Bij_rhs1 + Bij_rhs2 + Bij_rhs3 + Bij_rhs4 
 	+ Bij_rhs5 + Bij_rhs6 + Bij_rhs7 + Bij_rhs8 
 	+ Bij_rhs9 + Bij_rhs10 + Bij_rhs11 + Bij_rhs12 
-	+ Bij_rhs13 + Bij_rhs14 + Bij_rhs15
+	+ Bij_rhs13 + Bij_rhs14 + Bij_rhs15 + Bij_rhs16
 ) 
 
 #==========================================================================================
@@ -638,7 +646,7 @@ Bij_rhs = (
 #Ci_rhs = [item for sublist in Ci_rhs.tolist() for item in sublist]
 
 #RHS of Eqn.43, same argument from Aij_rhs is applicable for this 
-ok
+#ok
 #TODO : Additional constraints, C_k, E_k go here if we want to evolve and monitor
 
 #_I = gt*igt
