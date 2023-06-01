@@ -138,6 +138,7 @@ Aij_UU = dendro.up_up(Aij)*(chi*chi)
 AiUjD = dendro.up_down(Aij)*chi
 
 Kij = At + 1/3*gt*K
+Kij_UU = dendro.up_up(Kij)*(chi*chi)
 Kki = dendro.up_down(Kij)*chi
 
 # Ci is a momentume constraint
@@ -351,6 +352,28 @@ DkCi = Matrix([d(k,Ci[i]) + sum([dendro.C3[k,i,l]*Ci[l] for l in dendro.e_i]) fo
 DkKjk = Matrix([sum([ d(k,At[j,k]) + d(k,K)*gs[j,k] + K*(d(k,gt[j,k])/chi -d(k,chi)*gt[j,k]/(chi*chi))/3 - sum([dendro.C3[j,k,l]*Kij[l,j] + dendro.C3[k,j,l]*Kij[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for j in dendro.e_i])
 DkKik = Matrix([sum([ d(k,At[i,k]) + d(k,K)*gs[i,k] + K*(d(k,gt[i,k])/chi -d(k,chi)*gt[i,k]/(chi*chi))/3 - sum([dendro.C3[i,k,l]*Kij[l,i] + dendro.C3[k,i,l]*Kij[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i])
 
+#Kij_rhs we are not evolving Kij. This is used to compute B and Bij
+#Eqn.22 in draft
+
+#Some precomputation for covariant derivatives
+Dkaj = Matrix([d(k,a_acc[j]) + sum([dendro.C3[k,j,l]*a_acc[l] for l in dendro.e_i]) for j,k in dendro.e_ij]).reshape(3,3)
+
+Dknj = Matrix([d(k,n_vec[j]) + sum([dendro.C3[k,j,l]*n_vec[l] for l in dendro.e_i]) for j,k in dendro.e_ij]).reshape(3,3)
+#From LHS
+# I put this here but for the purpose we don't need expansion of n^a nabla_a Kij term
+#Kij_rhs1 = Matrix([sum([b[k]*d(k,Kij[i,j]) + Kij[i,k]*d(j,b[k]) +Kij[k,j]*d(i,b[k]) -2/3*Kij[i,j]*d(k,b[k]) for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
+#RHS : 1st line 
+Kij_rhs2 = Matrix([-a_acc[i]*a_acc[j] -(Dkaj[i,j]+Dkaj[j,i]) for i,j in dendro.e_ij]).reshape(3,3)
+#RHS : 2nd line
+Kij_rhs3 = - Matrix([sum([Kij[m,i]*Dknj[j,m] + Kij[m,j]*Dknj[j,m] for m in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
+#RHS : 3rd line
+Kij_rhs4 = - Matrix([sum([Kij[i,m]*Kki[m,j] for m in dendro.e_i]) + K*Kij[i,j] + R[i,j] for i,j in dendro.e_ij]).reshape(3,3)
+#RHS : 4th line
+Kij_rhs5 = - Matrix([(Sij_qg[i,j] - gs[i,j]*(S_qg - rho_qg)/2)/M_pl_sq]).reshape(3,3)
+
+#Don't add Kij_rhs1 term...
+Kij_rhs = Kij_rhs2 + Kij_rhs3 + Kij_rhs4 + Kij_rhs5
+
 # from LHS and RHS: line 1: term 1
 Btr_rhs1 = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) 
 # RHS: line 1: term 3, 4, 5
@@ -429,8 +452,9 @@ Btr_rhs9 = -4*a*(
          for j in dendro.e_i
         ])
 )
-# RHS: line 5 TODO: NEW TERMS TO BE ADDED
-Btr_rhs10 = 0
+# RHS: line 5
+DiaUPi = sum([d(i,a_acci_UP[i]) + sum([dendro.C3[i,i,l]*a_acc_UP[l] for l in dendro.e_i]) for i in dendro.e_i])
+Btr_rhs10 = -2*Atr*(DiaUPi + sum([a_acc[i]*a_acc_UP[i] - sum([Kij[i,j]*Kij_UU[i,j] + igs[i,j]*Kij_rhs[i,j] for j in dendro.e_i]) for i in dendro.e_i]))
 
 # combine RHS
 Btr_rhs = Btr_rhs1 + Btr_rhs2 + Btr_rhs3 + Btr_rhs4 + Btr_rhs5 + Btr_rhs6 + Btr_rhs7 + Btr_rhs8 + Btr_rhs9 + Btr_rhs10
@@ -493,7 +517,8 @@ Bij_rhs3 = Matrix([
 # (line 1: term 3 is a matter term and not included yet)
 # RHS: line 1: term 4
 # TODO: CHECK WHETHER "-a*" SHOULD BE HERE
-Bij_rhs4 = -a*gs*Btr_rhs/3
+# TODO: check subtraction for addition Btr_rhs one
+Bij_rhs4 = -a*gs*i(Btr_rhs-dendro.lie(b,Btr))/3
 # RHS: line 2: term 1 (1st part)
 # also RHS: line 2: term 3 (1st part)
 Bij_rhs5 = (
@@ -625,7 +650,8 @@ Bij_rhs15 = -Matrix([
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
 # RHS: line 6 TODO: NEW TERMS TO BE ADDED
-Bij_rhs16 = 0
+igsud=dendro.up_down(igs)
+Bij_rhs16 = -2*Atr*Matrix([a[i]*a[j] + (Dkaj[i,j]+Dkaj[j,i])/2 - sum([Kki[k,j]+Kkj[k,j] for k in dendro.e_i])+sum([igsud[k,i]*igsud[l,j]*Kij_rhs[k,l] for k,l in dendro.e_ij]) for i,j in dendro.e_ij]).reshape(3,3)
 
 # collect RHS terms
 Bij_rhs = (
