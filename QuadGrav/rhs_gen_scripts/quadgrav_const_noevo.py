@@ -165,14 +165,14 @@ Si_qg = Matrix([[-Ci[0], -Ci[1], -Ci[2]]])
 Sij_qg = Matrix([Aij[i,j] + gs[i,j]*Atr/3 + gs[i,j]*Rsc/4 for i,j in dendro.e_ij]).reshape(3,3)
 S_qg = sum([sum([Sij_qg[i,j]*igs[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
-At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)-0*8*pi*Sij_qg) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
+At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)- Sij_qg/M_pl_sq) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
 
-K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*4*pi*a*(rho_qg + S_qg) + 0*dendro.kodiss(K)
+K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + a*(rho_qg + S_qg)/(2*M_pl_sq) + 0*dendro.kodiss(K)
 
 At_UU = dendro.up_up(At)
 
 Gt_rhs = Matrix([sum(b[j]*ad(j,Gt[i]) for j in dendro.e_i) for i in dendro.e_i]) - \
-         Matrix([sum(CalGt[j]*d(j,b[i]) for j in dendro.e_i) for i in dendro.e_i]) + \
+         Matrix([sum(CalGt[j]*d(j,b[i]) - igt[i,j]*Si_qg[j]/M_pl_sq for j in dendro.e_i) for i in dendro.e_i]) + \
          Rational(2,3)*Matrix([ CalGt[i] * sum(d(j,b[j]) for j in dendro.e_i)  for i in dendro.e_i ]) + \
          Matrix([sum([igt[j, k] * d2(j, k, b[i]) + igt[i, j] * d2(j, k, b[k])/3 for j, k in dendro.e_ij]) for i in dendro.e_i]) - \
          Matrix([sum([2*At_UU[i, j]*d(j, a) for j in dendro.e_i]) for i in dendro.e_i]) + \
