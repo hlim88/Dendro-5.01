@@ -156,14 +156,15 @@ Ci = [item for sublist in Ci.tolist() for item in sublist]
 
 Ci_U = Matrix([sum([Ci[j]*igs[i,j] for j in dendro.e_i]) for i in dendro.e_i])
 
-# Ei is determined by the spatial projection of RHS of Eqn.47
+# Ei is determined by the spatial part of Eq. (40)
 diAiUjD = Matrix([sum([d(i, gt[i,k])*Aij[k,j] + igt[i,k]*d(i,Aij[k,j])  for i, k in dendro.e_ij]) for j in dendro.e_i])
 DiAiUjD = diAiUjD + Matrix([sum([sum([dendro.C3[k,k,l]*AiUjD[l,i] - dendro.C3[l,k,i]*AiUjD[k,l] for l in dendro.e_i]) for k in dendro.e_i]) for i in dendro.e_i]) 
 Ei = Matrix([sum([-Kki[k,i]*Ci[k] for k in dendro.e_i]) - K*Ci[i] - d(i,Atr)/3 + d(i,Rsc)/4 for i in dendro.e_i]) - DiAiUjD
 
-rho_qg = Rsc/4
-Si_qg = Matrix([[-Ci[0], -Ci[1], -Ci[2]]])
-Sij_qg = Matrix([Aij[i,j] + gs[i,j]*Atr/3 + gs[i,j]*Rsc/4 for i,j in dendro.e_ij]).reshape(3,3)
+# matches Eq. (16) in the paper
+rho_qg = M_pl_sq*(Atr + Rsc/4)
+Si_qg = Matrix([[-M_pl_sq*Ci[0], -M_pl_sq*Ci[1], -M_pl_sq*Ci[2]]])
+Sij_qg = Matrix([M_pl_sq*(Aij[i,j] + gs[i,j]*Atr/3 - gs[i,j]*Rsc/4) for i,j in dendro.e_ij]).reshape(3,3)
 S_qg = sum([sum([Sij_qg[i,j]*igs[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)- Sij_qg/M_pl_sq) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
