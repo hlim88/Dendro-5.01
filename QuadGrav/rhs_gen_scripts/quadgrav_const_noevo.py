@@ -361,21 +361,16 @@ Dkaj = Matrix([d(k,a_acc[j]) + sum([dendro.C3[k,j,l]*a_acc[l] for l in dendro.e_
 
 Dknj = Matrix([d(k,n_vec[j]) + sum([dendro.C3[k,j,l]*n_vec[l] for l in dendro.e_i]) for j,k in dendro.e_ij]).reshape(3,3)
 #From LHS
-# I put this here but for the purpose we don't need expansion of n^a nabla_a Kij term
-#Kij_rhs1 = Matrix([sum([b[k]*d(k,Kij[i,j]) + Kij[i,k]*d(j,b[k]) +Kij[k,j]*d(i,b[k]) -2/3*Kij[i,j]*d(k,b[k]) for k in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
 #RHS : 1st line: 1st term 
-Kij_rhs2 = Matrix([-a_acc[i]*a_acc[j] -(Dkaj[i,j]+Dkaj[j,i]) for i,j in dendro.e_ij]).reshape(3,3)
+Kij_rhs1 = Matrix([-a_acc[i]*a_acc[j] -(Dkaj[i,j]+Dkaj[j,i]) for i,j in dendro.e_ij]).reshape(3,3)
 #RHS : 1st line: 2nd term
-#TODO: @Hyun: please confirm that indices up or down do not matter here; otherwise some are off, I think
-Kij_rhs3 = - Matrix([sum([Kij[m,i]*Dknj[j,m] + Kij[m,j]*Dknj[j,m] for m in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
+Kij_rhs2 = - Matrix([sum([Kki[m,i]*Dknj[j,m] + Kki[m,j]*Dknj[j,m] for m in dendro.e_i]) for i,j in dendro.e_ij]).reshape(3,3)
 #RHS : 3rd line
-#TODO: added a factor of 2 (@Hyun: please check)
-Kij_rhs4 = - 2*Matrix([sum([Kij[i,m]*Kki[m,j] for m in dendro.e_i]) + K*Kij[i,j] + R[i,j] for i,j in dendro.e_ij]).reshape(3,3)
+Kij_rhs3 = - 2*Matrix([sum([Kij[i,m]*Kki[m,j] for m in dendro.e_i]) + K*Kij[i,j] + R[i,j] for i,j in dendro.e_ij]).reshape(3,3)
 #RHS : 4th line
-Kij_rhs5 = - Matrix([(Sij_qg[i,j] - gs[i,j]*(S_qg - rho_qg)/2)/M_pl_sq]).reshape(3,3)
+Kij_rhs4 = - Matrix([(Sij_qg[i,j] - gs[i,j]*(S_qg - rho_qg)/2)/M_pl_sq]).reshape(3,3)
 
-#Don't add Kij_rhs1 term...
-Kij_rhs = Kij_rhs2 + Kij_rhs3 + Kij_rhs4 + Kij_rhs5
+Kij_rhs = Kij_rhs1 + Kij_rhs2 + Kij_rhs3 + Kij_rhs4
 
 # from LHS and RHS: line 1: term 1
 Btr_rhs1 = dendro.lie(b, Btr) +2*a*sum([a_acc[k]*Ei[k] for k in dendro.e_i]) 
@@ -456,7 +451,6 @@ Btr_rhs9 = -4*a*(
         ])
 )
 # RHS: line 5
-# TODO: added a global factor of a (@Hyun: please check)
 DiaUPi = sum([d(i,a_acci_UP[i]) + sum([dendro.C3[i,i,l]*a_acc_UP[l] for l in dendro.e_i]) for i in dendro.e_i])
 Btr_rhs10 = -2*Atr*a*(
 	DiaUPi 
@@ -531,12 +525,7 @@ Bij_rhs3 = Matrix([
 ]).reshape(3,3)
 # (line 1: term 3 is a matter term and not included yet)
 # RHS: line 1: term 4
-# Aaron: CHECK WHETHER "-a*" SHOULD BE HERE
-# Hyun: check subtraction for addition Btr_rhs one
-# Aaron: subtraction is fine, I think ... still, I think there should not be an a* here ... I removed it but we can talk tomorrow
-# Bij_rhs4 = -a*gs*i(Btr_rhs-dendro.lie(b,Btr))/3
-#TODO: @Hyun: please check
-Bij_rhs4 = -gs*i(Btr_rhs-dendro.lie(b,Btr))/3
+Bij_rhs4 = -gs*(Btr_rhs-dendro.lie(b,Btr))/3
 # RHS: line 2: term 1 (1st part)
 # also RHS: line 2: term 3 (1st part)
 Bij_rhs5 = (
@@ -563,7 +552,6 @@ Bij_rhs6 = -Matrix([
 ]).reshape(3,3)
 # RHS: line 2: term 2
 # also RHS: line 1: term 3 (matter term)
-# TODO: THE Sij_qg SHOULD PROBABLY NOT BE THERE SINCE IT IS ACTUAL MATTER AND NOT FIDUCIAL MATTER
 Bij_rhs7 = Matrix([
 	a*K*(
 		Bij[i,j] 
@@ -669,8 +657,6 @@ Bij_rhs15 = -Matrix([
 	for i,j in dendro.e_ij
 ]).reshape(3,3)
 # RHS: line 6 
-# TODO: added a global factor of a (@Hyun: please check)
-# TODO: probably corrected a typo in the third term (@Hyun: please check)
 igsud=dendro.up_down(igs)
 Bij_rhs16 = -2*Atr*a*Matrix([
 	a[i]*a[j] 
