@@ -34,7 +34,7 @@ EEij_part3 = Rij # should be the *3D spatial* Ricci scalar
 EEij_part4 = -1/2*(
 	Aij 
 	+ 4/3*Atr*gt
-	+ Rsc*gt
+	+ 1/3*Rsc*gt
 )
 
 EEij = EEij_part1 + EEij_part2 + EEij_part3 + EEij_part4
