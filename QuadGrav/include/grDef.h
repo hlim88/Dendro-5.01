@@ -40,7 +40,10 @@ namespace bssn
 	      U_CI0,U_CI1,U_CI2};
 
     //enum VAR_PSI4 {C_PSI4_REAL, C_PSI4_IMG};
-    enum VAR_CONSTRAINT {C_HAM=0, C_MOM0, C_MOM1, C_MOM2, C_PSI4_REAL, C_PSI4_IMG};
+    enum VAR_CONSTRAINT {C_HAM=0, C_MOM0, C_MOM1, C_MOM2, C_PSI4_REAL, C_PSI4_IMG,
+                         C_SYMEEij0, C_SYMEEij1, C_SYMEEij2, C_SYMEEij3, C_SYMEEij4, C_SYMEEij5,
+                         C_SYMBBij0, C_SYMBBij1, C_SYMBBij2, C_SYMBBij3, C_SYMBBij4, C_SYMBBij5};
+
 
     static const char * BSSN_VAR_NAMES[]={"U_ALPHA","U_CHI","U_K",
 	                                  "U_GT0","U_GT1","U_GT2",
@@ -53,7 +56,9 @@ namespace bssn
                                           "U_BTR","U_SYMBIJ0","U_SYMBIJ1","U_SYMBIJ2","U_SYMBIJ3","U_SYMBIJ4","U_SYMBIJ5",
 	                                  "U_CI0","U_CI1","U_CI2"};
 
-    static const char * BSSN_CONSTRAINT_VAR_NAMES[]={"C_HAM","C_MOM0","C_MOM1","C_MOM2","C_PSI4_REAL","C_PSI4_IMG"};
+    static const char * BSSN_CONSTRAINT_VAR_NAMES[]={"C_HAM","C_MOM0","C_MOM1","C_MOM2","C_PSI4_REAL","C_PSI4_IMG",
+	    "C_SYMEEij0", "C_SYMEEij1", "C_SYMEEij2", "C_SYMEEij3", "C_SYMEEij4", "C_SYMEEij5",
+	    "C_SYMBBij0", "C_SYMBBij1", "C_SYMBBij2", "C_SYMBBij3", "C_SYMBBij4", "C_SYMBBij5"};
 
     /**
      * @brief Refinement mode types. 

@@ -33,6 +33,21 @@ void physical_constraints(double **uZipConVars, const double **uZipVars,
   double *mom2 = &uZipConVars[VAR_CONSTRAINT::C_MOM2][offset];
   double *psi4_real = &uZipConVars[VAR_CONSTRAINT::C_PSI4_REAL][offset];
   double *psi4_img = &uZipConVars[VAR_CONSTRAINT::C_PSI4_IMG][offset];
+  #ifdef QUADGRAV_EVOL
+  const double *EEij0 = &uZipVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
+  const double *EEij1 = &uZipVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
+  const double *EEij2 = &uZipVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
+  const double *EEij3 = &uZipVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
+  const double *EEij4 = &uZipVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
+  const double *EEij5 = &uZipVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
+  const double *BBij0 = &uZipVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
+  const double *BBij1 = &uZipVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
+  const double *BBij2 = &uZipVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
+  const double *BBij3 = &uZipVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
+  const double *BBij4 = &uZipVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
+  const double *BBij5 = &uZipVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
+  #endif 
+
 
   const double *alpha = &uZipVars[VAR::U_ALPHA][offset];
   const double *chi = &uZipVars[VAR::U_CHI][offset];

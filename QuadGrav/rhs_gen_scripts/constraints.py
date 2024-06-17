@@ -12,6 +12,8 @@
 import dendro
 from sympy import *
 
+import numpy as np
+
 ###################################################################
 # initialize
 ###################################################################
@@ -57,9 +59,14 @@ igt = dendro.get_inverse_metric()
 gs = gt/chi
 igs = igt/chi
 
+Kij = At + 1/3*gt*K
+Kij = At + 1/3*gt*K
+Kij_UU = dendro.up_up(Kij)*(chi*chi)
+Kki = dendro.up_down(Kij)*chi
 # Christoffels, Ricci, et al  
 C1 = dendro.get_first_christoffel()
 C2 = dendro.get_second_christoffel()
+LeviCivita = dendro.compute_LeviCivita()
 #what's this...tried to comment it out and python compilation fails 
 C2_spatial = dendro.get_complete_christoffel(chi)
 R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
@@ -70,6 +77,8 @@ Si_qg = Matrix([[-M_pl_sq*Ci[0], -M_pl_sq*Ci[1], -M_pl_sq*Ci[2]]])
 Sij_qg = Matrix([M_pl_sq*(Aij[i,j] + gs[i,j]*Atr/3 - gs[i,j]*Rsc/4) for i,j in dendro.e_ij]).reshape(3,3)
 S_qg = sum([sum([Sij_qg[i,j]*igs[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
+#Precomputation
+DiKkj = np.array([ d(i,At[k,j]) + d(i,K)*gs[k,j] + K*(d(i,gt[k,j])/chi -d(i,chi)*gt[k,j]/(chi*chi))/3 - sum([dendro.C3[k,i,l]*Kij[l,j] + dendro.C3[j,i,l]*Kij[k,l] for l in dendro.e_i]) for i,j in dendro.e_ij for k in dendro.e_i]).reshape((3,3,3))
 
 ###################################################################
 # Calculate the tetrad used in the Psi4 calculation
@@ -208,11 +217,47 @@ mom = [item for sublist in mom.tolist() for item in sublist]
 
 #Additional constraints?
 
+
+###################################################################
+# E and B
+###################################################################
+EEij_part1 = K*Kij
+
+EEij_part2 = Matrix([
+        sum([
+                Kij[i,m]*Kki[m,j]
+                for m in dendro.e_i
+        ])
+        +R[i,j] # Spatial Ricci scalar
+        for i,j in dendro.e_ij
+]).reshape(3,3)
+
+EEij_part3 = -1/2*(
+        Aij
+        + 4/3*Atr*gt
+        + 1/3*Rsc*gt
+)
+EEij = EEij_part1 + EEij_part2 + EEij_part3
+
+
+# determine BB (magnetic Weyl) from other 3+1 variables
+BBij = Matrix([
+        sum([
+                sum([
+                        1/2*(LeviCivita(k,l,i)*DiKkj[k,j,l] + LeviCivita(k,l,j)*DiKkj[k,i,l])
+                        for k in dendro.e_i
+                ])
+                for l in dendro.e_i
+        ])
+        for i,j in dendro.e_ij
+]).reshape(3,3)
+
+
 # Output for this should be included psi4_real and psi4_img as double precision  
 ###################################################################
 # generate code
 ###################################################################
 
-outs = [psi4_real, psi4_img, ham, mom]
-vnames = ['psi4_real', 'psi4_img', 'ham', 'mom']
+outs = [psi4_real, psi4_img, ham, mom, EEij, BBij]
+vnames = ['psi4_real', 'psi4_img', 'ham', 'mom', 'EEij', 'BBij']
 dendro.generate(outs, vnames, '[pp]')

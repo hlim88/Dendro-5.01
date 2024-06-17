@@ -524,6 +524,19 @@ def get_complete_christoffel(chi):
 
     return C3
 
+def compute_LeviCivita():
+
+    global LeviCivita
+
+    if LeviCivita == undef:
+        C1 = MutableDenseNDimArray(range(27), (3, 3, 3))
+
+        for k in e_i:
+            for j in e_i:
+                for i in e_i:
+                    LeviCivita[i, j, k] = 0.5 * (i-j)*(j-k)*(k-i)
+
+    return LeviCivita
 
 def compute_ricci(Gt, chi):
     """
