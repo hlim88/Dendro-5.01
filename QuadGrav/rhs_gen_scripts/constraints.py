@@ -16,6 +16,13 @@ from sympy import *
 # initialize
 ###################################################################
 
+#QG related constants
+a_const = symbols('a_const')
+b_const = symbols('b_const')
+qg_mass0_sq = symbols('qg_mass0_sq')
+qg_mass2_sq = symbols('qg_mass0_sq')
+M_pl_sq = symbols('M_pl_sq')
+
 # Declare variables.
 # These include the BSSN variables that we need for the Psi4 
 # calculation. 
@@ -25,6 +32,20 @@ Gt  = dendro.vec3("Gt","[pp]")
 gt  = dendro.sym_3x3("gt","[pp]")
 At  = dendro.sym_3x3("At","[pp]")
 
+# Ricci scalar, R
+Rsc = dendro.scalar("Rsc", "[pp]")
+# Aux Ricci scalar, R^
+Rsch = dendro.scalar("Rsch", "[pp]")
+
+# Spatial projection of Ricci tensor related quantities
+# From R_ab
+Atr = dendro.scalar("Atr", "[pp]")
+Aij  = dendro.sym_3x3("Aij", "[pp]")
+# From V_ab
+Btr = dendro.scalar("Btr", "[pp]")
+Bij  = dendro.sym_3x3("Bij", "[pp]")
+Ci = dendro.vec3("Ci","[pp]")
+
 # Specify the operators needed for computing first and second derivatives
 d = dendro.set_first_derivative('grad')    # first argument is direction
 d2 = dendro.set_second_derivative('grad2')  # first 2 arguments are directions
@@ -33,6 +54,8 @@ ad = dendro.set_advective_derivative('agrad')  # first argument is direction
 # Metric related quantities, i.e. the metric and its inverse  
 dendro.set_metric(gt)
 igt = dendro.get_inverse_metric()
+gs = gt/chi
+igs = igt/chi
 
 # Christoffels, Ricci, et al  
 C1 = dendro.get_first_christoffel()
@@ -40,6 +63,12 @@ C2 = dendro.get_second_christoffel()
 #what's this...tried to comment it out and python compilation fails 
 C2_spatial = dendro.get_complete_christoffel(chi)
 R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
+
+# Fiducial matter term
+rho_qg = M_pl_sq*(Atr + Rsc/4)
+Si_qg = Matrix([[-M_pl_sq*Ci[0], -M_pl_sq*Ci[1], -M_pl_sq*Ci[2]]])
+Sij_qg = Matrix([M_pl_sq*(Aij[i,j] + gs[i,j]*Atr/3 - gs[i,j]*Rsc/4) for i,j in dendro.e_ij]).reshape(3,3)
+S_qg = sum([sum([Sij_qg[i,j]*igs[i,j] for i in dendro.e_i]) for j in dendro.e_i])
 
 
 ###################################################################
@@ -149,6 +178,9 @@ psi4_3_img = inv_chi * sum([sum([NR[i,j]* Uu[i,j] + MR[i,j]*Vv[i,j] for i in den
 psi4_4_real = inv_chi * inv_chi * (m_real_A_vec * (m_real_A_vec + 0.5 * m_real_d_chi) - m_img_A_vec * (m_img_A_vec + 0.5 * m_img_d_chi))  
 psi4_4_img = inv_chi * inv_chi * (m_real_A_vec * (m_img_A_vec - 0.5 * m_img_d_chi ) + m_img_A_vec * (m_real_A_vec - 0.5 * m_real_d_chi))  
 
+psi4_5_real = - 4*pi*sum([sum([ MM[i,j]*Sij_qg[i,j] for i in dendro.e_i]) for j in dendro.e_i])
+psi4_5_img = - 4*pi*sum([sum([ NN[i,j]*Sij_qg[i,j] for i in dendro.e_i]) for j in dendro.e_i])
+
 # Adding previous auxilary Psi4 calculations
 
 psi4_real =     psi4_1_real + psi4_2_real - psi4_3_real - psi4_4_real
@@ -160,6 +192,7 @@ psi4_img  = - ( psi4_1_img  + psi4_2_img  - psi4_3_img  - psi4_4_img  )
 
 # TODO : add fiducial rho and S for constraints
 # The Hamiltonian constraint
+rho_sq = rho_qg*rho_qg
 ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2 - rho_sq
 
 # The momentum  constraints 
@@ -170,7 +203,7 @@ mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(3,2)*Matrix([ \
             sum([igt[j,k]*At[k,i]*d(j,chi)/chi for j,k in dendro.e_ij])  \
             for i in dendro.e_i]) -\
-      Rational(2,3)*Matrix([d(i,K) - Si[i] for i in dendro.e_i])
+      Rational(2,3)*Matrix([d(i,K) - Si_qg[i] for i in dendro.e_i])
 mom = [item for sublist in mom.tolist() for item in sublist]
 
 #Additional constraints?

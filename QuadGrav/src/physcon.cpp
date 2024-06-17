@@ -1,6 +1,8 @@
 #include "physcon.h"
 #include "gr.h"
 
+//#define QUADGRAV_EVOL
+
 using namespace bssn;
 
 
@@ -9,6 +11,7 @@ using namespace bssn;
  * vector form of RHS
  *
  *----------------------------------------------------------------------*/
+//TODO : Split Psi4
 void physical_constraints(double **uZipConVars, const double **uZipVars,
                        const unsigned int& offset,
                        const double *pmin, const double *pmax,
@@ -55,6 +58,28 @@ void physical_constraints(double **uZipConVars, const double **uZipVars,
   const double *B0 = &uZipVars[VAR::U_B0][offset];
   const double *B1 = &uZipVars[VAR::U_B1][offset];
   const double *B2 = &uZipVars[VAR::U_B2][offset];
+
+  #ifdef QUADGRAV_EVOL
+  const double *Rsc = &uZipVars[VAR::U_RSC][offset];
+  const double *Rsch = &uZipVars[VAR::U_RSCH][offset];
+  const double *Atr = &uZipVars[VAR::U_ATR][offset];
+  const double *Aij0 = &uZipVars[VAR::U_SYMAIJ0][offset];
+  const double *Aij1 = &uZipVars[VAR::U_SYMAIJ1][offset];
+  const double *Aij2 = &uZipVars[VAR::U_SYMAIJ2][offset];
+  const double *Aij3 = &uZipVars[VAR::U_SYMAIJ3][offset];
+  const double *Aij4 = &uZipVars[VAR::U_SYMAIJ4][offset];
+  const double *Aij5 = &uZipVars[VAR::U_SYMAIJ5][offset];
+  const double *Btr = &uZipVars[VAR::U_BTR][offset];
+  const double *Bij0 = &uZipVars[VAR::U_SYMBIJ0][offset];
+  const double *Bij1 = &uZipVars[VAR::U_SYMBIJ1][offset];
+  const double *Bij2 = &uZipVars[VAR::U_SYMBIJ2][offset];
+  const double *Bij3 = &uZipVars[VAR::U_SYMBIJ3][offset];
+  const double *Bij4 = &uZipVars[VAR::U_SYMBIJ4][offset];
+  const double *Bij5 = &uZipVars[VAR::U_SYMBIJ5][offset];
+  const double *Ci0 = &uZipVars[VAR::U_CI0][offset];
+  const double *Ci1 = &uZipVars[VAR::U_CI1][offset];
+  const double *Ci2 = &uZipVars[VAR::U_CI2][offset];
+  #endif
 
   mem::memory_pool<double> * __mem_pool = &BSSN_MEM_POOL;
 
