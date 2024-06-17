@@ -567,35 +567,6 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     unsigned int n = sz[0]*sz[1]*sz[2];
     mem::memory_pool<double>* __mem_pool = &BSSN_MEM_POOL;
 
-    #if 0
-        double vars[24];
-        pmin[0] = 0.0;
-        pmin[1] = 0.0;
-        pmin[2] = 0.0;
-        pmax[0] = 2.0;
-        pmax[1] = 2.0;
-        pmax[2] = 2.0;
-
-        hx = (pmax[0] - pmin[0]) / (nx - 1);
-        hy = (pmax[1] - pmin[1]) / (ny - 1);
-        hz = (pmax[2] - pmin[2]) / (nz - 1);
-
-        for (unsigned int k = 0; k < nz; k++) {
-            double z = pmin[2] + k*hz;
-            for (unsigned int j = 0; j < ny; j++) {
-                double y = pmin[1] + j*hy;
-                for (unsigned int i = 0; i < nx; i++) {
-                    double x = pmin[0] + i*hx;
-                    int pp = i + nx*(j + k*ny);
-                    fake_initial_data(x, y, z, vars);
-                    for (unsigned int m = 0; m < 24; m++) {
-                        uZipVars[m][offset+pp] = vars[m];
-                    }
-                }
-            }
-        }
-    #endif
-
     double * CalGt0 =new double[n];
     double * CalGt1 =new double[n];
     double * CalGt2 =new double[n];
