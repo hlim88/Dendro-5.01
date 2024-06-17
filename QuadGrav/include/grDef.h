@@ -34,15 +34,15 @@ namespace bssn
 	      U_B0,U_B1,U_B2,
 	      U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,
 	      U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5,
-              U_RSC,R_RSCH,
+              U_RSC,U_RSCH,
               U_ATR,U_SYMAIJ0,U_SYMAIJ1,U_SYMAIJ2,U_SYMAIJ3,U_SYMAIJ4,U_SYMAIJ5,
               U_BTR,U_SYMBIJ0,U_SYMBIJ1,U_SYMBIJ2,U_SYMBIJ3,U_SYMBIJ4,U_SYMBIJ5,
 	      U_CI0,U_CI1,U_CI2};
 
     //enum VAR_PSI4 {C_PSI4_REAL, C_PSI4_IMG};
     enum VAR_CONSTRAINT {C_HAM=0, C_MOM0, C_MOM1, C_MOM2, C_PSI4_REAL, C_PSI4_IMG,
-                         C_SYMEEij0, C_SYMEEij1, C_SYMEEij2, C_SYMEEij3, C_SYMEEij4, C_SYMEEij5,
-                         C_SYMBBij0, C_SYMBBij1, C_SYMBBij2, C_SYMBBij3, C_SYMBBij4, C_SYMBBij5};
+                         C_SYMEEIJ0, C_SYMEEIJ1, C_SYMEEIJ2, C_SYMEEIJ3, C_SYMEEIJ4, C_SYMEEIJ5,
+                         C_SYMBBIJ0, C_SYMBBIJ1, C_SYMBBIJ2, C_SYMBBIJ3, C_SYMBBIJ4, C_SYMBBIJ5};
 
 
     static const char * BSSN_VAR_NAMES[]={"U_ALPHA","U_CHI","U_K",
@@ -51,14 +51,14 @@ namespace bssn
 					  "U_B0","U_B1","U_B2",
 					  "U_SYMGT0","U_SYMGT1","U_SYMGT2","U_SYMGT3","U_SYMGT4","U_SYMGT5",
 					  "U_SYMAT0","U_SYMAT1","U_SYMAT2","U_SYMAT3","U_SYMAT4","U_SYMAT5",
-                                          "U_RSC","R_RSCH",
+                                          "U_RSC","U_RSCH",
                                           "U_ATR","U_SYMAIJ0","U_SYMAIJ1","U_SYMAIJ2","U_SYMAIJ3","U_SYMAIJ4","U_SYMAIJ5",
                                           "U_BTR","U_SYMBIJ0","U_SYMBIJ1","U_SYMBIJ2","U_SYMBIJ3","U_SYMBIJ4","U_SYMBIJ5",
 	                                  "U_CI0","U_CI1","U_CI2"};
 
     static const char * BSSN_CONSTRAINT_VAR_NAMES[]={"C_HAM","C_MOM0","C_MOM1","C_MOM2","C_PSI4_REAL","C_PSI4_IMG",
-	    "C_SYMEEij0", "C_SYMEEij1", "C_SYMEEij2", "C_SYMEEij3", "C_SYMEEij4", "C_SYMEEij5",
-	    "C_SYMBBij0", "C_SYMBBij1", "C_SYMBBij2", "C_SYMBBij3", "C_SYMBBij4", "C_SYMBBij5"};
+	    "C_SYMEEIJ0", "C_SYMEEIJ1", "C_SYMEEIJ2", "C_SYMEEIJ3", "C_SYMEEIJ4", "C_SYMEEIJ5",
+	    "C_SYMBBIJ0", "C_SYMBBIJ1", "C_SYMBBIJ2", "C_SYMBBIJ3", "C_SYMBBIJ4", "C_SYMBBIJ5"};
 
     /**
      * @brief Refinement mode types. 

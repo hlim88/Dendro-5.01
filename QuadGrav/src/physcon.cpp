@@ -1,7 +1,7 @@
 #include "physcon.h"
 #include "gr.h"
 
-//#define QUADGRAV_EVOL
+#define QUADGRAV_EVOL
 
 using namespace bssn;
 
@@ -17,7 +17,7 @@ void physical_constraints(double **uZipConVars, const double **uZipVars,
                        const double *pmin, const double *pmax,
                        const unsigned int *sz, const unsigned int& bflag)
 {
-
+  const double M_pl_sq = 1.0;
   const unsigned int nx = sz[0];
   const unsigned int ny = sz[1];
   const unsigned int nz = sz[2];
@@ -34,18 +34,18 @@ void physical_constraints(double **uZipConVars, const double **uZipVars,
   double *psi4_real = &uZipConVars[VAR_CONSTRAINT::C_PSI4_REAL][offset];
   double *psi4_img = &uZipConVars[VAR_CONSTRAINT::C_PSI4_IMG][offset];
   #ifdef QUADGRAV_EVOL
-  const double *EEij0 = &uZipConvVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
-  const double *EEij1 = &uZipConvVars[VAR_CONSTRAINT::C_SYMEEIJ1][offset];
-  const double *EEij2 = &uZipConvVars[VAR_CONSTRAINT::C_SYMEEIJ2][offset];
-  const double *EEij3 = &uZipConvVars[VAR_CONSTRAINT::C_SYMEEIJ3][offset];
-  const double *EEij4 = &uZipConvVars[VAR_CONSTRAINT::C_SYMEEIJ4][offset];
-  const double *EEij5 = &uZipConvVars[VAR_CONSTRAINT::C_SYMEEIJ5][offset];
-  const double *BBij0 = &uZipConvVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
-  const double *BBij1 = &uZipConvVars[VAR_CONSTRAINT::C_SYMBBIJ1][offset];
-  const double *BBij2 = &uZipConvVars[VAR_CONSTRAINT::C_SYMBBIJ2][offset];
-  const double *BBij3 = &uZipConvVars[VAR_CONSTRAINT::C_SYMBBIJ3][offset];
-  const double *BBij4 = &uZipConvVars[VAR_CONSTRAINT::C_SYMBBIJ4][offset];
-  const double *BBij5 = &uZipConvVars[VAR_CONSTRAINT::C_SYMBBIJ5][offset];
+  const double *EEij0 = &uZipConVars[VAR_CONSTRAINT::C_SYMEEIJ0][offset];
+  const double *EEij1 = &uZipConVars[VAR_CONSTRAINT::C_SYMEEIJ1][offset];
+  const double *EEij2 = &uZipConVars[VAR_CONSTRAINT::C_SYMEEIJ2][offset];
+  const double *EEij3 = &uZipConVars[VAR_CONSTRAINT::C_SYMEEIJ3][offset];
+  const double *EEij4 = &uZipConVars[VAR_CONSTRAINT::C_SYMEEIJ4][offset];
+  const double *EEij5 = &uZipConVars[VAR_CONSTRAINT::C_SYMEEIJ5][offset];
+  const double *BBij0 = &uZipConVars[VAR_CONSTRAINT::C_SYMBBIJ0][offset];
+  const double *BBij1 = &uZipConVars[VAR_CONSTRAINT::C_SYMBBIJ1][offset];
+  const double *BBij2 = &uZipConVars[VAR_CONSTRAINT::C_SYMBBIJ2][offset];
+  const double *BBij3 = &uZipConVars[VAR_CONSTRAINT::C_SYMBBIJ3][offset];
+  const double *BBij4 = &uZipConVars[VAR_CONSTRAINT::C_SYMBBIJ4][offset];
+  const double *BBij5 = &uZipConVars[VAR_CONSTRAINT::C_SYMBBIJ5][offset];
   #endif 
 
 
