@@ -17,7 +17,6 @@ void physical_constraints(double **uZipConVars, const double **uZipVars,
                        const double *pmin, const double *pmax,
                        const unsigned int *sz, const unsigned int& bflag)
 {
-  const double M_pl_sq = 1.0;
   const unsigned int nx = sz[0];
   const unsigned int ny = sz[1];
   const unsigned int nz = sz[2];

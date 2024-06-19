@@ -201,8 +201,7 @@ psi4_img  = - ( psi4_1_img  + psi4_2_img  - psi4_3_img  - psi4_4_img  + psi4_5_i
 
 # TODO : add fiducial rho and S for constraints
 # The Hamiltonian constraint
-rho_sq = rho_qg*rho_qg
-ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2 - rho_sq
+ham = sum(chi*igt[j,k]*R[j,k] for j,k in dendro.e_ij) - dendro.sqr(At) + Rational(2,3)*K**2 - 2*rho_qg/M_pl_sq
 
 # The momentum  constraints 
 mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
@@ -212,7 +211,7 @@ mom = Matrix([sum([igt[j,k]*(  d(k,At[i,j]) - \
       Rational(3,2)*Matrix([ \
             sum([igt[j,k]*At[k,i]*d(j,chi)/chi for j,k in dendro.e_ij])  \
             for i in dendro.e_i]) -\
-      Rational(2,3)*Matrix([d(i,K) - Si_qg[i] for i in dendro.e_i])
+      Rational(2,3)*Matrix([d(i,K) - Si_qg[i]/M_pl_sq for i in dendro.e_i])
 mom = [item for sublist in mom.tolist() for item in sublist]
 
 #Additional constraints?
@@ -225,7 +224,7 @@ EEij_part1 = K*Kij
 
 EEij_part2 = Matrix([
         sum([
-                Kij[i,m]*Kki[m,j]
+                - Kij[i,m]*Kki[m,j]
                 for m in dendro.e_i
         ])
         +R[i,j] # Spatial Ricci scalar

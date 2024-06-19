@@ -18,6 +18,6 @@
 #include "enuts.h"
 #include "bssnCtx.h"
 
-
+constexpr double M_pl_sq = 0.03978873577297384;
 
 #endif //SFCSORTBENCH_GR_H
