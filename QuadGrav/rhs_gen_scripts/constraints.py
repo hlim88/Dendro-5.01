@@ -192,8 +192,8 @@ psi4_5_img = - 4*pi*sum([sum([ NN[i,j]*Sij_qg[i,j] for i in dendro.e_i]) for j i
 
 # Adding previous auxilary Psi4 calculations
 
-psi4_real =     psi4_1_real + psi4_2_real - psi4_3_real - psi4_4_real
-psi4_img  = - ( psi4_1_img  + psi4_2_img  - psi4_3_img  - psi4_4_img  )
+psi4_real =     psi4_1_real + psi4_2_real - psi4_3_real - psi4_4_real + psi4_5_real
+psi4_img  = - ( psi4_1_img  + psi4_2_img  - psi4_3_img  - psi4_4_img  + psi4_5_img)
 
 ###################################################################
 # Constraint Equations
